@@ -3,8 +3,11 @@ package org.eigengo.monitor.agent.akka
 import org.specs2.mutable.SpecificationLike
 import akka.actor.ActorSystem
 import akka.testkit.{TestActorRef, TestKit}
+import org.specs2.runner.JUnitRunner
+import org.junit.runner.RunWith
 
-class ReceiveCounterSpec extends TestKit(ActorSystem()) with SpecificationLike {
+@RunWith(classOf[JUnitRunner])
+class ReceiveCounterTest extends TestKit(ActorSystem()) with SpecificationLike {
   sequential
 
   val simpleActor = TestActorRef[SimpleActor]

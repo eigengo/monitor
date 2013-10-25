@@ -1,7 +1,6 @@
 package org.eigengo.monitor.agent.akka;
 
-import org.eigengo.monitor.agent.AgentConfiguration;
-import org.eigengo.monitor.agent.AgentConfigurationFactory;
+import org.eigengo.monitor.agent.*;
 import org.eigengo.monitor.output.CounterInterface;
 import org.eigengo.monitor.output.NullCounterInterface;
 
