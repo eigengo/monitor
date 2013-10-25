@@ -2,6 +2,7 @@
 
     <aspects>
         <aspect name="org.eigengo.monitor.agent.akka.MessageMonitoringAspect"/>
+        <aspect name="org.eigengo.monitor.agent.akka.MailboxSizeMonitoringAspect"/>
     </aspects>
 
     <weaver options="-verbose -XnoInline -showWeaveInfo">
