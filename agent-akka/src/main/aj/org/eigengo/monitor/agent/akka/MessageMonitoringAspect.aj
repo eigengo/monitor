@@ -1,22 +1,6 @@
 package org.eigengo.monitor.agent.akka;
 
-import org.eigengo.monitor.agent.*;
-import org.eigengo.monitor.output.CounterInterface;
-import org.eigengo.monitor.output.NullCounterInterface;
-
-privileged aspect MessageMonitoringAspect {
-    private static String agentName = "akka";
-    private static final CounterInterface counterInterface = createCounterInterface();
-
-    private static CounterInterface createCounterInterface() throws ClassCastException{
-        try {
-            AgentConfiguration configuration = AgentConfigurationFactory.getAgentConfiguration(agentName);
-            CounterInterface counterInterface = (CounterInterface)Class.forName(configuration.counterInterfaceClassName()).newInstance();
-            return counterInterface;
-        } catch (final ReflectiveOperationException e) {
-            return new NullCounterInterface();
-        }
-    }
+privileged aspect MessageMonitoringAspect extends AbstractMonitoringAspect {
 
     pointcut receiveMessage(akka.actor.ActorCell actorCell, Object msg) : target(actorCell) &&
         call(* akka.actor.ActorCell.receiveMessage(..)) && args(msg);
