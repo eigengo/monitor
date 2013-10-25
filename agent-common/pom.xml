@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>agent-spray</artifactId>
+    <artifactId>agent-common</artifactId>
     <packaging>jar</packaging>
-    <name>Spray Agent</name>
+    <name>Common agent code</name>
 
     <parent>
         <groupId>org.eigengo.monitor</groupId>
@@ -11,5 +11,14 @@
     </parent>
 
     <dependencies>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+        </dependency>
     </dependencies>
 </project>

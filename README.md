@@ -23,5 +23,5 @@ In your project (not the monitor), create:
 Know the class name that will be used as output.
 
 #Monitoring other stuff
-In Play, use ``org.eigengo.montor:play-agent:0.1`` with the desired output module.
+In Play, use ``org.eigengo.monitor:play-agent:0.1`` with the desired output module.
 
