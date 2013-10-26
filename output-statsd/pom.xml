@@ -21,5 +21,10 @@
             <groupId>com.indeed</groupId>
             <artifactId>java-dogstatsd-client</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+        </dependency>
     </dependencies>
 </project>
