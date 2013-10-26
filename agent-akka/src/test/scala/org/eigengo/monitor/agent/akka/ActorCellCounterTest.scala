@@ -19,7 +19,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
   "Monitoring" should {
     val messageIntegerAspect = "message.Integer"
     val messageStringAspect  = "message.String"
-    val queueSizeAspect      = "queueSize"
+    val queueSizeAspect      = "queue.size"
 
     // records the count of messages received, grouped by message type
     "Record the message sent to actor" in {

@@ -38,6 +38,9 @@ module's structure as possible (members are public only if absolutely required, 
         <module>agent-common</module>
         <!-- List of output modules -->
         <module>output-statsd</module>
+
+        <!-- samples -->
+        <module>example-akka</module>
     </modules>
 
     <properties>
