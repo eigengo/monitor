@@ -6,12 +6,17 @@ package org.eigengo.monitor.output;
 public class NullCounterInterface implements CounterInterface {
 
     @Override
-    public void incrementCounter(String name) {
+    public void incrementCounter(String aspect, String... tags) {
         // noop
     }
 
     @Override
-    public void decrementCounter(String name) {
+    public void decrementCounter(String aspect, String... tags) {
+        // noop
+    }
+
+    @Override
+    public void recordGaugeValue(String aspect, int value, String... tags) {
         // noop
     }
 }

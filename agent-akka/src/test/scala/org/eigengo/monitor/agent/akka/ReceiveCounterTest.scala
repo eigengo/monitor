@@ -13,18 +13,19 @@ class ReceiveCounterTest extends TestKit(ActorSystem()) with SpecificationLike {
   "Monitoring" should {
 
     "Record the message sent to actor" in {
-      val simpleActor = TestActorRef[SimpleActor]
+      val simpleActor = TestActorRef[SimpleActor]("foo")
       simpleActor ! 1000
       simpleActor ! 2000
       simpleActor ! "Bantha Poodoo!"
 
-      TestCounterInterface.counters("message.Integer") mustEqual 2
-      TestCounterInterface.counters("message.String") mustEqual 1
+      TestCounterInterface.counters("message.Integer") mustEqual TestCounter(2, List("foo"))
+      TestCounterInterface.counters("message.String") mustEqual TestCounter(1, List("foo"))
     }
 
     "Record the message queue size" in {
-      val simpleActor = system.actorOf(Props[SimpleActor])
-      for (i <- 0 to 100) simpleActor ! 1000
+      val simpleActor = system.actorOf(Props[SimpleActor], "bar")
+      for (i <- 0 to 100) simpleActor ! 10
+      Thread.sleep(100 * (10 + 2))
 
       println(TestCounterInterface.counters)
 

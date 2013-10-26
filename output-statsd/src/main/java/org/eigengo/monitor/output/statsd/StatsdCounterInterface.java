@@ -11,15 +11,19 @@ public class StatsdCounterInterface implements CounterInterface {
     private static final StatsDClient statsd = new NonBlockingStatsDClient("", "localhost", 8125, new String[]{"tag:value"});
 
     @Override
-    public void incrementCounter(String name) {
-        statsd.incrementCounter(name);
+    public void incrementCounter(String aspect, String... tags) {
+        statsd.incrementCounter(aspect, tags);
     }
 
     @Override
-    public void decrementCounter(String s) {
-        statsd.decrementCounter(s);
+    public void decrementCounter(String aspect, String... tags) {
+        statsd.decrementCounter(aspect, tags);
     }
 
+    @Override
+    public void recordGaugeValue(String aspect, int value, String... tags) {
+        statsd.recordGaugeValue(aspect, value, tags);
+    }
 
 
 }

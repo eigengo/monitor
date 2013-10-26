@@ -8,17 +8,28 @@ package org.eigengo.monitor.output;
 public interface CounterInterface {
 
     /**
-     * Increment the counter identified by {@code name} by one.
+     * Increment the counter identified by {@code aspect} by one.
      *
-     * @param name the counter to increment
+     * @param aspect the aspect to increment
+     * @param tags optional tags
      */
-    void incrementCounter(String name);
+    void incrementCounter(String aspect, String... tags);
 
     /**
-     * Decrement the counter identified by {@code name} by one.
+     * Decrement the counter identified by {@code aspect} by one.
      *
-     * @param name the counter to increment
+     * @param aspect the aspect to increment
+     * @param tags optional tags
      */
-    void decrementCounter(String name);
+    void decrementCounter(String aspect, String... tags);
+
+    /**
+     * Records gauge {@code value} for the given {@code aspect}, with optional {@code tags}
+     *
+     * @param aspect the aspect to record the value for
+     * @param value the value
+     * @param tags optional tags
+     */
+    void recordGaugeValue(String aspect, int value, String... tags);
 
 }

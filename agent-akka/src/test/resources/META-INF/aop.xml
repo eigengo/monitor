@@ -1,8 +1,7 @@
 <aspectj>
 
     <aspects>
-        <aspect name="org.eigengo.monitor.agent.akka.MessageMonitoringAspect"/>
-        <aspect name="org.eigengo.monitor.agent.akka.MailboxSizeMonitoringAspect"/>
+        <aspect name="org.eigengo.monitor.agent.akka.ActorCellMonitoringAspect"/>
     </aspects>
 
     <weaver options="-verbose -XnoInline -showWeaveInfo">
