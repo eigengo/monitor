@@ -24,6 +24,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
     // records the count of messages received, grouped by message type
     "Record the message sent to actor" in {
       val actorName = "foo"
+      val tag = s"akka://default/user/$actorName"
       val simpleActor = TestActorRef[SimpleActor](actorName)
 
       simpleActor ! 1
@@ -31,13 +32,14 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       simpleActor ! "Bantha Poodoo!"
 
       // we expect to see 2 integers and 1 string in total
-      TestCounterInterface.foldlByAspect(messageIntegerAspect)(TestCounter.plus) must contain(TestCounter(messageIntegerAspect, 2, List(actorName)))
-      TestCounterInterface.foldlByAspect(messageStringAspect)(TestCounter.plus) must contain(TestCounter(messageStringAspect, 1, List(actorName)))
+      TestCounterInterface.foldlByAspect(messageIntegerAspect)(TestCounter.plus) must contain(TestCounter(messageIntegerAspect, 2, List(tag)))
+      TestCounterInterface.foldlByAspect(messageStringAspect)(TestCounter.plus) must contain(TestCounter(messageStringAspect, 1, List(tag)))
     }
 
     // records the queue size at any given time
     "Record the message queue size" in {
       val actorName = "bar"
+      val tag = s"akka://default/user/$actorName"
       val simpleActor = system.actorOf(Props[SimpleActor], actorName)
 
       // because we are using the test ActorSystem, which uses single-threaded dispatcher
@@ -49,9 +51,9 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       Thread.sleep(count * (10 + 2))
 
       // fold by _max_ over the counters by the ``queueSizeAspect``, tagged with this actor's name
-      val counter = TestCounterInterface.foldlByAspect(queueSizeAspect, SingleTag(actorName))(TestCounter.max)(0)
+      val counter = TestCounterInterface.foldlByAspect(queueSizeAspect, SingleTag(tag))(TestCounter.max)(0)
       counter.value must beGreaterThan(count - tolerance)
-      counter.tags must containAllOf(List(actorName))
+      counter.tags must containAllOf(List(tag))
     }
 
   }
