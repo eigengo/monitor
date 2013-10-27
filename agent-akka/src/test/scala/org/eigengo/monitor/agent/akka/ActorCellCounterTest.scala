@@ -57,7 +57,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       Thread.sleep(count * (10 + 2))
 
       // fold by _max_ over the counters by the ``queueSizeAspect``, tagged with this actor's name
-      val counter = TestCounterInterface.foldlByAspect(queueSizeAspect, SingleTag(tag))(TestCounter.max)(0)
+      val counter = TestCounterInterface.foldlByAspect(queueSizeAspect, ExactTag(tag))(TestCounter.max)(0)
       counter.value must beGreaterThan(count - tolerance)
       counter.tags must containAllOf(List(tag))
     }
@@ -72,7 +72,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
 
       Thread.sleep(1100)
 
-      val counter = TestCounterInterface.foldlByAspect(actorDurationAspect, SingleTag(tag))(TestCounter.max)(0)
+      val counter = TestCounterInterface.foldlByAspect(actorDurationAspect, ExactTag(tag))(TestCounter.max)(0)
       counter.value must beGreaterThan(900)
       counter.value must beLessThan(1100)
       counter.tags must containAllOf(List(tag))
@@ -98,11 +98,11 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       Thread.sleep(2000)
 
       // we expect to see 10 integers for the supervisor and 1 integer for each child
-      val supCounter = TestCounterInterface.foldlByAspect(messageIntegerAspect, SingleTag(tag))(TestCounter.plus)(0)
-      val c1Counter  = TestCounterInterface.foldlByAspect(messageIntegerAspect, SingleTag(tag + "/_a"))(TestCounter.plus)(0)
+      val supCounter = TestCounterInterface.foldlByAspect(messageIntegerAspect, ContainsTag(tag))(TestCounter.plus)(0)
+      val c1Counter  = TestCounterInterface.foldlByAspect(messageIntegerAspect, ExactTag(tag + "/$a"))(TestCounter.plus)(0)
 
       supCounter.value mustEqual 10
-      c1Counter.value mustEqual 10
+      c1Counter.value mustEqual 1
     }
   }
 
