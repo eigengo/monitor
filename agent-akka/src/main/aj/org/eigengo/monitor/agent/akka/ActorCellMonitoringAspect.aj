@@ -2,6 +2,7 @@ package org.eigengo.monitor.agent.akka;
 
 import akka.actor.ActorCell;
 import akka.actor.ActorPath;
+import akka.actor.ActorRef;
 import akka.actor.UnhandledMessage;
 
 import java.util.ArrayList;
@@ -78,6 +79,16 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
             counterInterface.incrementCounter("akka.actor.undelivered", tags);
             counterInterface.incrementCounter("akka.actor.undelivered." + unhandledMessage.getMessage().getClass().getSimpleName(), tags);
         }
+    }
+
+    after() returning (ActorRef actor): execution(* akka.actor.ActorCell.actorOf(..)) {
+        final String tag = actor.path().root().toString();
+        counterInterface.incrementCounter("akka.actor.count", tag);
+    }
+
+    after(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor) {
+        final String tag = actor.path().root().toString();
+        counterInterface.decrementCounter("akka.actor.count", tag);
     }
 
 }

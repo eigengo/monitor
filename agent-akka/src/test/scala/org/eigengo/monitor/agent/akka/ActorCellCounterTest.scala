@@ -41,6 +41,8 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       simpleActor ! "Bantha Poodoo!"  // OK
       simpleActor ! 2.2               // original Actor.unhandled
 
+      simpleActor ! 'stop             // OK. stop self
+
       // we expect to see 2 integers, 1 string and 1 undelivered
       TestCounterInterface.foldlByAspect(deliveredIntegerAspect)(TestCounter.plus) must contain(TestCounter(deliveredIntegerAspect, 2, List(tag)))
       TestCounterInterface.foldlByAspect(deliveredStringAspect)(TestCounter.plus) must contain(TestCounter(deliveredStringAspect, 1, List(tag)))

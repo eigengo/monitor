@@ -10,8 +10,8 @@ import scala.collection.mutable
  */
 class TestCounterInterface extends CounterInterface {
 
-  override def incrementCounter(name: String, tags: String*): Unit = {
-    TestCounterInterface.add(name, 1, tags.toList)
+  override def incrementCounter(aspect: String, tags: String*): Unit = {
+    TestCounterInterface.add(aspect, 1, tags.toList)
   }
 
   override def recordGaugeValue(aspect: String, value: Int, tags: String*): Unit = {
@@ -20,6 +20,10 @@ class TestCounterInterface extends CounterInterface {
 
   override def recordExecutionTime(aspect: String, duration: Int, tags: String*): Unit = {
     TestCounterInterface.set(aspect, duration, tags.toList)
+  }
+
+  def decrementCounter(aspect: String, tags: String*): Unit = {
+    TestCounterInterface.add(aspect, -1, tags.toList)
   }
 }
 
