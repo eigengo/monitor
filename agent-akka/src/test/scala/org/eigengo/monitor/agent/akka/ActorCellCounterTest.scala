@@ -21,11 +21,12 @@ import org.specs2.execute.Result
 @RunWith(classOf[JUnitRunner])
 class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike {
   sequential
-  val messageIntegerAspect = "akka.message.Integer"
-  val messageStringAspect  = "akka.message.String"
-  val queueSizeAspect      = "akka.queue.size"
-  val actorDurationAspect  = "akka.actor.duration"
-  val actorErrorAspect     = "akka.actor.error"
+  val deliveredIntegerAspect = "akka.actor.delivered.Integer"
+  val deliveredStringAspect  = "akka.actor.delivered.String"
+  val undeliveredAspect      = "akka.actor.undelivered"
+  val queueSizeAspect        = "akka.queue.size"
+  val actorDurationAspect    = "akka.actor.duration"
+  val actorErrorAspect       = "akka.actor.error"
 
   "Non-routed actor monitoring" should {
 
@@ -35,13 +36,15 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       val tag = s"akka://default/user/$actorName"
       val simpleActor = TestActorRef[SimpleActor](actorName)
 
-      simpleActor ! 1
-      simpleActor ! 1
-      simpleActor ! "Bantha Poodoo!"
+      simpleActor ! 1                 // OK
+      simpleActor ! 1                 // OK
+      simpleActor ! "Bantha Poodoo!"  // OK
+      simpleActor ! 2.2               // original Actor.unhandled
 
-      // we expect to see 2 integers and 1 string in total
-      TestCounterInterface.foldlByAspect(messageIntegerAspect)(TestCounter.plus) must contain(TestCounter(messageIntegerAspect, 2, List(tag)))
-      TestCounterInterface.foldlByAspect(messageStringAspect)(TestCounter.plus) must contain(TestCounter(messageStringAspect, 1, List(tag)))
+      // we expect to see 2 integers, 1 string and 1 undelivered
+      TestCounterInterface.foldlByAspect(deliveredIntegerAspect)(TestCounter.plus) must contain(TestCounter(deliveredIntegerAspect, 2, List(tag)))
+      TestCounterInterface.foldlByAspect(deliveredStringAspect)(TestCounter.plus) must contain(TestCounter(deliveredStringAspect, 1, List(tag)))
+      TestCounterInterface.foldlByAspect(undeliveredAspect)(TestCounter.plus) must contain(TestCounter(undeliveredAspect, 1, List(tag)))
     }
 
     // records the queue size at any given time
@@ -111,8 +114,8 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       Thread.sleep(2500)
 
       // we expect to see 10 integers for the supervisor and 1 integer for each child
-      val supCounter = TestCounterInterface.foldlByAspect(messageIntegerAspect, ContainsTag(tag))(TestCounter.plus)(0)
-      val c1Counter  = TestCounterInterface.foldlByAspect(messageIntegerAspect, ExactTag(tag + "/$a"))(TestCounter.plus)(0)
+      val supCounter = TestCounterInterface.foldlByAspect(deliveredIntegerAspect, ContainsTag(tag))(TestCounter.plus)(0)
+      val c1Counter  = TestCounterInterface.foldlByAspect(deliveredIntegerAspect, ExactTag(tag + "/$a"))(TestCounter.plus)(0)
 
       supCounter.value mustEqual 10
       c1Counter.value mustEqual 1
