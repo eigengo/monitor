@@ -37,6 +37,7 @@ object Main extends App {
   def commandLoop(): Unit = {
     Console.readLine() match {
       case "quit"          => return
+      case "go"            => (0 to 20).foreach(_ => foo ! 400)
       case CountPattern(i) => foo ! (i.toInt * 10)
       case _               => println("WTF?")
     }
