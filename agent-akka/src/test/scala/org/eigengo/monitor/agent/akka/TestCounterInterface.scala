@@ -68,8 +68,8 @@ object TestCounter {
  */
 sealed trait TagFilter
 case object AnyTag extends TagFilter
-case class SingleTag(tag: String) extends TagFilter
-// case class AllTags(tags: List[String]) extends TagFilter
+case class ExactTag(tag: String) extends TagFilter
+case class ContainsTag(tag: String) extends TagFilter
 
 /**
  * Companion for the TestCounterInterface containing all recorded events
@@ -106,8 +106,9 @@ object TestCounterInterface {
     def pred(x: TestCounter): Boolean =
       (x.aspect == aspect) &&
       (tagFilter match {
-        case AnyTag         => true
-        case SingleTag(tag) => x.tags.size == 1 && x.tags.head == tag
+        case AnyTag           => true
+        case ExactTag(tag)    => x.tags.size == 1 && x.tags.head == tag
+        case ContainsTag(tag) => x.tags.contains(tag)
       })
 
     counters.foldLeft[List[TestCounter]](Nil) { (b, a) =>
