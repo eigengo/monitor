@@ -6,6 +6,7 @@
 
     <weaver options="-verbose -XnoInline -showWeaveInfo">
         <include within="akka.actor.*"/>
+        <include within="akka.event.*"/>
     </weaver>
 
 </aspectj>
