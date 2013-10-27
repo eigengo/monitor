@@ -18,7 +18,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
 
         long start = System.nanoTime();
         Object result = proceed(actorCell, msg);
-        long duration = System.nanoTime() - start;
+        long duration = (System.nanoTime() - start) / 1000000;     // ms
 
         // record the actor duration
         counterInterface.recordGaugeValue("akka.actor.duration", (int)duration, tags);

@@ -20,6 +20,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
     val messageIntegerAspect = "akka.message.Integer"
     val messageStringAspect  = "akka.message.String"
     val queueSizeAspect      = "akka.queue.size"
+    val actorDurationAspect  = "akka.actor.duration"
 
     // records the count of messages received, grouped by message type
     "Record the message sent to actor" in {
@@ -53,6 +54,21 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       // fold by _max_ over the counters by the ``queueSizeAspect``, tagged with this actor's name
       val counter = TestCounterInterface.foldlByAspect(queueSizeAspect, SingleTag(tag))(TestCounter.max)(0)
       counter.value must beGreaterThan(count - tolerance)
+      counter.tags must containAllOf(List(tag))
+    }
+
+    "Record the actor duration" in {
+      val actorName = "dur"
+      val tag = s"akka://default/user/$actorName"
+      val simpleActor = system.actorOf(Props[SimpleActor], actorName)
+
+      simpleActor ! 1000
+
+      Thread.sleep(1100)
+
+      val counter = TestCounterInterface.foldlByAspect(actorDurationAspect, SingleTag(tag))(TestCounter.max)(0)
+      counter.value must beGreaterThan(900)
+      counter.value must beLessThan(1100)
       counter.tags must containAllOf(List(tag))
     }
 
