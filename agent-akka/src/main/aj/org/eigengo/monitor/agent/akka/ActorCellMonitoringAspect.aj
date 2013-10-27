@@ -36,26 +36,41 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
         return tags.toArray(new String[tags.size()]);
     }
 
-    Object around(ActorCell actorCell, Object msg): org.eigengo.monitor.agent.akka.Pointcuts.receiveMessage(actorCell, msg) {
+    Object around(ActorCell actorCell, Object msg) throws Throwable : org.eigengo.monitor.agent.akka.Pointcuts.receiveMessage(actorCell, msg) {
         if (!includeActorCell(actorCell)) return proceed(actorCell, msg);
 
         // we tag by actor name
-        String[] tags = getTags(actorCell);
+        final String[] tags = getTags(actorCell);
 
         // record the queue size
         counterInterface.recordGaugeValue("akka.queue.size", actorCell.numberOfMessages(), tags);
-        // record the message
+        // record the message, general and specific
+        counterInterface.incrementCounter("akka.message", tags);
         counterInterface.incrementCounter("akka.message." + msg.getClass().getSimpleName(), tags);
 
         // measure the time. we're using the ``nanoTime`` call to access the high-precision timer.
         // since we're not really interested in wall time, but just some increasing measure of
         // elapsed time
-        long start = System.nanoTime();
-        Object result = proceed(actorCell, msg);                   // result will always be ``null``.
-        long duration = (System.nanoTime() - start) / 1000000;     // ns or µs is too fine. ms will do for now.
+        Object result = null;
+        // non-null error means that the target has hard-failed
+        Throwable error = null;
+        final long start = System.nanoTime();
+        try {
+            // result will always be ``null``, because target returns ``Unit``
+            result = proceed(actorCell, msg);
+        } catch (final Throwable t) {
+            // record the error, general and specific
+            counterInterface.incrementCounter("akka.actor.error", tags);
+            counterInterface.incrementCounter(String.format("akka.actor.error.%s", t.getMessage()), tags);
+            error = t;
+        }
+        // ns or µs is too fine. ms will do for now.
+        final long duration = (System.nanoTime() - start) / 1000000;
 
         // record the actor duration
-        counterInterface.recordGaugeValue("akka.actor.duration", (int)duration, tags);
+        counterInterface.recordExecutionTime("akka.actor.duration", (int)duration, tags);
+
+        if (error != null) throw error;
 
         // return null would do the trick, but we want to be _proper_.
         return result;

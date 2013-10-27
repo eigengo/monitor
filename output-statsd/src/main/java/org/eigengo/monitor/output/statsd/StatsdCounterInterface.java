@@ -16,13 +16,13 @@ public class StatsdCounterInterface implements CounterInterface {
     }
 
     @Override
-    public void decrementCounter(String aspect, String... tags) {
-        statsd.decrementCounter(aspect, tags);
+    public void recordGaugeValue(String aspect, int value, String... tags) {
+        statsd.recordGaugeValue(aspect, value, tags);
     }
 
     @Override
-    public void recordGaugeValue(String aspect, int value, String... tags) {
-        statsd.recordGaugeValue(aspect, value, tags);
+    public void recordExecutionTime(String aspect, int duration, String... tags) {
+        statsd.recordExecutionTime(aspect, duration, tags);
     }
 
 

@@ -6,4 +6,5 @@ abstract aspect Pointcuts {
     static pointcut receiveMessage(ActorCell actorCell, Object msg) : target(actorCell) &&
             call(* akka.actor.ActorCell.receiveMessage(..)) && args(msg);
 
+    // static pointcut handleError(ActorCell actorCell)
 }
