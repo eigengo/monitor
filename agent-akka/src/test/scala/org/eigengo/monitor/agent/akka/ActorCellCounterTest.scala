@@ -17,9 +17,9 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
   sequential
 
   "Monitoring" should {
-    val messageIntegerAspect = "message.Integer"
-    val messageStringAspect  = "message.String"
-    val queueSizeAspect      = "queue.size"
+    val messageIntegerAspect = "akka.message.Integer"
+    val messageStringAspect  = "akka.message.String"
+    val queueSizeAspect      = "akka.queue.size"
 
     // records the count of messages received, grouped by message type
     "Record the message sent to actor" in {
