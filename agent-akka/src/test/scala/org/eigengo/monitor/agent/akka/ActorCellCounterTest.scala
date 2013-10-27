@@ -1,11 +1,12 @@
 package org.eigengo.monitor.agent.akka
 
 import org.specs2.mutable.SpecificationLike
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{Actor, ActorRef, Props, ActorSystem}
 import akka.testkit.{TestActorRef, TestKit}
 import org.specs2.runner.JUnitRunner
 import org.junit.runner.RunWith
-import akka.routing.RoundRobinRouter
+import akka.routing.{RouterConfig, RoundRobinRouter}
+import org.specs2.execute.Result
 
 /**
  * Checks that the ``ActorCellMonitoringAspect`` records the required information.
@@ -24,6 +25,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
   val messageStringAspect  = "akka.message.String"
   val queueSizeAspect      = "akka.queue.size"
   val actorDurationAspect  = "akka.actor.duration"
+  val actorErrorAspect     = "akka.actor.error"
 
   "Non-routed actor monitoring" should {
 
@@ -78,6 +80,17 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       counter.tags must containAllOf(List(tag))
     }
 
+    "Record the errors" in {
+      val actorName = "sodoff"
+      val tag = s"akka://default/user/$actorName"
+      val simpleActor = TestActorRef[SimpleActor](actorName)
+
+      // match error in receive
+      simpleActor ! false
+
+      TestCounterInterface.foldlByAspect(actorErrorAspect)(TestCounter.plus) must contain(TestCounter(actorErrorAspect, 1, List(tag)))
+    }
+
   }
 
   // If we create actor "foo" with round-robin routing with x | x > 1 instances, then each instance's metrics
@@ -95,7 +108,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
 
       for (i <- 0 until count) simpleActor ! 100
 
-      Thread.sleep(2000)
+      Thread.sleep(2500)
 
       // we expect to see 10 integers for the supervisor and 1 integer for each child
       val supCounter = TestCounterInterface.foldlByAspect(messageIntegerAspect, ContainsTag(tag))(TestCounter.plus)(0)

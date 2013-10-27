@@ -11,12 +11,12 @@ public class NullCounterInterface implements CounterInterface {
     }
 
     @Override
-    public void decrementCounter(String aspect, String... tags) {
+    public void recordGaugeValue(String aspect, int value, String... tags) {
         // noop
     }
 
     @Override
-    public void recordGaugeValue(String aspect, int value, String... tags) {
+    public void recordExecutionTime(String aspect, int duration, String... tags) {
         // noop
     }
 }
