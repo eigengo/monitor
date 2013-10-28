@@ -16,6 +16,14 @@ public interface CounterInterface {
     void incrementCounter(String aspect, String... tags);
 
     /**
+     * Decrement the counter identified by {@code aspect} by one.
+     *
+     * @param aspect the aspect to decrement
+     * @param tags optional tags
+     */
+    void decrementCounter(String aspect, String... tags);
+
+    /**
      * Records gauge {@code value} for the given {@code aspect}, with optional {@code tags}
      *
      * @param aspect the aspect to record the value for

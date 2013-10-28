@@ -1,12 +1,11 @@
 package org.eigengo.monitor.agent.akka
 
 import org.specs2.mutable.SpecificationLike
-import akka.actor.{Actor, ActorRef, Props, ActorSystem}
+import akka.actor.{Props, ActorSystem}
 import akka.testkit.{TestActorRef, TestKit}
 import org.specs2.runner.JUnitRunner
 import org.junit.runner.RunWith
-import akka.routing.{RouterConfig, RoundRobinRouter}
-import org.specs2.execute.Result
+import akka.routing.RoundRobinRouter
 
 /**
  * Checks that the ``ActorCellMonitoringAspect`` records the required information.
@@ -27,8 +26,22 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
   val queueSizeAspect        = "akka.queue.size"
   val actorDurationAspect    = "akka.actor.duration"
   val actorErrorAspect       = "akka.actor.error"
+  val actorCountAspect       = "akka.actor.count"
 
   "Non-routed actor monitoring" should {
+
+    // records the count of messages received, grouped by message type
+    "Record the actor count" in {
+      TestCounterInterface.clear()
+      val actorName = "counter"
+      val tag = "akka://default/"
+      val simpleActor = system.actorOf(Props[SimpleActor], actorName)
+
+      // stop(self)
+      simpleActor ! 'stop
+
+      TestCounterInterface.foldlByAspect(actorCountAspect)(TestCounter.plus) must contain(TestCounter(actorCountAspect, 0, List(tag)))
+    }
 
     // records the count of messages received, grouped by message type
     "Record the message sent to actor" in {
@@ -40,6 +53,8 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       simpleActor ! 1                 // OK
       simpleActor ! "Bantha Poodoo!"  // OK
       simpleActor ! 2.2               // original Actor.unhandled
+
+      simpleActor ! 'stop             // OK. stop self
 
       // we expect to see 2 integers, 1 string and 1 undelivered
       TestCounterInterface.foldlByAspect(deliveredIntegerAspect)(TestCounter.plus) must contain(TestCounter(deliveredIntegerAspect, 2, List(tag)))

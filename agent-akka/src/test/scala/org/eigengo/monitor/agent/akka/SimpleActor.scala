@@ -10,6 +10,8 @@ class SimpleActor extends Actor {
     case i: Int =>
       // for speed testing
       Thread.sleep(i)
+    case 'stop =>
+      context.stop(self)
     case false =>
       throw new RuntimeException("Bantha poodoo!")
   }
