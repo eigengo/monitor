@@ -11,10 +11,10 @@ import java.util.List;
 public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
 
     // decide whether to include this ActorCell in our measurements
-    private boolean includeActorCell(ActorCell actorCell) {
+    private boolean includeActorPath(ActorPath actorPath) {
         if (this.includeSystemActors) return true;
 
-        String userOrSystem = actorCell.self().path().getElements().iterator().next();
+        String userOrSystem = actorPath.getElements().iterator().next();
         return "user".equals(userOrSystem);
     }
 
@@ -37,10 +37,11 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
     }
 
     Object around(ActorCell actorCell, Object msg) : Pointcuts.receiveMessage(actorCell, msg) {
-        if (!includeActorCell(actorCell)) return proceed(actorCell, msg);
+        final ActorPath actorPath = actorCell.self().path();
+        if (!includeActorPath(actorPath)) return proceed(actorCell, msg);
 
         // we tag by actor name
-        final String[] tags = getTags(actorCell.self().path());
+        final String[] tags = getTags(actorPath);
 
         // record the queue size
         counterInterface.recordGaugeValue("akka.queue.size", actorCell.numberOfMessages(), tags);
@@ -81,12 +82,23 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
         }
     }
 
+    after() returning (ActorRef actor): execution(* akka.actor.ActorSystem.actorOf(..)) {
+        if (!includeActorPath(actor.path())) return;
+
+        final String tag = actor.path().root().toString();
+        counterInterface.incrementCounter("akka.actor.count", tag);
+    }
+
     after() returning (ActorRef actor): execution(* akka.actor.ActorCell.actorOf(..)) {
+        if (!includeActorPath(actor.path())) return;
+
         final String tag = actor.path().root().toString();
         counterInterface.incrementCounter("akka.actor.count", tag);
     }
 
     after(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor) {
+        if (!includeActorPath(actor.path())) return;
+
         final String tag = actor.path().root().toString();
         counterInterface.decrementCounter("akka.actor.count", tag);
     }

@@ -127,4 +127,9 @@ object TestCounterInterface {
    */
   def allCounters: List[TestCounter] = counters.toList
 
+  /**
+   * Removes all recorded counters
+   */
+  def clear(): Unit = counters.clear()
+
 }
