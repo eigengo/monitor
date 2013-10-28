@@ -1,6 +1,6 @@
 package org.eigengo.monitor.agent
 
-import com.typesafe.config.{ConfigResolveOptions, ConfigParseOptions, ConfigFactory}
+import com.typesafe.config._
 
 /**
  * Loads the configuration for the monitoring's agents (and outputs)
@@ -19,6 +19,13 @@ object AgentConfigurationFactory {
   def getCommonAgentConfiguration(): CommonAgentConfiguration = {
     val className = agentConfig.getString("output.class")
     CommonAgentConfiguration(className)
+  }
+
+  def getAgentCofiguration(agentName: String): AgentConfiguration = {
+    val configuration:Config = try {config.getConfig(s"org.eigengo.monitor.agent.$agentName")} catch {
+      case e: ConfigException.Missing => ConfigFactory.empty()
+    }
+    AgentConfiguration(getCommonAgentConfiguration(), configuration)
   }
 
 }
