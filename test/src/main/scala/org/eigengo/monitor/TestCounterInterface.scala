@@ -116,7 +116,7 @@ object TestCounterInterface {
       })
 
     counters.foldLeft[List[TestCounter]](Nil) { (b, a) =>
-      if (a.aspect == aspect) b.find(pred).map(fold(a, _)).getOrElse(a) :: b else b
+      if (pred(a)) b.find(pred).map(fold(a, _)).getOrElse(a) :: b else b
     }
   }
 
