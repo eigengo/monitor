@@ -16,9 +16,9 @@ object AgentConfigurationFactory {
    *
    * @return the loaded ``AgentConfiguration`` instance
    */
-  def getAgentConfiguration(agentName: String): AgentConfiguration = {
-    val className = agentConfig.getConfig(agentName).getString("output.class")
-    AgentConfiguration(className)
+  def getCommonAgentConfiguration(): CommonAgentConfiguration = {
+    val className = agentConfig.getString("output.class")
+    CommonAgentConfiguration(className)
   }
 
 }
