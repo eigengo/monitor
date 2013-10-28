@@ -29,17 +29,20 @@ such beasts). Be careful not to have circular dependencies; and be sure to hide 
 module's structure as possible (members are public only if absolutely required, ...).
 -->
     <modules>
-        <module>output-api</module>
-        <!-- List of agent modules -->
+        <!-- Common code for the agents & outputs: configuration & similar -->
+        <module>agent</module>
+        <module>output</module>
+        <!-- Test support code -->
+        <module>test</module>
+
+        <!-- Agents -->
         <module>agent-akka</module>
         <module>agent-play</module>
         <module>agent-spray</module>
-        <!-- Common code for the agents: configuration & similar -->
-        <module>agent-common</module>
-        <!-- List of output modules -->
+        <!-- Output -->
         <module>output-statsd</module>
 
-        <!-- samples -->
+        <!-- Example -->
         <module>example-akka</module>
     </modules>
 

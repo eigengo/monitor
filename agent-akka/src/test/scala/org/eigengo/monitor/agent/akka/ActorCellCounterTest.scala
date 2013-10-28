@@ -6,6 +6,7 @@ import akka.testkit.{TestActorRef, TestKit}
 import org.specs2.runner.JUnitRunner
 import org.junit.runner.RunWith
 import akka.routing.RoundRobinRouter
+import org.eigengo.monitor.{TestCounterInterface, ContainsTag, ExactTag, TestCounter}
 
 /**
  * Checks that the ``ActorCellMonitoringAspect`` records the required information.

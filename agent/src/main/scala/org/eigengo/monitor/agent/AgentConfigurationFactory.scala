@@ -12,7 +12,7 @@ object AgentConfigurationFactory {
   private val agentConfig = config.getConfig("org.eigengo.monitor.agent")
 
   /**
-   * Load the configuration for the given agent name ``org.eigengo.monitor.agent.akka``
+   * Load the configuration for the agent
    *
    * @return the loaded ``AgentConfiguration`` instance
    */

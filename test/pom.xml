@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>output-statsd</artifactId>
+    <artifactId>test</artifactId>
     <packaging>jar</packaging>
-    <name>Output to Statsd</name>
+    <name>Test support</name>
 
     <parent>
         <groupId>org.eigengo.monitor</groupId>
@@ -18,8 +18,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.indeed</groupId>
-            <artifactId>java-dogstatsd-client</artifactId>
+            <groupId>org.eigengo.monitor</groupId>
+            <artifactId>agent</artifactId>
+            <version>0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>

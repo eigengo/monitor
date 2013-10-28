@@ -13,14 +13,21 @@
     <dependencies>
         <dependency>
             <groupId>org.eigengo.monitor</groupId>
-            <artifactId>output-api</artifactId>
+            <artifactId>output</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.eigengo.monitor</groupId>
-            <artifactId>agent-common</artifactId>
+            <artifactId>agent</artifactId>
             <version>0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eigengo.monitor</groupId>
+            <artifactId>test</artifactId>
+            <version>0.1-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
