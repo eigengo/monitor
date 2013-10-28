@@ -6,6 +6,8 @@
     <packaging>pom</packaging>
     <version>0.1-SNAPSHOT</version>
     <name>Monitor Parent</name>
+    <description>Typesafe Stack monitoring support</description>
+    <url>https://github.com/eigengo/monitor</url>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -19,6 +21,35 @@
         <developerConnection>scm:git@github.com:eigengo/monitor.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
+    <developers>
+        <developer>
+            <id>jan.machacek</id>
+            <name>Jan Machacek</name>
+            <email>jan.machacek@gmail.com</email>
+        </developer>
+        <developer>
+            <id>alexl</id>
+            <name>Alex Lashford</name>
+            <email>alexl@cakesolutions.net</email>
+        </developer>
+        <developer>
+            <id>anirvanc</id>
+            <name>Anirvan Chakraborty</name>
+            <email>anirvanc@cakesolutions.net</email>
+        </developer>
+        <developer>
+            <id>hughsimpson</id>
+            <name>Hugh Simpson</name>
+            <email>hughs@cakesolutions.net</email>
+        </developer>
+    </developers>
+
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
     <prerequisites>
         <maven>3.0.3</maven>
     </prerequisites>
