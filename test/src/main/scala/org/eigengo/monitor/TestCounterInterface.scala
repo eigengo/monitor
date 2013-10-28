@@ -1,4 +1,4 @@
-package org.eigengo.monitor.agent.akka
+package org.eigengo.monitor
 
 import org.eigengo.monitor.output.CounterInterface
 import scala.collection.mutable
