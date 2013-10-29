@@ -16,6 +16,7 @@
 package org.eigengo.monitor.agent
 
 import com.typesafe.config._
+import scala.util.Try
 
 /**
  * Loads the configuration for the monitoring's agents (and outputs)
@@ -27,19 +28,23 @@ object AgentConfigurationFactory {
   private val agentConfig = config.getConfig("org.eigengo.monitor.agent")
 
   /**
-   * Load the configuration for the agent
+   * Load the common configurations for all agents
    *
-   * @return the loaded ``AgentConfiguration`` instance
+   * @return the loaded ``CommonAgentConfiguration`` instance
    */
-  def getCommonAgentConfiguration(): CommonAgentConfiguration = {
+  private def getCommonAgentConfiguration(): CommonAgentConfiguration = {
     val className = agentConfig.getString("output.class")
     CommonAgentConfiguration(className)
   }
 
+  /**
+  * Load agent-specific configurations, based on agentName (e.g. "akka"), and package corresponding Config with common agent configurations.
+  * Will use empty Config if no corresponding agent settings are found
+  *
+  * @return the loaded ``AgentConfiguration`` instance
+  */
   def getAgentCofiguration(agentName: String): AgentConfiguration = {
-    val configuration:Config = try {config.getConfig(s"org.eigengo.monitor.agent.$agentName")} catch {
-      case e: ConfigException.Missing => ConfigFactory.empty()
-    }
+    val configuration:Config = Try(config.getConfig(s"org.eigengo.monitor.agent.$agentName")).getOrElse(ConfigFactory.empty())
     AgentConfiguration(getCommonAgentConfiguration(), configuration)
   }
 

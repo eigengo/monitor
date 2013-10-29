@@ -126,8 +126,8 @@ object TestCounterInterface {
       (x.aspect == aspect) &&
       (tagFilter match {
         case AnyTag           => true
-        case ExactTag(tag)    => x.tags.size == 1 && x.tags.head == tag
-        case ContainsTag(tag) => x.tags.contains(tag)
+        case ExactTag(tag)    => x.tags.contains(tag)  // tag concerns should be separate, so we shouldn't be checking that this is the only tag here, only that we have *the exact* tag
+        case ContainsTag(tag) => x.tags.exists{_.contains(tag)} // since our tags may be 'complex', on the other hand, it makes sense for the 'ContainsTag' distinction to indicate that we have a tag of a particular type
       })
 
     counters.foldLeft[List[TestCounter]](Nil) { (b, a) =>
