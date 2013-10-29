@@ -18,8 +18,11 @@ object MonitorBuild extends Build {
     id = "parent", 
     base = file("."), 
     settings = BuildSettings.buildSettings ++ Seq(
+      javaOptions in run += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
+      fork in run := true,
+      connectInput in run := true,
       mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")),
-    aggregate = Seq(agent, output, agent_akka, agent_spray, agent_play, example_akka))
+    aggregate = Seq(agent, output, agent_akka, agent_spray, agent_play, example_akka)) dependsOn (example_akka)
 
 /*
   lazy val macros = module("macros") settings(
@@ -58,11 +61,7 @@ object MonitorBuild extends Build {
   lazy val agent_play  = module("agent-play")  dependsOn(agent, output)
 
   lazy val example_akka = module("example-akka") dependsOn(agent_akka, output_statsd) settings (
-  	libraryDependencies += akka_actor,
-
-    javaOptions in run += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
-    fork in run := true,
-    connectInput in run := true
+  	libraryDependencies += akka_actor
   )
 
 }
