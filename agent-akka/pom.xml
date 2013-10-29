@@ -74,7 +74,7 @@
                 <artifactId>aspectj-maven-plugin</artifactId>
                 <version>1.5</version>
                 <configuration>
-                    <aspectDirectory>src/main/aj</aspectDirectory>
+                    <aspectDirectory>src/main/aspectj</aspectDirectory>
                     <showWeaveInfo>true</showWeaveInfo>
                     <complianceLevel>${java.version}</complianceLevel>
                 </configuration>

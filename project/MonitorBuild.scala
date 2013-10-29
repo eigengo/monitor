@@ -10,14 +10,16 @@ object MonitorBuild extends Build {
     scalaVersion := "2.10.2"
   )
 
-  def module(dir: String) = Project(id = dir, base = file(dir), settings = BuildSettings.buildSettings)
+  def module(dir: String, extraSettings: Seq[Setting[_]] = Nil) = Project(id = dir, base = file(dir), 
+    settings = BuildSettings.buildSettings ++ extraSettings)
   import Dependencies._
 
-  lazy val root = Project(id = "parent", base = file("."), settings = BuildSettings.buildSettings) settings (
-    mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")
-  ) aggregate (
-  	agent, output, agent_akka, agent_spray, agent_play, example_akka
-  ) dependsOn (example_akka)
+  lazy val root = Project(
+    id = "parent", 
+    base = file("."), 
+    settings = BuildSettings.buildSettings ++ Seq(
+      mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")),
+    aggregate = Seq(agent, output, agent_akka, agent_spray, agent_play, example_akka))
 
 /*
   lazy val macros = module("macros") settings(
@@ -42,18 +44,25 @@ object MonitorBuild extends Build {
   lazy val test = module("test") dependsOn (output) settings (
   	libraryDependencies += specs2 % "test"
   )
-  lazy val agent_akka = module("agent-akka") dependsOn (agent, output, test % "test") settings (
+  lazy val agent_akka = module("agent-akka", BuildSettings.aspectjCompileSettings) dependsOn (agent, output, test % "test") settings (
   	libraryDependencies += aspectj_weaver,
   	libraryDependencies += akka_actor,
   	libraryDependencies += specs2 % "test",
   	libraryDependencies += akka_testkit % "test",
-  	libraryDependencies += junit % "test"
+  	libraryDependencies += junit % "test",
+
+    javaOptions in Test += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
+    fork in Test := true
   )
   lazy val agent_spray = module("agent-spray") dependsOn(agent, output)
   lazy val agent_play  = module("agent-play")  dependsOn(agent, output)
 
   lazy val example_akka = module("example-akka") dependsOn(agent_akka, output_statsd) settings (
-  	libraryDependencies += akka_actor
+  	libraryDependencies += akka_actor,
+
+    javaOptions in run += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
+    fork in run := true,
+    connectInput in run := true
   )
 
 }
