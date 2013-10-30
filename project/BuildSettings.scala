@@ -33,9 +33,7 @@ object BuildSettings {
     compileOnly in Aspectj := true,
 
     // add the compiled aspects as products
-    products in Compile <++= products in Aspectj,
-
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-v")
+    products in Compile <++= products in Aspectj
   )
 
 }
