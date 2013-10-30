@@ -52,7 +52,6 @@ object MonitorBuild extends Build {
   	libraryDependencies += akka_actor,
   	libraryDependencies += specs2 % "test",
   	libraryDependencies += akka_testkit % "test",
-  	libraryDependencies += junit % "test",
 
     javaOptions in Test += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
     fork in Test := true

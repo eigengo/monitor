@@ -18,8 +18,6 @@
 import org.specs2.mutable.SpecificationLike
 import akka.actor.{Props, ActorSystem}
 import akka.testkit.{TestActorRef, TestKit}
-import org.specs2.runner.JUnitRunner
-import org.junit.runner.RunWith
 import akka.routing.RoundRobinRouter
 import org.eigengo.monitor.{TestCounterInterface, ContainsTag, TestCounter}
 
@@ -33,7 +31,6 @@ import org.eigengo.monitor.{TestCounterInterface, ContainsTag, TestCounter}
  * -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  * in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  */
-@RunWith(classOf[JUnitRunner])
 class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike {
   sequential
   val deliveredIntegerAspect = "akka.actor.delivered.Integer"

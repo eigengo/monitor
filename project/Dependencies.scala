@@ -24,5 +24,4 @@ object Dependencies {
   val dogstatsd_client = "com.indeed"         % "java-dogstatsd-client" % "2.0.7"
 
   val specs2           = "org.specs2"        %% "specs2"                % "2.2.3"
-  val junit            = "junit"              % "junit"                 % "4.7"
 }
