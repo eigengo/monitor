@@ -145,7 +145,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
 
       for (i <- 0 until count) simpleActor ! 100
 
-      Thread.sleep(2500)
+      Thread.sleep(3500)
 
       // we expect to see 10 integers for the supervisor and 1 integer for each child
       val supCounter = TestCounterInterface.foldlByAspect(deliveredIntegerAspect, ContainsTag(tag))(TestCounter.plus)(0)
