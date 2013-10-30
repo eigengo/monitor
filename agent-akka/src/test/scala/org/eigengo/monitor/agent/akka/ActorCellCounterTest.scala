@@ -1,12 +1,25 @@
-package org.eigengo.monitor.agent.akka
+/*
+ * Copyright (c) 2013 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ package org.eigengo.monitor.agent.akka
 
 import org.specs2.mutable.SpecificationLike
 import akka.actor.{Props, ActorSystem}
 import akka.testkit.{TestActorRef, TestKit}
-import org.specs2.runner.JUnitRunner
-import org.junit.runner.RunWith
 import akka.routing.RoundRobinRouter
-import org.eigengo.monitor.{TestCounterInterface, ContainsTag, ExactTag, TestCounter}
+import org.eigengo.monitor.{TestCounterInterface, ContainsTag, TestCounter}
 
 /**
  * Checks that the ``ActorCellMonitoringAspect`` records the required information.
@@ -18,7 +31,6 @@ import org.eigengo.monitor.{TestCounterInterface, ContainsTag, ExactTag, TestCou
  * -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  * in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  */
-@RunWith(classOf[JUnitRunner])
 class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike {
   sequential
   val deliveredIntegerAspect = "akka.actor.delivered.Integer"
@@ -28,6 +40,10 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
   val actorDurationAspect    = "akka.actor.duration"
   val actorErrorAspect       = "akka.actor.error"
   val actorCountAspect       = "akka.actor.count"
+
+  val simpleActorClassTag    = "akka:default.org.eigengo.monitor.agent.akka.SimpleActor"
+
+  def simpleActorTagWithTag(tag: String): List[String] = List(tag, simpleActorClassTag)
 
   "Non-routed actor monitoring" should {
 
@@ -58,8 +74,9 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       simpleActor ! 'stop             // OK. stop self
 
       // we expect to see 2 integers, 1 string and 1 undelivered
-      TestCounterInterface.foldlByAspect(deliveredIntegerAspect)(TestCounter.plus) must contain(TestCounter(deliveredIntegerAspect, 2, List(tag)))
-      TestCounterInterface.foldlByAspect(deliveredStringAspect)(TestCounter.plus) must contain(TestCounter(deliveredStringAspect, 1, List(tag)))
+      TestCounterInterface.foldlByAspect(deliveredIntegerAspect)(TestCounter.plus) must contain(TestCounter(deliveredIntegerAspect, 2, simpleActorTagWithTag(tag)))
+      TestCounterInterface.foldlByAspect(deliveredStringAspect)(TestCounter.plus) must contain(TestCounter(deliveredStringAspect, 1, simpleActorTagWithTag(tag)))
+      // NB: undelivered does not include the actor class name
       TestCounterInterface.foldlByAspect(undeliveredAspect)(TestCounter.plus) must contain(TestCounter(undeliveredAspect, 1, List(tag)))
     }
 
@@ -78,9 +95,9 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       Thread.sleep(count * (10 + 2))
 
       // fold by _max_ over the counters by the ``queueSizeAspect``, tagged with this actor's name
-      val counter = TestCounterInterface.foldlByAspect(queueSizeAspect, ExactTag(tag))(TestCounter.max)(0)
+      val counter = TestCounterInterface.foldlByAspect(queueSizeAspect, ContainsTag(tag))(TestCounter.max)(0)
       counter.value must beGreaterThan(count - tolerance)
-      counter.tags must containAllOf(List(tag))
+      counter.tags must containAllOf(simpleActorTagWithTag(tag))
     }
 
     // keep track of the actor duration; that is the time the receive method takes
@@ -93,10 +110,10 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
 
       Thread.sleep(1100)
 
-      val counter = TestCounterInterface.foldlByAspect(actorDurationAspect, ExactTag(tag))(TestCounter.max)(0)
+      val counter = TestCounterInterface.foldlByAspect(actorDurationAspect, ContainsTag(tag))(TestCounter.max)(0)
       counter.value must beGreaterThan(900)
       counter.value must beLessThan(1100)
-      counter.tags must containAllOf(List(tag))
+      counter.tags must containAllOf(simpleActorTagWithTag(tag))
     }
 
     "Record the errors" in {
@@ -107,7 +124,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       // match error in receive
       simpleActor ! false
 
-      TestCounterInterface.foldlByAspect(actorErrorAspect)(TestCounter.plus) must contain(TestCounter(actorErrorAspect, 1, List(tag)))
+      TestCounterInterface.foldlByAspect(actorErrorAspect)(TestCounter.plus) must contain(TestCounter(actorErrorAspect, 1, simpleActorTagWithTag(tag)))
     }
 
   }
@@ -120,10 +137,11 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
   "Routed actor monitoring" should {
 
     "Record the message sent to actor" in {
+      TestCounterInterface.clear()
       val actorName = "routedFoo"
       val tag = s"akka://default/user/$actorName"
       val count = 10
-      val simpleActor = system.actorOf(Props[SimpleActor].withRouter(RoundRobinRouter(nrOfInstances = count)), actorName)
+      val simpleActor = system.actorOf(Props[SimpleActor].withRouter(RoundRobinRouter(nrOfInstances = count * 2)), actorName)
 
       for (i <- 0 until count) simpleActor ! 100
 
@@ -131,7 +149,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
 
       // we expect to see 10 integers for the supervisor and 1 integer for each child
       val supCounter = TestCounterInterface.foldlByAspect(deliveredIntegerAspect, ContainsTag(tag))(TestCounter.plus)(0)
-      val c1Counter  = TestCounterInterface.foldlByAspect(deliveredIntegerAspect, ExactTag(tag + "/$a"))(TestCounter.plus)(0)
+      val c1Counter  = TestCounterInterface.foldlByAspect(deliveredIntegerAspect, ContainsTag(tag + "/$a"))(TestCounter.plus)(0)
 
       supCounter.value mustEqual 10
       c1Counter.value mustEqual 1

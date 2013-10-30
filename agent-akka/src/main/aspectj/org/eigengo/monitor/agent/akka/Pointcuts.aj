@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package org.eigengo.monitor.agent.akka
+ package org.eigengo.monitor.agent.akka;
 
-import akka.actor.Actor
+import akka.actor.ActorCell;
 
-class SimpleActor extends Actor {
+abstract aspect Pointcuts {
+    static pointcut receiveMessage(ActorCell actorCell, Object msg) : target(actorCell) &&
+            call(* akka.actor.ActorCell.receiveMessage(..)) && args(msg);
 
-  def receive: Receive = {
-    case s: String =>
-      // do nothing
-    case i: Int =>
-      // for speed testing
-      Thread.sleep(i)
-    case 'stop =>
-      context.stop(self)
-    case false =>
-      throw new RuntimeException("Bantha poodoo!")
-  }
+    static pointcut handleInvokeFailure(ActorCell actorCell, Throwable failure) : target(actorCell) &&
+            execution(* akka.actor.ActorCell.handleInvokeFailure(..)) && args(*, failure);
 
+    static pointcut eventStreamPublish(Object event) :
+            execution(* akka.event.EventStream.publish(..)) && args(event);
 }

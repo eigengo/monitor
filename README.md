@@ -1,4 +1,4 @@
-#Monitoring of stuff
+#Monitoring of stuff [![Build Status](https://travis-ci.org/eigengo/monitor.png?branch=master)](https://travis-ci.org/eigengo/monitor)
 
 Include one ``*-agent``, create ``/META-INF/aop.xml`` that liststs the aspects to be weaved in. Include
 one of the ``*-output`` dependencies so that the aspects know how to send the metrics out.

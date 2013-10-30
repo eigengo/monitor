@@ -1,0 +1,15 @@
+# See http://about.travis-ci.org/docs/user/build-configuration/
+# By default Java projects would be built using `mvn tes` goal
+language: java
+
+# Testing with OpenJDK7 as well just to be adventurous!
+jdk:
+  - oraclejdk7
+  - openjdk7
+
+# Custom notification settings
+notifications:
+  email:
+    recipients:
+      - anirvanchakraborty@gmail.com
+      - jan.machacek@gmail.com

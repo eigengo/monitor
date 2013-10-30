@@ -1,9 +1,21 @@
-package org.eigengo.monitor.agent.akka;
+/*
+ * Copyright (c) 2013 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ package org.eigengo.monitor.agent.akka;
 
-import akka.actor.ActorCell;
-import akka.actor.ActorPath;
-import akka.actor.ActorRef;
-import akka.actor.UnhandledMessage;
+import akka.actor.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +31,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
     }
 
     // get the tags for the cell
-    private String[] getTags(final ActorPath actorPath) {
+    private String[] getTags(final ActorPath actorPath, final Actor actor) {
         List<String> tags = new ArrayList<String>();
 
         // TODO: Improve detection of routed actors. This relies only on the naming :(.
@@ -32,6 +44,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
             // there is no supervisor
             tags.add(actorPath.toString());
         }
+        if (actor != null) {
+            tags.add(String.format("akka:%s.%s", actor.context().system().name(), actor.getClass().getCanonicalName()));
+        }
 
         return tags.toArray(new String[tags.size()]);
     }
@@ -41,7 +56,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
         if (!includeActorPath(actorPath)) return proceed(actorCell, msg);
 
         // we tag by actor name
-        final String[] tags = getTags(actorPath);
+        final String[] tags = getTags(actorPath, actorCell.actor());
 
         // record the queue size
         counterInterface.recordGaugeValue("akka.queue.size", actorCell.numberOfMessages(), tags);
@@ -68,7 +83,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
 
     before(ActorCell actorCell, Throwable failure) : Pointcuts.handleInvokeFailure(actorCell, failure) {
         // record the error, general and specific
-        String[] tags = getTags(actorCell.self().path());
+        String[] tags = getTags(actorCell.self().path(), actorCell.actor());
         counterInterface.incrementCounter("akka.actor.error", tags);
         counterInterface.incrementCounter(String.format("akka.actor.error.%s", failure.getMessage()), tags);
     }
@@ -76,7 +91,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
     before(Object event) : Pointcuts.eventStreamPublish(event) {
         if (event instanceof UnhandledMessage) {
             UnhandledMessage unhandledMessage = (UnhandledMessage)event;
-            String[] tags = getTags(unhandledMessage.recipient().path());
+            String[] tags = getTags(unhandledMessage.recipient().path(), null);
             counterInterface.incrementCounter("akka.actor.undelivered", tags);
             counterInterface.incrementCounter("akka.actor.undelivered." + unhandledMessage.getMessage().getClass().getSimpleName(), tags);
         }
