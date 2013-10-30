@@ -1,6 +1,12 @@
 # See http://about.travis-ci.org/docs/user/build-configuration/
-# By default Java projects would be built using `mvn tes` goal
-language: java
+language: scala
+
+scala:
+  - 2.10.1
+  - 2.10.2
+  - 2.10.3
+  
+script: sbt clean scalastyle test
 
 # Testing with OpenJDK7 as well just to be adventurous!
 jdk:
