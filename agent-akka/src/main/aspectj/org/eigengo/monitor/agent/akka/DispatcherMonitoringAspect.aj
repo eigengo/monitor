@@ -13,22 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package org.eigengo.monitor.agent.akka
+ package org.eigengo.monitor.agent.akka;
 
-import akka.actor.Actor
+public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect {
 
-class SimpleActor extends Actor {
 
-  def receive: Receive = {
-    case s: String =>
-      // do nothing
-    case i: Int =>
-      // for speed testing
-      Thread.sleep(i)
-    case 'stop =>
-      context.stop(self)
-    case false =>
-      throw new RuntimeException("Bantha poodoo!")
-  }
 
 }
