@@ -1,6 +1,6 @@
 <scalastyle commentFilter="enabled">
  <name>Scalastyle standard configuration</name>
- <check level="warning" class="org.scalastyle.file.FileTabChecker" enabled="true"></check>
+ <check level="error" class="org.scalastyle.file.FileTabChecker" enabled="true"></check>
  <check level="warning" class="org.scalastyle.file.FileLengthChecker" enabled="true">
   <parameters>
    <parameter name="maxFileLength"><![CDATA[800]]></parameter>
@@ -34,17 +34,17 @@
    <parameter name="tabSize"><![CDATA[4]]></parameter>
   </parameters>
  </check>
- <check level="warning" class="org.scalastyle.scalariform.ClassNamesChecker" enabled="true">
+ <check level="error" class="org.scalastyle.scalariform.ClassNamesChecker" enabled="true">
   <parameters>
    <parameter name="regex"><![CDATA[[A-Z][A-Za-z]*]]></parameter>
   </parameters>
  </check>
- <check level="warning" class="org.scalastyle.scalariform.ObjectNamesChecker" enabled="true">
+ <check level="error" class="org.scalastyle.scalariform.ObjectNamesChecker" enabled="true">
   <parameters>
    <parameter name="regex"><![CDATA[[A-Z][A-Za-z]*]]></parameter>
   </parameters>
  </check>
- <check level="warning" class="org.scalastyle.scalariform.PackageObjectNamesChecker" enabled="true">
+ <check level="error" class="org.scalastyle.scalariform.PackageObjectNamesChecker" enabled="true">
   <parameters>
    <parameter name="regex"><![CDATA[^[a-z][A-Za-z]*$]]></parameter>
   </parameters>
@@ -78,7 +78,7 @@
    <parameter name="regex"><![CDATA[println]]></parameter>
   </parameters>
  </check>
- <check level="warning" class="org.scalastyle.scalariform.NumberOfTypesChecker" enabled="true">
+ <check level="error" class="org.scalastyle.scalariform.NumberOfTypesChecker" enabled="true">
   <parameters>
    <parameter name="maxTypes"><![CDATA[30]]></parameter>
   </parameters>
@@ -124,7 +124,7 @@
   </parameters>
  </check>
  <check level="error" class="org.scalastyle.scalariform.DeprecatedJavaChecker" enabled="true"></check>
- <check level="warning" class="org.scalastyle.scalariform.EmptyClassChecker" enabled="true"></check>
+ <check level="error" class="org.scalastyle.scalariform.EmptyClassChecker" enabled="true"></check>
  <check level="error" class="org.scalastyle.scalariform.ClassTypeParameterChecker" enabled="true">
   <parameters>
    <parameter name="regex"><![CDATA[^[A-Z_]$]]></parameter>
