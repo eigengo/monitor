@@ -87,7 +87,9 @@ object TestCounter {
  */
 sealed trait TagFilter
 case object AnyTag extends TagFilter
-case class ExactTag(tag: String) extends TagFilter
+// indicates that only one tag, matching ``tag`` exactly, is attached
+case class SingleTag(tag: String) extends TagFilter
+// indicates that at least one tag, which exactly matches ``tag`` is attached
 case class ContainsTag(tag: String) extends TagFilter
 
 /**
@@ -126,7 +128,7 @@ object TestCounterInterface {
       (x.aspect == aspect) &&
       (tagFilter match {
         case AnyTag           => true
-        case ExactTag(tag)    => x.tags.size == 1 && x.tags.head == tag
+        case SingleTag(tag)   => x.tags == tag :: Nil
         case ContainsTag(tag) => x.tags.contains(tag)
       })
 
