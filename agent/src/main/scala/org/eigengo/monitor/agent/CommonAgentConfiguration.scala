@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package org.eigengo.monitor.agent
+package org.eigengo.monitor.agent
 
 import com.typesafe.config.Config
 
