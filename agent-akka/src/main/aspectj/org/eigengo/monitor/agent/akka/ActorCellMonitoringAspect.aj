@@ -76,6 +76,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
 
         // record the actor duration
         counterInterface.recordExecutionTime("akka.actor.duration", (int)duration, tags);
+        // add gauge value of 1 with actor ref as tag, to provide 'number of actors' metric
+        counterInterface.gaugeValue("akka.actor.count", tag)
 
         // return null would do the trick, but we want to be _proper_.
         return result;
@@ -97,25 +99,25 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
         }
     }
 
-    after() returning (ActorRef actor): execution(* akka.actor.ActorSystem.actorOf(..)) {
-        if (!includeActorPath(actor.path())) return;
-
-        final String tag = actor.path().root().toString();
-        counterInterface.incrementCounter("akka.actor.count", tag);
-    }
-
-    after() returning (ActorRef actor): execution(* akka.actor.ActorCell.actorOf(..)) {
-        if (!includeActorPath(actor.path())) return;
-
-        final String tag = actor.path().root().toString();
-        counterInterface.incrementCounter("akka.actor.count", tag);
-    }
-
-    after(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor) {
-        if (!includeActorPath(actor.path())) return;
-
-        final String tag = actor.path().root().toString();
-        counterInterface.decrementCounter("akka.actor.count", tag);
-    }
+//    after() returning (ActorRef actor): execution(* akka.actor.ActorSystem.actorOf(..)) {
+//        if (!includeActorPath(actor.path())) return;
+//
+//        final String tag = actor.path().root().toString();
+//        counterInterface.incrementCounter("akka.actor.count", tag);
+//    }
+//
+//    after() returning (ActorRef actor): execution(* akka.actor.ActorCell.actorOf(..)) {
+//        if (!includeActorPath(actor.path())) return;
+//
+//        final String tag = actor.path().root().toString();
+//        counterInterface.incrementCounter("akka.actor.count", tag);
+//    }
+//
+//    after(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor) {
+//        if (!includeActorPath(actor.path())) return;
+//
+//        final String tag = actor.path().root().toString();
+//        counterInterface.decrementCounter("akka.actor.count", tag);
+//    }
 
 }
