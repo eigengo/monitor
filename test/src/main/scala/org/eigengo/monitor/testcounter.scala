@@ -128,7 +128,7 @@ object TestCounterInterface {
       (x.aspect == aspect) &&
       (tagFilter match {
         case AnyTag           => true
-        case SingleTag(tag)    => x.tags == tag :: Nil
+        case SingleTag(tag)   => x.tags == tag :: Nil
         case ContainsTag(tag) => x.tags.contains(tag)
       })
 
