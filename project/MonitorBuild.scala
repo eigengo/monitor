@@ -2,7 +2,6 @@ import sbt._
 import Keys._
 
 object MonitorBuild extends Build {
-  import BuildSettings._
 
   override val settings = super.settings ++ Seq(
     organization := "org.eigengo",
@@ -12,12 +11,17 @@ object MonitorBuild extends Build {
 
   def module(dir: String, extraSettings: Seq[Setting[_]] = Nil) = Project(id = dir, base = file(dir), 
     settings = BuildSettings.buildSettings ++ extraSettings)
+  
   import Dependencies._
+  import sbtunidoc.Plugin.UnidocKeys._
+  import sbtunidoc.Plugin._
 
   lazy val root = Project(
     id = "parent", 
     base = file("."), 
-    settings = BuildSettings.buildSettings ++ Seq(
+    settings = BuildSettings.buildSettings ++ scalaJavaUnidocSettings ++ unidocSettings ++ Seq(
+      unidocConfigurationFilter in (TestScalaUnidoc, unidoc) := inConfigurations(Compile, Test),
+      unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject,
       javaOptions in run += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
       fork in run := true,
       connectInput in run := true,
