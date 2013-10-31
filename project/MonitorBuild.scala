@@ -49,13 +49,12 @@ object MonitorBuild extends Build {
   	libraryDependencies += dogstatsd_client
   )
   lazy val test = module("test") dependsOn (output) settings (
-  	libraryDependencies += specs2 % "test"
+  	libraryDependencies += specs2,
+    libraryDependencies += akka_testkit
   )
   lazy val agent_akka = module("agent-akka", BuildSettings.aspectjCompileSettings) dependsOn (agent, output, test % "test") settings (
   	libraryDependencies += aspectj_weaver,
   	libraryDependencies += akka_actor,
-  	libraryDependencies += specs2 % "test",
-  	libraryDependencies += akka_testkit % "test",
 
     javaOptions in Test += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
     fork in Test := true
