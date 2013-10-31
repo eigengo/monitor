@@ -38,14 +38,17 @@ object AgentConfigurationFactory {
   }
 
   /**
-  * Load agent-specific configurations, based on agentName (e.g. "akka"), and package corresponding Config with common agent configurations.
-  * Will use empty Config if no corresponding agent settings are found
-  *
-  * @return the loaded ``AgentConfiguration`` instance
-  */
-  def getAgentCofiguration(agentName: String): AgentConfiguration = {
-    val configuration:Config = Try(config.getConfig(s"org.eigengo.monitor.agent.$agentName")).getOrElse(ConfigFactory.empty())
-    AgentConfiguration(getCommonAgentConfiguration(), configuration)
+   * Load agent-specific configurations, based on agentName (e.g. "akka"), and package corresponding Config with common agent configurations.
+   * Will use empty Config if no corresponding agent settings are found
+   *
+   * @param agentName the name of the agent, e.g. "akka"
+   * @param agent the function that completes the specific agent configuration
+   *
+   * @return the loaded ``AgentConfiguration`` instance
+   */
+  def getAgentCofiguration[A](agentName: String)(agent: Config => A): AgentConfiguration[A] = {
+    val agentConfig = Try(config.getConfig(s"org.eigengo.monitor.agent.$agentName")).getOrElse(ConfigFactory.empty())
+    AgentConfiguration(getCommonAgentConfiguration(), agent(agentConfig))
   }
 
 }

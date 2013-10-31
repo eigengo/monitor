@@ -24,7 +24,7 @@ abstract aspect AbstractMonitoringAspect {
     // if true, the monitoring will include the /system actors
     protected boolean includeSystemActors = false;
     // if true, the monitoring will include the child actors created as routees
-    protected boolean includeRoutees = getAgentConfiguration().config().getBoolean("includeRoutees");
+    protected boolean includeRoutees = getAgentConfiguration().agent().includeRoutees();
     // if true, the monitoring will include the actor class name as one of the tags
     protected boolean includeActorClassName = true;
 
@@ -42,7 +42,7 @@ abstract aspect AbstractMonitoringAspect {
         }
     }
 
-    private static AgentConfiguration getAgentConfiguration() {
-        return AgentConfigurationFactory.getAgentCofiguration("akka");
+    private static AgentConfiguration<AkkaAgentConfiguration> getAgentConfiguration() {
+        return AgentConfigurationFactory.getAgentCofiguration("akka", AkkaAgentConfigurationJapi.apply());
     }
 }
