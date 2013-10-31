@@ -47,7 +47,7 @@ object AkkaAgentConfiguration {
   def apply(config: Config): AkkaAgentConfiguration = {
     import scala.collection.JavaConversions._
 
-    val includeRoutees = config.getBoolean("includeRoutees")
+    val includeRoutees = if (config.hasPath("includeRoutees")) config.getBoolean("includeRoutees") else false
     val included = if (config.hasPath("included")) config.getStringList("included").map(parseFilter).toList else Nil
     val excluded = if (config.hasPath("excluded")) config.getStringList("included").map(parseFilter).toList else Nil
     AkkaAgentConfiguration(includeRoutees, false, AnyAcceptActorFilter(included, true), AnyAcceptActorFilter(excluded, false))

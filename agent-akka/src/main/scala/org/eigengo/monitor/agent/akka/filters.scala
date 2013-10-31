@@ -59,14 +59,8 @@ sealed trait ActorFilter {
  */
 case class AnyAcceptActorFilter(filters: List[ActorFilter], zero: Boolean) extends ActorFilter {
   override def accept(actorPath: ActorPath, actorClassName: Option[String]): Boolean = {
-
-    @tailrec
-    def accept0(xs: List[ActorFilter]): Boolean = filters match {
-      case Nil  => zero
-      case x::t => if (x.accept(actorPath, actorClassName)) accept0(t) else false
-    }
-
-    accept0(filters)
+    for (filter <- filters) if (!filter.accept(actorPath, actorClassName)) return false
+    zero
   }
 }
 

@@ -16,6 +16,8 @@
 package org.eigengo.monitor.agent.akka;
 
 import akka.actor.*;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.eigengo.monitor.agent.AgentConfiguration;
 import org.eigengo.monitor.output.CounterInterface;
 import scala.Option;
@@ -43,7 +45,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      *
      * @param agentConfiguration the new configuration
      */
-    void setAgentConfiguration(AkkaAgentConfiguration agentConfiguration) {
+    synchronized void setAgentConfiguration(AkkaAgentConfiguration agentConfiguration) {
         this.agentConfiguration = agentConfiguration;
     }
 

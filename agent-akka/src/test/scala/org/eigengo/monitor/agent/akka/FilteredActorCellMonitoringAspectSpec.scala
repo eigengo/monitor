@@ -19,10 +19,12 @@ import org.eigengo.monitor.{TestCounter, TestCounterInterface}
  */
 class FilteredActorCellMonitoringAspectSpec extends TestKit(ActorSystem()) with SpecificationLike {
   import Aspects._
-/*
+  val aspect: ActorCellMonitoringAspect = ActorCellMonitoringAspect.aspectOf()
+  val configuration = AkkaAgentConfiguration(ConfigFactory.load("META-INF/monitor/filtered1.conf"))
+  aspect.setAgentConfiguration(configuration)
+
   "With path included filter" should {
-    val aspect: ActorCellMonitoringAspect = ActorCellMonitoringAspect.aspectOf()
-    aspect.setAgentConfiguration(AkkaAgentConfiguration(ConfigFactory.load("META-INF/monitor/filtered1.conf")))
+
     val a = TestActorRef[SimpleActor]("a")
     val b = TestActorRef[SimpleActor]("b")
 
@@ -34,8 +36,8 @@ class FilteredActorCellMonitoringAspectSpec extends TestKit(ActorSystem()) with 
       val counter = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)(0)
 
       counter.value mustEqual 1
-      counter.tags must contain(a.toString())
+      counter.tags must contain(a.path.toString)
     }
   }
-*/
+
 }

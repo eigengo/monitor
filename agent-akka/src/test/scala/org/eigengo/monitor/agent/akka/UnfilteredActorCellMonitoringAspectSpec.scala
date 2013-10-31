@@ -20,6 +20,7 @@ import akka.actor.{Props, ActorSystem}
 import akka.testkit.{TestActorRef, TestKit}
 import akka.routing.RoundRobinRouter
 import org.eigengo.monitor.{TestCounterInterface, ContainsTag, TestCounter}
+import com.typesafe.config.ConfigFactory
 
 /**
  * Checks that the ``ActorCellMonitoringAspect`` records the required information.
@@ -35,6 +36,9 @@ class UnfilteredActorCellMonitoringAspectSpec extends TestKit(ActorSystem()) wit
   sequential
   import Aspects._
 
+  val aspect: ActorCellMonitoringAspect = ActorCellMonitoringAspect.aspectOf()
+  val configuration = AkkaAgentConfiguration(ConfigFactory.load("META-INF/monitor/unfiltered.conf"))
+  aspect.setAgentConfiguration(configuration)
   val simpleActorClassTag    = "akka:default.org.eigengo.monitor.agent.akka.SimpleActor"
 
   def simpleActorTagWithTag(tag: String): List[String] = List(tag, simpleActorClassTag)
