@@ -30,8 +30,7 @@ import scala.annotation.tailrec
  * akka://actor-system-name/user/concrete/path
  * akka://&#42;/user/concrete/path
  * akka://&#42;/&#42;/wildcard-path
- * akka://&#42;/../child
- * akka://&#42;/../child/+
+ * akka://&#42;/child
  *
  * akka:actor-system-name.com.foo.BarActor
  * akka:&#42;.com.foo.BarActor
