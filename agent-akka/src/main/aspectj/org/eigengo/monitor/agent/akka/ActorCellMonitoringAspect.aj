@@ -16,8 +16,6 @@
 package org.eigengo.monitor.agent.akka;
 
 import akka.actor.*;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.eigengo.monitor.agent.AgentConfiguration;
 import org.eigengo.monitor.output.CounterInterface;
 import scala.Option;
@@ -81,7 +79,13 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return tags.toArray(new String[tags.size()]);
     }
 
-    Object around(ActorCell actorCell, Object msg) : Pointcuts.receiveMessage(actorCell, msg) {
+    /**
+     * Advises the {@code ActorCell.receiveMessage(message: Object): Unit}
+     *
+     * @param actorCell the ActorCell where the actor that receives the message "lives"
+     * @param msg the incoming message
+     */
+    Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
         final ActorPath actorPath = actorCell.self().path();
         if (!includeActorPath(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()))) return proceed(actorCell, msg);
 
@@ -111,13 +115,24 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return result;
     }
 
-    before(ActorCell actorCell, Throwable failure) : Pointcuts.handleInvokeFailure(actorCell, failure) {
+    /**
+     * Advises the {@code ActorCell.handleInvokeFailure(_, failure: Throwable): Unit}
+     *
+     * @param actorCell the ActorCell where the error spreads from
+     * @param failure the exception that escaped from the {@code receive} method
+     */
+    before(ActorCell actorCell, Throwable failure) : Pointcuts.actorCellHandleInvokeFailure(actorCell, failure) {
         // record the error, general and specific
         String[] tags = getTags(actorCell.self().path(), actorCell.actor());
         this.counterInterface.incrementCounter("akka.actor.error", tags);
         this.counterInterface.incrementCounter(String.format("akka.actor.error.%s", failure.getMessage()), tags);
     }
 
+    /**
+     * Advises the {@code EventStream.publish(event: Any): Unit}
+     *
+     * @param event the received event
+     */
     before(Object event) : Pointcuts.eventStreamPublish(event) {
         if (event instanceof UnhandledMessage) {
             UnhandledMessage unhandledMessage = (UnhandledMessage)event;
@@ -127,21 +142,24 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         }
     }
 
-    after() returning (ActorRef actor): execution(* akka.actor.ActorSystem.actorOf(..)) {
+    /**
+     * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem}
+     *
+     * @param actor the {@code ActorRef} returned from the call
+     */
+    after() returning (ActorRef actor): Pointcuts.anyActorOf() {
         if (!includeActorPath(actor.path(), this.noActorClazz)) return;
 
         final String tag = actor.path().root().toString();
         this.counterInterface.incrementCounter("akka.actor.count", tag);
     }
 
-    after() returning (ActorRef actor): execution(* akka.actor.ActorCell.actorOf(..)) {
-        if (!includeActorPath(actor.path(), this.noActorClazz)) return;
-
-        final String tag = actor.path().root().toString();
-        this.counterInterface.incrementCounter("akka.actor.count", tag);
-    }
-
-    after(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor) {
+    /**
+     * Advises the {@code ActorCell.stop} method
+     *
+     * @param actor the actor being stopped
+     */
+    after(ActorRef actor) : Pointcuts.actorCellStop(actor) {
         if (!includeActorPath(actor.path(), this.noActorClazz)) return;
 
         final String tag = actor.path().root().toString();

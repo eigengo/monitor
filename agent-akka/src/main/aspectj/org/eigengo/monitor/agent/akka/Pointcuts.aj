@@ -16,14 +16,19 @@
 package org.eigengo.monitor.agent.akka;
 
 import akka.actor.ActorCell;
+import akka.actor.ActorRef;
 
 abstract aspect Pointcuts {
-    static pointcut receiveMessage(ActorCell actorCell, Object msg) : target(actorCell) &&
+    static pointcut actorCellReceiveMessage(ActorCell actorCell, Object msg) : target(actorCell) &&
             call(* akka.actor.ActorCell.receiveMessage(..)) && args(msg);
 
-    static pointcut handleInvokeFailure(ActorCell actorCell, Throwable failure) : target(actorCell) &&
+    static pointcut actorCellHandleInvokeFailure(ActorCell actorCell, Throwable failure) : target(actorCell) &&
             execution(* akka.actor.ActorCell.handleInvokeFailure(..)) && args(*, failure);
 
     static pointcut eventStreamPublish(Object event) :
             execution(* akka.event.EventStream.publish(..)) && args(event);
+
+    static pointcut anyActorOf() : execution(* akka.actor.ActorSystem.actorOf(..)) || execution(* akka.actor.ActorCell.actorOf(..));
+
+    static pointcut actorCellStop(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor);
 }
