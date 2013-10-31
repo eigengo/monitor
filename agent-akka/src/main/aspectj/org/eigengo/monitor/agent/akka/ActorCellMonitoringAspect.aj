@@ -24,18 +24,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingleton() {
-    private AgentConfiguration<AkkaAgentConfiguration> configuration;
     private AkkaAgentConfiguration agentConfiguration;
-    private CounterInterface counterInterface;
+    private final CounterInterface counterInterface;
     private final Option<String> noActorClazz = Option.empty();
 
     /**
      * Constructs this aspect
      */
     public ActorCellMonitoringAspect() {
-        this.configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
+        AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.agentConfiguration = configuration.agent();
-        this.counterInterface = createCounterInterface(this.configuration.common());
+        this.counterInterface = createCounterInterface(configuration.common());
     }
 
     /**
@@ -43,7 +42,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      *
      * @param agentConfiguration the new configuration
      */
-    synchronized void setAgentConfiguration(AkkaAgentConfiguration agentConfiguration) {
+    synchronized final void setAgentConfiguration(AkkaAgentConfiguration agentConfiguration) {
         this.agentConfiguration = agentConfiguration;
     }
 
