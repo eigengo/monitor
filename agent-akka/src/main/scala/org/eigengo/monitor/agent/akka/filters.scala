@@ -30,8 +30,7 @@ import scala.annotation.tailrec
  * akka://actor-system-name/user/concrete/path
  * akka://&#42;/user/concrete/path
  * akka://&#42;/&#42;/wildcard-path
- * akka://&#42;/../child
- * akka://&#42;/../child/+
+ * akka://&#42;/child
  *
  * akka:actor-system-name.com.foo.BarActor
  * akka:&#42;.com.foo.BarActor
@@ -47,7 +46,7 @@ sealed trait ActorFilter {
    * @param actorClassName the type of the actor being examined
    * @return ``true`` if the actor system and path are acceptable
    */
-  def accept(actorPath: ActorPath, actorClassName: String): Boolean
+  def accept(actorPath: ActorPath, actorClassName: Option[String]): Boolean
 
 }
 
@@ -58,15 +57,9 @@ sealed trait ActorFilter {
  * @param zero the zero
  */
 case class AnyAcceptActorFilter(filters: List[ActorFilter], zero: Boolean) extends ActorFilter {
-  override def accept(actorPath: ActorPath, actorClassName: String): Boolean = {
-
-    @tailrec
-    def accept0(xs: List[ActorFilter]): Boolean = filters match {
-      case Nil  => zero
-      case x::t => if (x.accept(actorPath, actorClassName)) accept0(t) else false
-    }
-
-    accept0(filters)
+  override def accept(actorPath: ActorPath, actorClassName: Option[String]): Boolean = {
+    for (filter <- filters) if (!filter.accept(actorPath, actorClassName)) return false
+    zero
   }
 }
 
@@ -78,13 +71,13 @@ case class AnyAcceptActorFilter(filters: List[ActorFilter], zero: Boolean) exten
  */
 case class ActorPathFilter(actorSystem: ActorSystemNameFilter, actorPathElements: List[ActorPathElement]) extends ActorFilter {
 
-  override def accept(actorPath: ActorPath, actorClassName: String): Boolean = actorSystem match {
+  override def accept(actorPath: ActorPath, actorClassName: Option[String]): Boolean = actorSystem match {
     case AnyActorSystem                    => localAccept(actorPath, actorClassName)
     case NamedActorSystem(actorSystemName) => actorPath.root.address.system == actorSystemName && localAccept(actorPath, actorClassName)
     case _                                 => false
   }
 
-  private def localAccept(actorPath: ActorPath, actorClassName: String): Boolean = {
+  private def localAccept(actorPath: ActorPath, actorClassName: Option[String]): Boolean = {
 
     @tailrec
     def acceptAll(xs: List[(ActorPathElement, String)]): Boolean = xs match {
@@ -105,16 +98,20 @@ case class ActorPathFilter(actorSystem: ActorSystemNameFilter, actorPathElements
  */
 case class ActorTypeFilter(actorSystem: ActorSystemNameFilter, actorType: ActorTypeOperator) extends ActorFilter {
 
-  override def accept(actorPath: ActorPath, actorClassName: String): Boolean = actorSystem match {
+  override def accept(actorPath: ActorPath, actorClassName: Option[String]): Boolean = actorSystem match {
     case AnyActorSystem                    => localAccept(actorPath, actorClassName)
     case NamedActorSystem(actorSystemName) => actorPath.root.address.system == actorSystemName && localAccept(actorPath, actorClassName)
     case _                                 => false
   }
 
-  private def localAccept(actorPath: ActorPath, actorClassName: String): Boolean = actorType match {
-    case SameType(`actorClassName`) => true
-    case _                          => false
-  }
+  private def localAccept(actorPath: ActorPath, actorClassName: Option[String]): Boolean =
+    actorClassName.map({ clazz =>
+      actorType match {
+        case SameType(`clazz`) => true
+        case _                 => false
+      }
+    }).getOrElse(true)
+
 }
 
 /**

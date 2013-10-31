@@ -99,7 +99,7 @@ object TestCounterInterface {
   private val counters = new mutable.ListBuffer[TestCounter]()
 
   // adds a new counter
-  private def add(aspect: String, delta: Int, tags: List[String]): Unit = {
+  private def add(aspect: String, delta: Int, tags: List[String]): Unit = synchronized {
     val counter: TestCounter = TestCounter(aspect, delta, tags)
     counters += counter
 
@@ -107,7 +107,7 @@ object TestCounterInterface {
   }
 
   // sets a gauge
-  private def set(aspect: String, value: Int, tags: List[String]): Unit = {
+  private def set(aspect: String, value: Int, tags: List[String]): Unit = synchronized {
     val gauge = TestCounter(aspect, value, tags)
     counters += gauge
 

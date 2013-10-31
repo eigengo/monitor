@@ -16,15 +16,45 @@
 package org.eigengo.monitor.agent.akka;
 
 import akka.actor.*;
+import org.eigengo.monitor.agent.AgentConfiguration;
+import org.eigengo.monitor.output.CounterInterface;
+import scala.Option;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
+/**
+ * Contains advices for monitoring behaviour of an actor; typically imprisoned in an {@code ActorCell}.
+ */
+public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingleton() {
+    private AkkaAgentConfiguration agentConfiguration;
+    private final CounterInterface counterInterface;
+    private final Option<String> noActorClazz = Option.empty();
+
+    /**
+     * Constructs this aspect
+     */
+    public ActorCellMonitoringAspect() {
+        AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
+        this.agentConfiguration = configuration.agent();
+        this.counterInterface = createCounterInterface(configuration.common());
+    }
+
+    /**
+     * Injects the new {@code AkkaAgentConfiguration} instance.
+     *
+     * @param agentConfiguration the new configuration
+     */
+    synchronized final void setAgentConfiguration(AkkaAgentConfiguration agentConfiguration) {
+        this.agentConfiguration = agentConfiguration;
+    }
 
     // decide whether to include this ActorCell in our measurements
-    private boolean includeActorPath(ActorPath actorPath) {
-        if (this.includeSystemActors) return true;
+    private boolean includeActorPath(final ActorPath actorPath, final Option<String> actorClassName) {
+        if (!this.agentConfiguration.incuded().accept(actorPath, actorClassName)) return false;
+        if (this.agentConfiguration.excluded().accept(actorPath, actorClassName)) return false;
+
+        if (this.agentConfiguration.includeSystemAgents()) return true;
 
         String userOrSystem = actorPath.getElements().iterator().next();
         return "user".equals(userOrSystem);
@@ -39,7 +69,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
         if (lastPathElement.startsWith("$")) {
             // this is routed actor.
             tags.add(actorPath.parent().toString());
-            if (this.includeRoutees) tags.add(actorPath.toString());
+            if (this.agentConfiguration.includeRoutees()) tags.add(actorPath.toString());
         } else {
             // there is no supervisor
             tags.add(actorPath.toString());
@@ -51,18 +81,24 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
         return tags.toArray(new String[tags.size()]);
     }
 
-    Object around(ActorCell actorCell, Object msg) : Pointcuts.receiveMessage(actorCell, msg) {
+    /**
+     * Advises the {@code ActorCell.receiveMessage(message: Object): Unit}
+     *
+     * @param actorCell the ActorCell where the actor that receives the message "lives"
+     * @param msg the incoming message
+     */
+    Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
         final ActorPath actorPath = actorCell.self().path();
-        if (!includeActorPath(actorPath)) return proceed(actorCell, msg);
+        if (!includeActorPath(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()))) return proceed(actorCell, msg);
 
         // we tag by actor name
         final String[] tags = getTags(actorPath, actorCell.actor());
 
         // record the queue size
-        counterInterface.recordGaugeValue("akka.queue.size", actorCell.numberOfMessages(), tags);
+        this.counterInterface.recordGaugeValue("akka.queue.size", actorCell.numberOfMessages(), tags);
         // record the message, general and specific
-        counterInterface.incrementCounter("akka.actor.delivered", tags);
-        counterInterface.incrementCounter("akka.actor.delivered." + msg.getClass().getSimpleName(), tags);
+        this.counterInterface.incrementCounter("akka.actor.delivered", tags);
+        this.counterInterface.incrementCounter("akka.actor.delivered." + msg.getClass().getSimpleName(), tags);
 
         // measure the time. we're using the ``nanoTime`` call to access the high-precision timer.
         // since we're not really interested in wall time, but just some increasing measure of
@@ -75,47 +111,61 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
         final long duration = (System.nanoTime() - start) / 1000000;
 
         // record the actor duration
-        counterInterface.recordExecutionTime("akka.actor.duration", (int)duration, tags);
+        this.counterInterface.recordExecutionTime("akka.actor.duration", (int)duration, tags);
 
         // return null would do the trick, but we want to be _proper_.
         return result;
     }
 
-    before(ActorCell actorCell, Throwable failure) : Pointcuts.handleInvokeFailure(actorCell, failure) {
+    /**
+     * Advises the {@code ActorCell.handleInvokeFailure(_, failure: Throwable): Unit}
+     *
+     * @param actorCell the ActorCell where the error spreads from
+     * @param failure the exception that escaped from the {@code receive} method
+     */
+    before(ActorCell actorCell, Throwable failure) : Pointcuts.actorCellHandleInvokeFailure(actorCell, failure) {
         // record the error, general and specific
         String[] tags = getTags(actorCell.self().path(), actorCell.actor());
-        counterInterface.incrementCounter("akka.actor.error", tags);
-        counterInterface.incrementCounter(String.format("akka.actor.error.%s", failure.getMessage()), tags);
+        this.counterInterface.incrementCounter("akka.actor.error", tags);
+        this.counterInterface.incrementCounter(String.format("akka.actor.error.%s", failure.getMessage()), tags);
     }
 
+    /**
+     * Advises the {@code EventStream.publish(event: Any): Unit}
+     *
+     * @param event the received event
+     */
     before(Object event) : Pointcuts.eventStreamPublish(event) {
         if (event instanceof UnhandledMessage) {
             UnhandledMessage unhandledMessage = (UnhandledMessage)event;
             String[] tags = getTags(unhandledMessage.recipient().path(), null);
-            counterInterface.incrementCounter("akka.actor.undelivered", tags);
-            counterInterface.incrementCounter("akka.actor.undelivered." + unhandledMessage.getMessage().getClass().getSimpleName(), tags);
+            this.counterInterface.incrementCounter("akka.actor.undelivered", tags);
+            this.counterInterface.incrementCounter("akka.actor.undelivered." + unhandledMessage.getMessage().getClass().getSimpleName(), tags);
         }
     }
 
-    after() returning (ActorRef actor): execution(* akka.actor.ActorSystem.actorOf(..)) {
-        if (!includeActorPath(actor.path())) return;
+    /**
+     * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem}
+     *
+     * @param actor the {@code ActorRef} returned from the call
+     */
+    after() returning (ActorRef actor): Pointcuts.anyActorOf() {
+        if (!includeActorPath(actor.path(), this.noActorClazz)) return;
 
         final String tag = actor.path().root().toString();
-        counterInterface.incrementCounter("akka.actor.count", tag);
+        this.counterInterface.incrementCounter("akka.actor.count", tag);
     }
 
-    after() returning (ActorRef actor): execution(* akka.actor.ActorCell.actorOf(..)) {
-        if (!includeActorPath(actor.path())) return;
+    /**
+     * Advises the {@code ActorCell.stop} method
+     *
+     * @param actor the actor being stopped
+     */
+    after(ActorRef actor) : Pointcuts.actorCellStop(actor) {
+        if (!includeActorPath(actor.path(), this.noActorClazz)) return;
 
         final String tag = actor.path().root().toString();
-        counterInterface.incrementCounter("akka.actor.count", tag);
-    }
-
-    after(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor) {
-        if (!includeActorPath(actor.path())) return;
-
-        final String tag = actor.path().root().toString();
-        counterInterface.decrementCounter("akka.actor.count", tag);
+        this.counterInterface.decrementCounter("akka.actor.count", tag);
     }
 
 }

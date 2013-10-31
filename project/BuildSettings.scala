@@ -2,7 +2,7 @@ object BuildSettings {
   import sbt._
   import Keys._
   import com.typesafe.sbt.SbtAspectj.{ Aspectj, aspectjSettings }
-  import com.typesafe.sbt.SbtAspectj.AspectjKeys.{ compileOnly, weaverOptions, aspectjDirectory }
+  import com.typesafe.sbt.SbtAspectj.AspectjKeys.{ compileOnly, sourceLevel, aspectjDirectory }
   import org.scalastyle.sbt.ScalastylePlugin
 
   lazy val buildSettings = 
@@ -38,6 +38,7 @@ object BuildSettings {
     // only compile the aspects (no weaving)
     compileOnly in Aspectj := true,
     aspectjDirectory in Aspectj <<= crossTarget,
+    sourceLevel in Aspectj := "-1.6",
 
     // add the compiled aspects as products
     products in Compile <++= products in Aspectj
