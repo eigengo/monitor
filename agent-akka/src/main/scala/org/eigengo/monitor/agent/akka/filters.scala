@@ -93,8 +93,7 @@ case class ActorPathFilter(actorSystem: ActorSystemNameFilter, actorPathElements
     }
 
     val elements = actorPath.elements.toList
-    if (actorPathElements.size != elements.size) false
-    else acceptAll(actorPathElements.zip(elements))
+    actorPathElements.size == elements.size && acceptAll(actorPathElements.zip(elements))
   }
 }
 
