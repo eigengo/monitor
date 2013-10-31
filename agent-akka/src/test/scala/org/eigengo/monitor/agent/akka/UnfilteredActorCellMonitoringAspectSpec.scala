@@ -32,13 +32,10 @@ import com.typesafe.config.ConfigFactory
  * -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  * in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  */
-class UnfilteredActorCellMonitoringAspectSpec extends TestKit(ActorSystem()) with SpecificationLike {
+class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("unfiltered.conf")) {
   sequential
   import Aspects._
 
-  val aspect: ActorCellMonitoringAspect = ActorCellMonitoringAspect.aspectOf()
-  val configuration = AkkaAgentConfiguration(ConfigFactory.load("META-INF/monitor/unfiltered.conf"))
-  aspect.setAgentConfiguration(configuration)
   val simpleActorClassTag    = "akka:default.org.eigengo.monitor.agent.akka.SimpleActor"
 
   def simpleActorTagWithTag(tag: String): List[String] = List(tag, simpleActorClassTag)

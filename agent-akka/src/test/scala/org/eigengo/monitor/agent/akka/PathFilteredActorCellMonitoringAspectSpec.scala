@@ -17,18 +17,15 @@ import org.eigengo.monitor.{TestCounter, TestCounterInterface}
  * -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  * in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  */
-class FilteredActorCellMonitoringAspectSpec extends TestKit(ActorSystem()) with SpecificationLike {
+class PathFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("filtered1.conf")) {
   import Aspects._
-  val aspect: ActorCellMonitoringAspect = ActorCellMonitoringAspect.aspectOf()
-  val configuration = AkkaAgentConfiguration(ConfigFactory.load("META-INF/monitor/filtered1.conf"))
-  aspect.setAgentConfiguration(configuration)
 
   "With path included filter" should {
-
     val a = TestActorRef[SimpleActor]("a")
     val b = TestActorRef[SimpleActor]("b")
 
     "Skip non-included actor" in {
+      TestCounterInterface.clear()
       a ! 100
       b ! 100
 
