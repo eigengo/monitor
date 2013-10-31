@@ -50,6 +50,8 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
       // stop(self)
       simpleActor ! 'stop
 
+      Thread.sleep(500)   // wait for the messages
+
       TestCounterInterface.foldlByAspect(actorCount)(TestCounter.plus) must contain(TestCounter(actorCount, 0, List(tag)))
     }
 
@@ -65,6 +67,8 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
       simpleActor ! 2.2               // original Actor.unhandled
 
       simpleActor ! 'stop             // OK. stop self
+
+      Thread.sleep(500)   // wait for the messages
 
       // we expect to see 2 integers, 1 string and 1 undelivered
       TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus) must contain(TestCounter(deliveredInteger, 2, simpleActorTagWithTag(tag)))
@@ -116,6 +120,8 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
 
       // match error in receive
       simpleActor ! false
+
+      Thread.sleep(500)   // wait for the messages
 
       TestCounterInterface.foldlByAspect(actorError)(TestCounter.plus) must contain(TestCounter(actorError, 1, simpleActorTagWithTag(tag)))
     }

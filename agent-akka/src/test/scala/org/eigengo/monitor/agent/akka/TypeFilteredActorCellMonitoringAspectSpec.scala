@@ -41,7 +41,7 @@ class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
       a ! 100
       b ! 100
 
-      Thread.sleep(500)
+      Thread.sleep(500)   // wait for the messages
 
       // we expect to see 2 integers, 1 string and 1 undelivered
       val counter = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)(0)
