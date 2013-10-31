@@ -15,12 +15,10 @@
  */
 package org.eigengo.monitor.agent.akka
 
-import org.specs2.mutable.SpecificationLike
-import akka.actor.{Props, ActorSystem}
-import akka.testkit.{TestActorRef, TestKit}
+import akka.actor.Props
+import akka.testkit.TestActorRef
 import akka.routing.RoundRobinRouter
 import org.eigengo.monitor.{TestCounterInterface, ContainsTag, TestCounter}
-import com.typesafe.config.ConfigFactory
 
 /**
  * Checks that the ``ActorCellMonitoringAspect`` records the required information.

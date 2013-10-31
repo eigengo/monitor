@@ -29,12 +29,12 @@ import org.eigengo.monitor.{TestCounter, TestCounterInterface}
  * -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  * in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  */
-class PathFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("path-filter.conf")) {
+class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("path-filter.conf")) {
   import Aspects._
 
   "With path included filter" should {
     val a = TestActorRef[SimpleActor]("a")
-    val b = TestActorRef[SimpleActor]("b")
+    val b = TestActorRef[WithUnhandledActor]("b")
 
     "Skip non-included actor" in {
       TestCounterInterface.clear()
