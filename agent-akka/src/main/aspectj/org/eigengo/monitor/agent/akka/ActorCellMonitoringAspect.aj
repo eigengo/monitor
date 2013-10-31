@@ -23,6 +23,9 @@ import scala.Option;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Contains advices for monitoring behaviour of an actor; typically imprisoned in an {@code ActorCell}.
+ */
 public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingleton() {
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
