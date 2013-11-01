@@ -21,12 +21,14 @@ import akka.routing.RoundRobinRouter
 // run with -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
 // in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
 object Main extends App {
+  val longSleep = 10
+  val shortSleep = 1
 
   class FooActor(bar: ActorRef) extends Actor {
     def receive: Receive = {
       case i: Int if i > 0 =>
         println(s"Counting down... Now $i")
-        Thread.sleep(100)
+        Thread.sleep(longSleep)
         if (i % 10 == 0) bar ! i
         self ! (i - 1)
       case i: Int if i == 0 =>
@@ -37,7 +39,7 @@ object Main extends App {
   class BarActor extends Actor {
     def receive: Receive = {
       case i: Int if i > 0 =>
-        Thread.sleep(10)
+        Thread.sleep(shortSleep)
         self ! (i - 1)
       case i: Int if i == 0 =>
         println("Bar done.")
