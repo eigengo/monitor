@@ -1,6 +1,7 @@
 *.class
 *.log
 .DS_Store
+*.pyc
 
 # sbt specific
 dist/*
