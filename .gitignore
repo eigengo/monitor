@@ -1,5 +1,6 @@
 *.class
 *.log
+.DS_Store
 
 # sbt specific
 dist/*
@@ -12,8 +13,10 @@ project/plugins/project/
 # Scala-IDE specific
 .scala_dependencies
 
-#IntelliJ IDEA project files
+# IntelliJ IDEA project files
 .idea
 .idea_modules
 *.iml
 
+# Pre-processed documentation file
+rst_preprocessed
