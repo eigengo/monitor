@@ -4,7 +4,7 @@
 Introduction  & motivation
 ##########################
 
-**Scalable real-time transaction processing**
+**Eye on the Typesafe Stack**
 
 The monitoring that this tool provides is *not* on the same level as the insight into your Akka application you get from the Typesafe Console. Use the `Typesafe Console <http://typesafe.com/products/typesafe-subscription>`_ in development, when you really need to lift the hood of the actor system. Use our monitor to keep an eye on a debugged, tuned Akka system that is running in production. Imagine being able to see a chart like this:
 
