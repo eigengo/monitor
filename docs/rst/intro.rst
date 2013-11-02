@@ -77,7 +77,9 @@ The monitor structure
 
 The monitor project is released in `Sonatype Snapshots <https://oss.sonatype.org/content/repositories/snapshots/org/eigengo/monitor>`_; the source code is in the usual place on `GitHub <https://github.com/eigengo/monitor>`_. At the moment the only working agent is the Akka agent, and the only working output module is the statsd / Datadog module. As you can see from the structure, I intend to add monitoring of `Spray <http://spray.io>`_, Play and more detail in Akka IO. Similarly, by popular demand, I will be adding more output modules.
 
-The agents use `AspectJ's load-time weaving <http://www.eclipse.org/aspectj/doc/next/devguide/ltw.html>`_ (in other words, we don't roll our own Akka!). The advices modify Akka's bytecode as it is loaded by the ``ClassLoader``. That explains the need for the obscure ``-javaagent:.../aspectjweaver-1.7.3.jar`` JVM parameter. The weaver contains Java agent, which registers the AspectJ weaver that instruments the classes as they are loaded. To find out what to do, the weaver reads the ``/META-INF/aop.xml`` file. In our case, it contains::
+The agents use `AspectJ's load-time weaving <http://www.eclipse.org/aspectj/doc/next/devguide/ltw.html>`_ (in other words, we don't roll our own Akka!). The advices modify Akka's bytecode as it is loaded by the ``ClassLoader``. That explains the need for the obscure ``-javaagent:.../aspectjweaver-1.7.3.jar`` JVM parameter. The weaver contains Java agent, which registers the AspectJ weaver that instruments the classes as they are loaded. To find out what to do, the weaver reads the ``/META-INF/aop.xml`` file. In our case, it contains.
+
+.. code:: xml
 
     <aspectj>
 
@@ -118,26 +120,38 @@ Gallery
 
 Let me complete the article by showing you a few simple charts you can construct using this monitoring tool and Datadog.
 
+.. raw:: latex
+    
+    \newpage
+
 .. figure:: images/unhappy.png
-   :align: center
+   :align: left
    :width: 680
-   
+
    Overloaded bar actor
 
 .. figure:: images/duration.png
-   :align: center
+   :align: left
    :width: 680
 
    Performance of the receive function
 
+.. raw:: latex
+    
+    \newpage
+
 .. figure:: images/delivered-int.png
-   :align: center
+   :align: left
    :width: 680
 
    Configuration of the delivered messages chart
 
+.. raw:: latex
+    
+    \newpage
+
 .. figure:: images/queue-foo.png
-   :align: center
+   :align: left
    :width: 680
 
    Configuration of the queue size for foo chart

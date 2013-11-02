@@ -73,11 +73,13 @@ latex_documents = [
    u'Original authors \& Cake Solutions', 'manual')
 ]
 
+latex_preamble = "\\definecolor{VerbatimColor}{rgb}{0.935,0.935,0.935}"
+
 latex_elements = {
     'classoptions': ',oneside,openany',
     'babel': '\\usepackage[english]{babel}',
     'fontpkg': '\\PassOptionsToPackage{warn}{textcomp} \\usepackage{times}',
-    'preamble': '\\definecolor{VerbatimColor}{rgb}{0.935,0.935,0.935}'
+    'preamble': latex_preamble
     }
 
 # latex_logo = '_sphinx/static/logo.jpeg'
