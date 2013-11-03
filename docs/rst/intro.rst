@@ -20,23 +20,23 @@ In production, you may want to monitor the actors' queues, the number of message
 
       class FooActor(bar: ActorRef) extends Actor {
         def receive: Receive = {
-          case i: Int if i &gt; 0  =>
+          case i: Int if i == 0 =>
+            println("Foo done.")
+          case i: Int           =>
             println(s"Counting down... Now $i")
             Thread.sleep(longSleep)
             if (i % 10 == 0) bar ! i
             self ! (i - 1)
-          case i: Int if i == 0 =&gt;
-            println("Foo done.")
         }
       }
 
       class BarActor extends Actor {
         def receive: Receive = {
-          case i: Int if i &gt; 0  =&gt;
+          case i: Int if i == 0 =>
+            println("Bar done.")
+          case i: Int           =>
             Thread.sleep(shortSleep)
             self ! (i - 1)
-          case i: Int if i == 0 =&gt;
-            println("Bar done.")
         }
       }
 
