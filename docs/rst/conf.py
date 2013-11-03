@@ -16,7 +16,7 @@ master_doc = 'index'
 exclude_patterns = ['_build', 'pending', 'disabled']
 
 project = u'Monitor'
-copyright = u'Original contributors & Cake Solutions'
+copyright = u'Original contributors'
 version = '@version@'
 release = '@version@'
 
@@ -52,7 +52,7 @@ show_authors = True
 #}
 
 # -- Options for EPUB output ---------------------------------------------------
-epub_author = "Original authors & Cake Solutions"
+epub_author = "Original authors"
 epub_language = "en"
 epub_publisher = epub_author
 epub_identifier = "http://github.com/eigengo/monitor/"
@@ -70,7 +70,7 @@ latex_font_size = '10pt'
 
 latex_documents = [
   ('index', 'monitor.tex', u' Monitor Documentation',
-   u'Original authors \& Cake Solutions', 'manual')
+   u'Original authors', 'manual')
 ]
 
 latex_preamble = "\\definecolor{VerbatimColor}{rgb}{0.935,0.935,0.935}"
