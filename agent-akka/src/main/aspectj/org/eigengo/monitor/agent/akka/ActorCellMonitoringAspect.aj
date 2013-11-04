@@ -66,8 +66,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return "user".equals(userOrSystem);
     }
 
-    private int getSampleRate(final ActorPath actorPath) {
-        return agentConfiguration.sampling().getRate(actorPath);
+    private int getSampleRate(final ActorPath actorPath, final Option<String> actorClassName) {
+        return agentConfiguration.sampling().getRate(actorPath, actorClassName);
     }
 
     private Option<ActorFilter> getFilterToSampleOver(final ActorPath actorPath, final Option<String> actorClassName) {
@@ -75,7 +75,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     private final boolean sampleMessage(final ActorPath actorPath, final Option<String> actorClassName) {
-        int sampleRate = getSampleRate(actorPath);
+        int sampleRate = getSampleRate(actorPath, actorClassName);
         if (sampleRate == 1) {return true;}
 
         // We've already essentially checked that the actorFilter is not None (with `sampleRate == 1`) so this is legit

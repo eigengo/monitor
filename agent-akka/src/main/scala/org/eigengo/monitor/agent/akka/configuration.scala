@@ -107,7 +107,8 @@ case class SamplingRate(included: ActorFilter, sampleEvery: Int) {
 
 case class SamplingRates(samplingRates: List[SamplingRate]) {
   def allFilters():Array[ActorFilter] = samplingRates.map(_.included).toArray
-  def getRate(actorPath: ActorPath): Int = samplingRates.find(_.includes(actorPath)).map(_.sampleEvery).getOrElse(1)
+  def getRate(actorPath: ActorPath, actorClassName: Option[String]): Int =
+    samplingRates.find(_.accepts(actorPath, actorClassName)).map(_.sampleEvery).getOrElse(1)
   def getFilterFor(actorPath: ActorPath, actorClassName: Option[String]): Option[ActorFilter] =
     samplingRates.find(_.accepts(actorPath, actorClassName)).map(_.included)
 }

@@ -15,7 +15,7 @@ class ActorSamplingSpec extends ActorCellMonitoringAspectSpec(Some("sample.conf"
       TestCounterInterface.clear()
       (0 until 1000) map {_ => a ! 1}
 
-      Thread.sleep(5000)   // wait for the messages
+      Thread.sleep(500)   // wait for the messages
 
       // we expect to see 1000/5 = 200 messages to actor a
       val counter = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)(0)
@@ -26,13 +26,13 @@ class ActorSamplingSpec extends ActorCellMonitoringAspectSpec(Some("sample.conf"
 
       TestCounterInterface.clear()
       (0 until 1000) map {_ => b ! 1}
-      Thread.sleep(5000)   // wait for the messages
+      Thread.sleep(500)   // wait for the messages
 
       // we expect to see 1000/15 ~=67 messages to actor b (we round up, since logging the first message)
       val counter2 = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)(0)
 
       counter2.value mustEqual 67
-      counter2.tags must contain(a.path.toString)
+      counter2.tags must contain(b.path.toString)
     }
   }
 
