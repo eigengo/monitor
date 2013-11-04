@@ -70,16 +70,16 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return agentConfiguration.sampling().getRate(actorPath);
     }
 
-    private Option<ActorFilter> getFilterToSampleOver(final ActorPath actorPath) {
-        return agentConfiguration.sampling().getFilterFor(actorPath);
+    private Option<ActorFilter> getFilterToSampleOver(final ActorPath actorPath, final Option<String> actorClassName) {
+        return agentConfiguration.sampling().getFilterFor(actorPath, actorClassName);
     }
 
-    private final boolean sampleMessage(final ActorPath actorPath) {
+    private final boolean sampleMessage(final ActorPath actorPath, final Option<String> actorClassName) {
         int sampleRate = getSampleRate(actorPath);
         if (sampleRate == 1) {return true;}
 
         // We've already essentially checked that the actorFilter is not None (with `sampleRate == 1`) so this is legit
-        ActorFilter actorFilter = getFilterToSampleOver(actorPath).get();
+        ActorFilter actorFilter = getFilterToSampleOver(actorPath, actorClassName).get();
         // And we initialised the HashMap element with AtomicLong(0) in the constructor
         long timesSeenSoFar = concurrentCounters.get(actorFilter).incrementAndGet();
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
@@ -115,7 +115,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
         final ActorPath actorPath = actorCell.self().path();
         if (!includeActorPath(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName())) ||
-                !sampleMessage(actorPath)) return proceed(actorCell, msg);
+                !sampleMessage(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()))) return proceed(actorCell, msg);
 
         // we tag by actor name
         final String[] tags = getTags(actorPath, actorCell.actor());

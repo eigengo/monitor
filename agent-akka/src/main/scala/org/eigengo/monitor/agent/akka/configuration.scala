@@ -102,10 +102,12 @@ object AkkaAgentConfigurationJapi {
 //TODO: complete me
 case class SamplingRate(included: ActorFilter, sampleEvery: Int) {
   def includes(actorPath: ActorPath): Boolean = included.accept(actorPath, None)
+  def accepts(actorPath: ActorPath, actorClassName: Option[String]) = included.accept(actorPath, actorClassName)
 }
 
 case class SamplingRates(samplingRates: List[SamplingRate]) {
   def allFilters():Array[ActorFilter] = samplingRates.map(_.included).toArray
   def getRate(actorPath: ActorPath): Int = samplingRates.find(_.includes(actorPath)).map(_.sampleEvery).getOrElse(1)
-  def getFilterFor(actorPath: ActorPath): Option[ActorFilter] = samplingRates.find(_.includes(actorPath)).map(_.included)
+  def getFilterFor(actorPath: ActorPath, actorClassName: Option[String]): Option[ActorFilter] =
+    samplingRates.find(_.accepts(actorPath, actorClassName)).map(_.included)
 }
