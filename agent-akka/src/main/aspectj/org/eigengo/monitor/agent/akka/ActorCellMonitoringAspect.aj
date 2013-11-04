@@ -77,7 +77,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect {
         // record the actor duration
         counterInterface.recordExecutionTime("akka.actor.duration", (int)duration, tags);
         // add gauge value of 1 with actor ref as tag, to provide 'number of actors' metric
-        counterInterface.gaugeValue("akka.actor.count", tag)
+//        counterInterface.gaugeValue("akka.actor.count", tag);
 
         // return null would do the trick, but we want to be _proper_.
         return result;
