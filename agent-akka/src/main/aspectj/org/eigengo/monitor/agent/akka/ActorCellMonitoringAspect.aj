@@ -82,7 +82,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         ActorFilter actorFilter = getFilterToSampleOver(actorPath).get();
         // And we initialised the HashMap element with AtomicLong(0) in the constructor
         long timesSeenSoFar = concurrentCounters.get(actorFilter).incrementAndGet();
-        return (timesSeenSoFar % sampleRate == 0);
+        return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
     // get the tags for the cell
