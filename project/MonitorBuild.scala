@@ -44,6 +44,9 @@ object MonitorBuild extends Build {
   lazy val output_statsd = module("output-statsd") dependsOn (output) settings (
   	libraryDependencies += dogstatsd_client
   )
+  lazy val output_datadog = module("output-statsd") dependsOn (output) settings (
+    libraryDependencies += dogstatsd_client
+    )
   lazy val test = module("test") dependsOn (output) settings (
   	libraryDependencies += specs2 % "test"
   )
@@ -59,7 +62,7 @@ object MonitorBuild extends Build {
   lazy val agent_spray = module("agent-spray") dependsOn(agent, output)
   lazy val agent_play  = module("agent-play")  dependsOn(agent, output)
 
-  lazy val example_akka = module("example-akka") dependsOn(agent_akka, output_statsd) settings (
+  lazy val example_akka = module("example-akka") dependsOn(agent_akka, output_statsd, output_datadog) settings (
   	libraryDependencies += akka_actor
   )
 

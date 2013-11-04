@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.eigengo.monitor.output.statsd;
+package org.eigengo.monitor.output.datadog;
 
 import org.eigengo.monitor.output.CounterInterface;
-import com.timgroup.statsd.NonBlockingStatsDClient;
+//import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
 
 /**
  * Submits the counters to the local statsd interface
  */
 public class StatsdCounterInterface implements CounterInterface {
-    private static final StatsDClient statsd = new NonBlockingStatsDClient("", "localhost", 8125, new String[]{"tag:value"});
+    private static final StatsDClient statsd = new NonBlockingStatsDClientRipoff("", "localhost", 8125, new String[]{"tag:value"});
 
     @Override
     public void incrementCounter(String aspect, String... tags) {
