@@ -22,6 +22,9 @@ import scala.Option;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Contains advices for monitoring behaviour of an actor; typically imprisoned in an {@code ActorCell}.
@@ -30,6 +33,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
     private final Option<String> noActorClazz = Option.empty();
+    private final HashMap<ActorFilter, AtomicLong> concurrentCounters;
 
     /**
      * Constructs this aspect
@@ -38,6 +42,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.agentConfiguration = configuration.agent();
         this.counterInterface = createCounterInterface(configuration.common());
+    // we initialise all the keys we'll be using for our sampling here, so that we can access the HashMap once per query
+        this.concurrentCounters = getCounterKeys(configuration);
     }
 
     /**
@@ -58,6 +64,25 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
         String userOrSystem = actorPath.getElements().iterator().next();
         return "user".equals(userOrSystem);
+    }
+
+    private int getSampleRate(final ActorPath actorPath) {
+        return agentConfiguration.sampling().getRate(actorPath);
+    }
+
+    private Option<ActorFilter> getFilterToSampleOver(final ActorPath actorPath) {
+        return agentConfiguration.sampling().getFilterFor(actorPath);
+    }
+
+    private final boolean sampleMessage(final ActorPath actorPath) {
+        int sampleRate = getSampleRate(actorPath);
+        if (sampleRate == 1) {return true;}
+
+        // We've already essentially checked that the actorFilter is not None (with `sampleRate == 1`) so this is legit
+        ActorFilter actorFilter = getFilterToSampleOver(actorPath).get();
+        // And we initialised the HashMap element with AtomicLong(0) in the constructor
+        long timesSeenSoFar = concurrentCounters.get(actorFilter).incrementAndGet();
+        return (timesSeenSoFar % sampleRate == 0);
     }
 
     // get the tags for the cell
@@ -89,7 +114,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
         final ActorPath actorPath = actorCell.self().path();
-        if (!includeActorPath(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()))) return proceed(actorCell, msg);
+        if (!includeActorPath(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName())) ||
+                !sampleMessage(actorPath)) return proceed(actorCell, msg);
 
         // we tag by actor name
         final String[] tags = getTags(actorPath, actorCell.actor());

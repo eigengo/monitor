@@ -23,6 +23,9 @@ import org.eigengo.monitor.output.CounterInterface;
 import org.eigengo.monitor.output.NullCounterInterface;
 import scala.Function1;
 
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
 abstract aspect AbstractMonitoringAspect {
 
     protected final CounterInterface createCounterInterface(CommonAgentConfiguration configuration) {
@@ -38,5 +41,15 @@ abstract aspect AbstractMonitoringAspect {
 
     protected final <A> AgentConfiguration<A> getAgentConfiguration(String agentName, Function1<Config, A> agent) {
         return AgentConfigurationFactory.getAgentCofiguration(agentName, agent);
+    }
+
+    protected final HashMap<ActorFilter, AtomicLong> getCounterKeys(AgentConfiguration<AkkaAgentConfiguration> configuration) {
+        ActorFilter[] filters = configuration.agent().sampling().allFilters();
+        // TODO: Check best key to use
+        HashMap<ActorFilter, AtomicLong> counters = new HashMap<ActorFilter, AtomicLong>();
+        for (ActorFilter actorFilter: filters) {
+            counters.put(actorFilter, new AtomicLong(0));
+        }
+        return counters;
     }
 }

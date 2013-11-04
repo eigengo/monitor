@@ -15,10 +15,11 @@
  */
 package org.eigengo.monitor.agent.akka
 
-import com.typesafe.config.Config
+import com.typesafe.config.{ConfigValueType, ConfigObject, Config}
 import org.eigengo.monitor.agent.akka.ActorFilter._
 import org.eigengo.monitor.agent.akka.ActorFilter.NamedActorSystem
 import org.eigengo.monitor.agent.akka.ActorFilter.SameType
+import akka.actor.ActorPath
 
 /**
  * Configures the Akka agent by specifying the ``included`` and ``excluded`` actor filters.
@@ -28,7 +29,8 @@ import org.eigengo.monitor.agent.akka.ActorFilter.SameType
  * @param incuded the filter that matches the included actors
  * @param excluded the filter that matches the excluded actors
  */
-case class AkkaAgentConfiguration(includeRoutees: Boolean, includeSystemAgents: Boolean, incuded: ActorFilter, excluded: ActorFilter)
+case class AkkaAgentConfiguration(includeRoutees: Boolean, includeSystemAgents: Boolean, incuded: ActorFilter,
+                                  excluded: ActorFilter, sampling: SamplingRates)
 
 /**
  * Companion for AkkaAgentConfiguration that provides a method to turn a ``Config`` into
@@ -50,7 +52,9 @@ object AkkaAgentConfiguration {
     val includeRoutees = if (config.hasPath("includeRoutees")) config.getBoolean("includeRoutees") else false
     val included = if (config.hasPath("included")) config.getStringList("included").map(parseFilter).toList else Nil
     val excluded = if (config.hasPath("excluded")) config.getStringList("included").map(parseFilter).toList else Nil
-    AkkaAgentConfiguration(includeRoutees, false, AnyAcceptActorFilter(included, true), AnyAcceptActorFilter(excluded, false))
+    val sampling = if (config.hasPath("sampling")) config.getObjectList("sampling").flatMap(parseSampling).toList else Nil
+    AkkaAgentConfiguration(includeRoutees, false, AnyAcceptActorFilter(included, true),
+                            AnyAcceptActorFilter(excluded, false), SamplingRates(sampling))
   }
 
   private def parseActorSystemFilter(actorSystemName: String): ActorSystemNameFilter =
@@ -65,6 +69,18 @@ object AkkaAgentConfiguration {
   private def parseFilter(expression: String): ActorFilter = expression match {
     case ActorPathPattern(name, path)  => ActorPathFilter(parseActorSystemFilter(name), parseActorPathElements(path))
     case ActorTypePattern(name, clazz) => ActorTypeFilter(parseActorSystemFilter(name), SameType(clazz))
+  }
+
+  private def parseSampling(samplingObject: ConfigObject): Iterable[SamplingRate] = samplingObject match {
+    case samplingObject: ConfigObject => {
+      (samplingObject.get("rate").unwrapped(), samplingObject.get("for").unwrapped()) match {
+        case (rate: Number, pathSeq: java.util.List[Object]) =>
+          (0 until pathSeq.size()).map{
+            index =>
+            SamplingRate(parseFilter(pathSeq.get(index).toString()), rate.intValue())
+          }
+      }
+    }
   }
 
 }
@@ -84,4 +100,12 @@ object AkkaAgentConfigurationJapi {
 }
 
 //TODO: complete me
-//case class SamplingRate(included: ActorFilter, sampleEvery: Int)
+case class SamplingRate(included: ActorFilter, sampleEvery: Int) {
+  def includes(actorPath: ActorPath): Boolean = included.accept(actorPath, None)
+}
+
+case class SamplingRates(samplingRates: List[SamplingRate]) {
+  def allFilters():Array[ActorFilter] = samplingRates.map(_.included).toArray
+  def getRate(actorPath: ActorPath): Int = samplingRates.find(_.includes(actorPath)).map(_.sampleEvery).getOrElse(1)
+  def getFilterFor(actorPath: ActorPath): Option[ActorFilter] = samplingRates.find(_.includes(actorPath)).map(_.included)
+}
