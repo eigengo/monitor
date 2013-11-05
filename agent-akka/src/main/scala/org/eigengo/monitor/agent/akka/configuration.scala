@@ -15,7 +15,7 @@
  */
 package org.eigengo.monitor.agent.akka
 
-import com.typesafe.config.{ConfigValueType, ConfigObject, Config}
+import com.typesafe.config.{ConfigObject, Config}
 import org.eigengo.monitor.agent.akka.ActorFilter._
 import org.eigengo.monitor.agent.akka.ActorFilter.NamedActorSystem
 import org.eigengo.monitor.agent.akka.ActorFilter.SameType

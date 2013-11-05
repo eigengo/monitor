@@ -103,7 +103,7 @@ object TestCounterInterface {
     val counter: TestCounter = TestCounter(aspect, delta, tags)
     counters += counter
 
-    println(s"**counter: $aspect -> $counter")
+//    println(s"**counter: $aspect -> $counter")
   }
 
   // sets a gauge
@@ -111,7 +111,7 @@ object TestCounterInterface {
     val gauge = TestCounter(aspect, value, tags)
     counters += gauge
 
-    println(s"**gauge:   $aspect -> $gauge")
+//    println(s"**gauge:   $aspect -> $gauge")
   }
 
   /**

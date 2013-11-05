@@ -28,3 +28,23 @@ class WithUnhandledActor extends Actor {
   }
 
 }
+
+class NullTestingActor1 extends Actor {
+
+  def receive: Receive = {
+    case i: Int =>
+  }
+
+  override def unhandled(message: Any): Unit = ()
+
+}
+
+class NullTestingActor2 extends Actor {
+
+  def receive: Receive = {
+    case i: Int =>
+  }
+
+  override def unhandled(message: Any): Unit = ()
+
+}
