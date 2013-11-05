@@ -29,7 +29,9 @@ object BuildSettings {
         Resolver.sonatypeRepo("releases"),
         Resolver.typesafeRepo("releases"),
         Resolver.typesafeRepo("snapshots"),
-        Resolver.sonatypeRepo("snapshots")
+        Resolver.sonatypeRepo("snapshots"),
+        "Spray Releases" at "http://repo.spray.io",
+        "Spray Nightlies" at "http://nightlies.spray.io"
       ),
       parallelExecution in Test := false
   )

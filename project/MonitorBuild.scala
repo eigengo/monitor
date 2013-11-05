@@ -60,11 +60,11 @@ object MonitorBuild extends Build {
   )
   lazy val test = module("test") dependsOn (output) settings (
   	libraryDependencies += specs2,
-    libraryDependencies += akka_testkit
+    libraryDependencies += akka.testkit
   )
   lazy val agent_akka = module("agent-akka", BuildSettings.aspectjCompileSettings) dependsOn (agent, output, test % "test") settings (
   	libraryDependencies += aspectj_weaver,
-  	libraryDependencies += akka_actor,
+  	libraryDependencies += akka.actor,
 
     javaOptions in Test += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
     fork in Test := true
@@ -73,7 +73,11 @@ object MonitorBuild extends Build {
   lazy val agent_play  = module("agent-play")  dependsOn(agent, output)
 
   lazy val example_akka = module("example-akka") dependsOn(agent_akka, output_statsd) settings (
-  	libraryDependencies += akka_actor
+    libraryDependencies += akka.actor
+  )
+  lazy val example_spray = module("example-spray") dependsOn(agent_spray, output_statsd) settings (
+    libraryDependencies += spray.can,
+    libraryDependencies += spray.httpx
   )
 
   lazy val docs = Project(
