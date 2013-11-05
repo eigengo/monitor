@@ -31,6 +31,15 @@ public interface CounterInterface {
     void incrementCounter(String aspect, String... tags);
 
     /**
+     * Increment the counter identified by {@code aspect} by a given number.
+     *
+     * @param aspect the aspect to increment
+     * @param delta the amount to increment the counter by
+     * @param tags optional tags
+     */
+    void incrementCounter(String aspect, int delta, String... tags);
+
+    /**
      * Decrement the counter identified by {@code aspect} by one.
      *
      * @param aspect the aspect to decrement

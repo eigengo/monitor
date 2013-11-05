@@ -29,6 +29,10 @@ class TestCounterInterface extends CounterInterface {
     TestCounterInterface.add(aspect, 1, tags.toList)
   }
 
+  override def incrementCounter(aspect: String, delta: Int, tags: String*): Unit = {
+    TestCounterInterface.add(aspect, delta, tags.toList)
+  }
+
   override def recordGaugeValue(aspect: String, value: Int, tags: String*): Unit = {
     TestCounterInterface.set(aspect, value, tags.toList)
   }

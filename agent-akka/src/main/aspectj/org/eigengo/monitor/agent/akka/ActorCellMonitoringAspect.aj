@@ -22,8 +22,6 @@ import scala.Option;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -111,14 +109,16 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         final PathAndClass pathAndClass = new PathAndClass(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()));
         if (!includeActorPath(pathAndClass) || !sampleMessage(pathAndClass)) return proceed(actorCell, msg);
 
+        int samplingRate = getSampleRate(pathAndClass);
+
         // we tag by actor name
         final String[] tags = getTags(actorPath, actorCell.actor());
 
         // record the queue size
         this.counterInterface.recordGaugeValue("akka.queue.size", actorCell.numberOfMessages(), tags);
         // record the message, general and specific
-        this.counterInterface.incrementCounter("akka.actor.delivered", tags);
-        this.counterInterface.incrementCounter("akka.actor.delivered." + msg.getClass().getSimpleName(), tags);
+        this.counterInterface.incrementCounter("akka.actor.delivered", samplingRate, tags);
+        this.counterInterface.incrementCounter("akka.actor.delivered." + msg.getClass().getSimpleName(), samplingRate, tags);
 
         // measure the time. we're using the ``nanoTime`` call to access the high-precision timer.
         // since we're not really interested in wall time, but just some increasing measure of

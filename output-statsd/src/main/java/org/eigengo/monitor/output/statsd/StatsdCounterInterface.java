@@ -31,6 +31,11 @@ public class StatsdCounterInterface implements CounterInterface {
     }
 
     @Override
+    public void incrementCounter(String aspect, int delta, String... tags) {
+        statsd.count(aspect, delta, tags);
+    }
+
+    @Override
     public void decrementCounter(String aspect, String... tags) {
         statsd.decrementCounter(aspect, tags);
     }

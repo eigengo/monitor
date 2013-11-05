@@ -19,7 +19,6 @@ import com.typesafe.config.{ConfigObject, Config}
 import org.eigengo.monitor.agent.akka.ActorFilter._
 import org.eigengo.monitor.agent.akka.ActorFilter.NamedActorSystem
 import org.eigengo.monitor.agent.akka.ActorFilter.SameType
-import akka.actor.ActorPath
 
 /**
  * Configures the Akka agent by specifying the ``included`` and ``excluded`` actor filters.
