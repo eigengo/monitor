@@ -24,14 +24,15 @@ class ActorTypeFilterSpec extends Specification {
   "Type filter" should {
     val actorSystemName = "default"
     val singlePath = ActorPath.fromString(s"akka://$actorSystemName/foo/bar/baz")
+    val singlePathFoo = PathAndClass(singlePath, Some("com.foo.BarActor"))
+    val singlePathFaa = PathAndClass(singlePath, Some("com.faa.BarActor"))
 
     "Match concrete path" in {
-      ActorTypeFilter(AnyActorSystem, SameType("com.foo.BarActor")).accept(singlePath, Some("com.foo.BarActor")) mustEqual true
-      ActorTypeFilter(NamedActorSystem(actorSystemName), SameType("com.foo.BarActor")).accept(singlePath, Some("com.foo.BarActor")) mustEqual true
-      ActorTypeFilter(NamedActorSystem("asdadasdasdas"), SameType("com.foo.BarActor")).accept(singlePath, Some("com.foo.BarActor")) mustEqual false
+      ActorTypeFilter(AnyActorSystem, SameType("com.foo.BarActor")).accept(singlePathFoo) mustEqual true
+      ActorTypeFilter(NamedActorSystem(actorSystemName), SameType("com.foo.BarActor")).accept(singlePathFoo) mustEqual true
+      ActorTypeFilter(NamedActorSystem("asdadasdasdas"), SameType("com.foo.BarActor")).accept(singlePathFoo) mustEqual false
 
-      ActorTypeFilter(AnyActorSystem, SameType("com.foo.BarActor")).accept(singlePath, Some("com.faa.BarActor")) mustEqual false
-      ActorTypeFilter(AnyActorSystem, SameType("com.foo.BarActor")).accept(singlePath, Some("com.faa.BarActor")) mustEqual false
+      ActorTypeFilter(AnyActorSystem, SameType("com.foo.BarActor")).accept(singlePathFaa) mustEqual false
     }
 
   }

@@ -56,26 +56,26 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     // decide whether to include this ActorCell in our measurements
-    private boolean includeActorPath(final ActorPath actorPath, final Option<String> actorClassName) {
-        if (!this.agentConfiguration.incuded().accept(actorPath, actorClassName)) return false;
-        if (this.agentConfiguration.excluded().accept(actorPath, actorClassName)) return false;
+    private boolean includeActorPath(final PathAndClass pathAndClass) {
+        if (!this.agentConfiguration.incuded().accept(pathAndClass)) return false;
+        if (this.agentConfiguration.excluded().accept(pathAndClass)) return false;
 
         if (this.agentConfiguration.includeSystemAgents()) return true;
 
-        String userOrSystem = actorPath.getElements().iterator().next();
+        String userOrSystem = pathAndClass.actorPath().getElements().iterator().next();
         return "user".equals(userOrSystem);
     }
 
-    private int getSampleRate(final ActorPath actorPath, final Option<String> actorClassName) {
-        return agentConfiguration.sampling().getRate(actorPath, actorClassName);
+    private int getSampleRate(final PathAndClass pathAndClass) {
+        return agentConfiguration.sampling().getRate(pathAndClass);
     }
 
-    private final boolean sampleMessage(final ActorPath actorPath, final Option<String> actorClassName) {
-        int sampleRate = getSampleRate(actorPath, actorClassName);
+    private final boolean sampleMessage(final PathAndClass pathAndClass) {
+        int sampleRate = getSampleRate(pathAndClass);
         if (sampleRate == 1) return true;
 
-        concurrentCounters.putIfAbsent(actorClassName, new AtomicLong(0));
-        long timesSeenSoFar = concurrentCounters.get(actorClassName).incrementAndGet();
+        concurrentCounters.putIfAbsent(pathAndClass.actorClassName(), new AtomicLong(0));
+        long timesSeenSoFar = concurrentCounters.get(pathAndClass.actorClassName()).incrementAndGet();
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
@@ -108,8 +108,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
         final ActorPath actorPath = actorCell.self().path();
-        if (!includeActorPath(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName())) ||
-                !sampleMessage(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()))) return proceed(actorCell, msg);
+        final PathAndClass pathAndClass = new PathAndClass(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()));
+        if (!includeActorPath(pathAndClass) || !sampleMessage(pathAndClass)) return proceed(actorCell, msg);
 
         // we tag by actor name
         final String[] tags = getTags(actorPath, actorCell.actor());
@@ -170,7 +170,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param actor the {@code ActorRef} returned from the call
      */
     after() returning (ActorRef actor): Pointcuts.anyActorOf() {
-        if (!includeActorPath(actor.path(), this.noActorClazz)) return;
+        if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
 
         final String tag = actor.path().root().toString();
         this.counterInterface.incrementCounter("akka.actor.count", tag);
@@ -182,7 +182,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param actor the actor being stopped
      */
     after(ActorRef actor) : Pointcuts.actorCellStop(actor) {
-        if (!includeActorPath(actor.path(), this.noActorClazz)) return;
+        if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
 
         final String tag = actor.path().root().toString();
         this.counterInterface.decrementCounter("akka.actor.count", tag);
