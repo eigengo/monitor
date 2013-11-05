@@ -42,14 +42,4 @@ abstract aspect AbstractMonitoringAspect {
     protected final <A> AgentConfiguration<A> getAgentConfiguration(String agentName, Function1<Config, A> agent) {
         return AgentConfigurationFactory.getAgentCofiguration(agentName, agent);
     }
-
-    protected final ConcurrentHashMap<ActorFilter, AtomicLong> getCounterKeys(AgentConfiguration<AkkaAgentConfiguration> configuration) {
-        ActorFilter[] filters = configuration.agent().sampling().allFilters();
-        // TODO: Check best key to use
-        ConcurrentHashMap<ActorFilter, AtomicLong> counters = new ConcurrentHashMap<ActorFilter, AtomicLong>();
-        for (ActorFilter actorFilter: filters) {
-            counters.put(actorFilter, new AtomicLong(0));
-        }
-        return counters;
-    }
 }

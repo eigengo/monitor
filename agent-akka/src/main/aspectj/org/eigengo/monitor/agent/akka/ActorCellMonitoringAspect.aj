@@ -34,7 +34,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
     private final Option<String> noActorClazz = Option.empty();
-    private final ConcurrentHashMap<ActorFilter, AtomicLong> concurrentCounters;
+    private final ConcurrentHashMap<Option<String>, AtomicLong> concurrentCounters;
 
     /**
      * Constructs this aspect
@@ -43,8 +43,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.agentConfiguration = configuration.agent();
         this.counterInterface = createCounterInterface(configuration.common());
-    // we initialise all the keys we'll be using for our sampling here, so that we can access the HashMap once per query
-        this.concurrentCounters = getCounterKeys(configuration);
+        this.concurrentCounters = new ConcurrentHashMap<Option<String>, AtomicLong>();
     }
 
     /**
@@ -71,18 +70,12 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return agentConfiguration.sampling().getRate(actorPath, actorClassName);
     }
 
-    private Option<ActorFilter> getFilterToSampleOver(final ActorPath actorPath, final Option<String> actorClassName) {
-        return agentConfiguration.sampling().getFilterFor(actorPath, actorClassName);
-    }
-
     private final boolean sampleMessage(final ActorPath actorPath, final Option<String> actorClassName) {
         int sampleRate = getSampleRate(actorPath, actorClassName);
         if (sampleRate == 1) return true;
 
-        // We've already essentially checked that the actorFilter is not None (with `sampleRate == 1`) so this is legit
-        ActorFilter actorFilter = getFilterToSampleOver(actorPath, actorClassName).get();
-        // And we initialised the HashMap element with AtomicLong(0) in the constructor
-        long timesSeenSoFar = concurrentCounters.get(actorFilter).incrementAndGet();
+        concurrentCounters.putIfAbsent(actorClassName, new AtomicLong(0));
+        long timesSeenSoFar = concurrentCounters.get(actorClassName).incrementAndGet();
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
