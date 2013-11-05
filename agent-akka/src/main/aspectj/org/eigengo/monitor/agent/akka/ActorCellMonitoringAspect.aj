@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Contains advices for monitoring behaviour of an actor; typically imprisoned in an {@code ActorCell}.
@@ -33,7 +34,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
     private final Option<String> noActorClazz = Option.empty();
-    private final HashMap<ActorFilter, AtomicLong> concurrentCounters;
+    private final ConcurrentHashMap<ActorFilter, AtomicLong> concurrentCounters;
 
     /**
      * Constructs this aspect
@@ -76,7 +77,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
     private final boolean sampleMessage(final ActorPath actorPath, final Option<String> actorClassName) {
         int sampleRate = getSampleRate(actorPath, actorClassName);
-        if (sampleRate == 1) {return true;}
+        if (sampleRate == 1) return true;
 
         // We've already essentially checked that the actorFilter is not None (with `sampleRate == 1`) so this is legit
         ActorFilter actorFilter = getFilterToSampleOver(actorPath, actorClassName).get();

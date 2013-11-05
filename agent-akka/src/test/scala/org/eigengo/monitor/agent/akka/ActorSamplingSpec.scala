@@ -13,7 +13,7 @@ class ActorSamplingSpec extends ActorCellMonitoringAspectSpec(Some("sample.conf"
 
     "Sample every 'n' messages (where 'n' is defined in conf file)" in {
       TestCounterInterface.clear()
-      (0 until 1000) map {_ => a ! 1}
+      (0 until 1000) foreach {_ => a ! 1}
 
       Thread.sleep(500)   // wait for the messages
 
@@ -25,7 +25,7 @@ class ActorSamplingSpec extends ActorCellMonitoringAspectSpec(Some("sample.conf"
 
 
       TestCounterInterface.clear()
-      (0 until 1000) map {_ => b ! 1}
+      (0 until 1000) foreach {_ => b ! 1}
       Thread.sleep(500)   // wait for the messages
 
       // we expect to see 1000/15 ~=67 messages to actor b (we round up, since logging the first message)

@@ -28,6 +28,7 @@ import akka.actor.ActorPath
  * @param includeSystemAgents include the system agents in the monitoring?
  * @param incuded the filter that matches the included actors
  * @param excluded the filter that matches the excluded actors
+ * @param sampling defines the sampling rate for any actors where we don't want to log every message received
  */
 case class AkkaAgentConfiguration(includeRoutees: Boolean, includeSystemAgents: Boolean, incuded: ActorFilter,
                                   excluded: ActorFilter, sampling: SamplingRates)
@@ -71,15 +72,11 @@ object AkkaAgentConfiguration {
     case ActorTypePattern(name, clazz) => ActorTypeFilter(parseActorSystemFilter(name), SameType(clazz))
   }
 
-  private def parseSampling(samplingObject: ConfigObject): Iterable[SamplingRate] = samplingObject match {
-    case samplingObject: ConfigObject => {
-      (samplingObject.get("rate").unwrapped(), samplingObject.get("for").unwrapped()) match {
-        case (rate: Number, pathSeq: java.util.List[Object]) =>
-          (0 until pathSeq.size()).map{
-            index =>
-            SamplingRate(parseFilter(pathSeq.get(index).toString()), rate.intValue())
-          }
-      }
+  private def parseSampling(samplingObject: ConfigObject): Iterable[SamplingRate] = {
+    import scala.collection.JavaConversions._
+    (samplingObject.get("rate").unwrapped(), samplingObject.get("for").unwrapped()) match {
+      case (rate: Number, filters: java.util.List[String @unchecked]) =>
+        filters.map(filter => SamplingRate(parseFilter(filter), rate.intValue()))
     }
   }
 
