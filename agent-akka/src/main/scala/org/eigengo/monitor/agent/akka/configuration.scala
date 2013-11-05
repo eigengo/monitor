@@ -95,9 +95,24 @@ object AkkaAgentConfigurationJapi {
 
 }
 
+/**
+* Represents a sampling rate provided by a conf object
+*
+* @param included the filter over the actors
+* @param sampleEvery how often to sample (e.g. every 5 messages)
+*/
 case class SamplingRate(included: ActorFilter, sampleEvery: Int)
 
+/**
+* A wrapper for holding multiple sampling rates
+*/
 case class SamplingRates(samplingRates: List[SamplingRate]) {
+  /**
+  * Gets the sampling rate for a particular actor
+  *
+  * @param pathAndClass an object representing the actor's path and (optionally) its class name
+  * @return the rate as an integer
+  */
   def getRate(pathAndClass: PathAndClass): Int =
     samplingRates.find(_.included.accept(pathAndClass)).map(_.sampleEvery).getOrElse(1)
 }

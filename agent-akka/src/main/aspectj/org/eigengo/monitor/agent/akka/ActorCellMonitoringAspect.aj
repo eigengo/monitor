@@ -64,10 +64,12 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return "user".equals(userOrSystem);
     }
 
+    // get the sample rate for an actor
     private int getSampleRate(final PathAndClass pathAndClass) {
         return agentConfiguration.sampling().getRate(pathAndClass);
     }
 
+    // decide whether to sample an actor on a particular occasion
     private final boolean sampleMessage(final PathAndClass pathAndClass) {
         int sampleRate = getSampleRate(pathAndClass);
         if (sampleRate == 1) return true;
