@@ -23,9 +23,6 @@ import org.eigengo.monitor.output.CounterInterface;
 import org.eigengo.monitor.output.NullCounterInterface;
 import scala.Function1;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 abstract aspect AbstractMonitoringAspect {
 
     protected final CounterInterface createCounterInterface(CommonAgentConfiguration configuration) {
