@@ -50,7 +50,7 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
       // stop(self)
       simpleActor ! 'stop
 
-      Thread.sleep(500)   // wait for the messages
+      Thread.sleep(1500)   // wait for the messages
 
       TestCounterInterface.foldlByAspect(actorCount)(TestCounter.plus) must contain(TestCounter(actorCount, 0, List(tag)))
     }

@@ -32,7 +32,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
     private final Option<String> noActorClazz = Option.empty();
-    private final ConcurrentHashMap<Option<String>, AtomicLong> concurrentCounters;
+    private final ConcurrentHashMap<Option<String>, AtomicLong> samplingCounters;
+    private final ConcurrentHashMap<String, AtomicLong> numberOfActors;
+
 
     /**
      * Constructs this aspect
@@ -41,7 +43,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.agentConfiguration = configuration.agent();
         this.counterInterface = createCounterInterface(configuration.common());
-        this.concurrentCounters = new ConcurrentHashMap<Option<String>, AtomicLong>();
+        this.samplingCounters = new ConcurrentHashMap<Option<String>, AtomicLong>();
+        this.numberOfActors = new ConcurrentHashMap<String, AtomicLong>();
     }
 
     /**
@@ -74,8 +77,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         int sampleRate = getSampleRate(pathAndClass);
         if (sampleRate == 1) return true;
 
-        this.concurrentCounters.putIfAbsent(pathAndClass.actorClassName(), new AtomicLong(0));
-        long timesSeenSoFar = this.concurrentCounters.get(pathAndClass.actorClassName()).incrementAndGet();
+        this.samplingCounters.putIfAbsent(pathAndClass.actorClassName(), new AtomicLong(0));
+        long timesSeenSoFar = this.samplingCounters.get(pathAndClass.actorClassName()).incrementAndGet();
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
@@ -178,9 +181,16 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     after() returning (ActorRef actor): Pointcuts.anyActorOf() {
         if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
+//        final String className = actor.getClass().getCanonicalName();
 
         final String tag = actor.path().root().toString();
-        this.counterInterface.incrementCounter("akka.actor.count", tag);
+        this.numberOfActors.putIfAbsent(tag, new AtomicLong(0));
+        // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
+        final long value = this.numberOfActors.get(tag).incrementAndGet();
+
+        System.out.println("+++++"+tag + " : " + value);
+        // record the current number of actors of this type
+        this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, tag);
     }
 
     /**
@@ -190,9 +200,14 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     after(ActorRef actor) : Pointcuts.actorCellStop(actor) {
         if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
+//        final String className = actor.getClass().getCanonicalName();
 
         final String tag = actor.path().root().toString();
-        this.counterInterface.decrementCounter("akka.actor.count", tag);
+        this.numberOfActors.putIfAbsent(tag, new AtomicLong(0));
+        final long value = this.numberOfActors.get(tag).decrementAndGet();
+
+        System.out.println("-----"+tag + " : " + value);
+        this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, tag);
     }
 
 }
