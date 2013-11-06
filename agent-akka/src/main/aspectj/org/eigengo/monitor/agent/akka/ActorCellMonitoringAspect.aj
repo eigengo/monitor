@@ -106,7 +106,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * this is the 'multiple-of-n'th time we've seen a message for an actor with a sample rate of n.
      *
      * Currently, we sample queue size, the fact that the message is delivered, the simple name of the class of the
-     * message, and the tinme taken to complete the actor's reactive action.
+     * message, and the time taken to complete the actor's reactive action.
      *
      * @param actorCell the ActorCell where the actor that receives the message "lives"
      * @param msg the incoming message
