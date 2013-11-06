@@ -17,11 +17,13 @@ package org.eigengo.monitor.agent.akka;
 
 import akka.actor.ActorCell;
 import akka.actor.ActorRef;
+import akka.actor.Props;
+import akka.actor.LocalActorRef;
 
 /**
  * Centralises the pointcuts
  */
-abstract aspect Pointcuts {
+abstract privileged aspect Pointcuts {
 
     /**
      * Pointcut for {@code ActorCell.receiveMessage(msg)}, extracting the {@code ActorCell} and the message being received
@@ -46,10 +48,12 @@ abstract aspect Pointcuts {
      * Pointcut for the {@code actorOf} methods in {@code ActorCell} and {@code ActorSystem}. You would typically use
      * it in the {@code after returning()} advices.
      */
-    static pointcut anyActorOf() : execution(* akka.actor.ActorSystem.actorOf(..)) || execution(* akka.actor.ActorCell.actorOf(..));
+    static pointcut anyActorOf(Props props) : (execution(* akka.actor.ActorSystem.actorOf(..)) || execution(* akka.actor.ActorCell.actorOf(..))) && args(props);
 
     /**
      * Pointcut for {@code ActorCell.stop(actor)} method, extracting the {@code ActorRef}
      */
-    static pointcut actorCellStop(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor);
+//    static pointcut actorCellStop(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor);
+
+    static pointcut anotherKindOfStop(LocalActorRef localRef) : target(localRef) && execution(* akka.actor.LocalActorRef.stop());
 }
