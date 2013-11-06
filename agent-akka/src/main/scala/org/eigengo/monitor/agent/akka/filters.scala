@@ -20,6 +20,8 @@ import org.eigengo.monitor.agent.akka.ActorFilter._
 
 import scala.annotation.tailrec
 
+// a case class for holding information about an actor's path and (optionally) its type
+case class PathAndClass(actorPath: ActorPath, actorClassName: Option[String])
 /**
  * ActorFilters always start by filtering the actor system, and then filtering either by looking
  * at the actor path, or by looking at the actor type
@@ -42,11 +44,10 @@ sealed trait ActorFilter {
   /**
    * Decides whether to accept this ``actorSystemName`` and ``actorPath``
    *
-   * @param actorPath the actor path being examined
-   * @param actorClassName the type of the actor being examined
+   * @param pathAndClass the path and type of the actor being examined
    * @return ``true`` if the actor system and path are acceptable
    */
-  def accept(actorPath: ActorPath, actorClassName: Option[String]): Boolean
+  def accept(pathAndClass: PathAndClass): Boolean
 
 }
 
@@ -57,8 +58,8 @@ sealed trait ActorFilter {
  * @param zero the zero
  */
 case class AnyAcceptActorFilter(filters: List[ActorFilter], zero: Boolean) extends ActorFilter {
-  override def accept(actorPath: ActorPath, actorClassName: Option[String]): Boolean = {
-    for (filter <- filters) if (!filter.accept(actorPath, actorClassName)) return false
+  override def accept(pathAndClass: PathAndClass): Boolean = {
+    for (filter <- filters) if (!filter.accept(pathAndClass)) return false
     zero
   }
 }
@@ -71,13 +72,13 @@ case class AnyAcceptActorFilter(filters: List[ActorFilter], zero: Boolean) exten
  */
 case class ActorPathFilter(actorSystem: ActorSystemNameFilter, actorPathElements: List[ActorPathElement]) extends ActorFilter {
 
-  override def accept(actorPath: ActorPath, actorClassName: Option[String]): Boolean = actorSystem match {
-    case AnyActorSystem                    => localAccept(actorPath, actorClassName)
-    case NamedActorSystem(actorSystemName) => actorPath.root.address.system == actorSystemName && localAccept(actorPath, actorClassName)
+  override def accept(pathAndClass: PathAndClass): Boolean = actorSystem match {
+    case AnyActorSystem                    => localAccept(pathAndClass)
+    case NamedActorSystem(actorSystemName) => pathAndClass.actorPath.root.address.system == actorSystemName && localAccept(pathAndClass)
     case _                                 => false
   }
 
-  private def localAccept(actorPath: ActorPath, actorClassName: Option[String]): Boolean = {
+  private def localAccept(pathAndClass: PathAndClass): Boolean = {
 
     @tailrec
     def acceptAll(xs: List[(ActorPathElement, String)]): Boolean = xs match {
@@ -85,7 +86,7 @@ case class ActorPathFilter(actorSystem: ActorSystemNameFilter, actorPathElements
       case (ape, e)::t => if (ape.accept(e)) acceptAll(t) else false
     }
 
-    val elements = actorPath.elements.toList
+    val elements = pathAndClass.actorPath.elements.toList
     actorPathElements.size == elements.size && acceptAll(actorPathElements.zip(elements))
   }
 }
@@ -98,14 +99,14 @@ case class ActorPathFilter(actorSystem: ActorSystemNameFilter, actorPathElements
  */
 case class ActorTypeFilter(actorSystem: ActorSystemNameFilter, actorType: ActorTypeOperator) extends ActorFilter {
 
-  override def accept(actorPath: ActorPath, actorClassName: Option[String]): Boolean = actorSystem match {
-    case AnyActorSystem                    => localAccept(actorPath, actorClassName)
-    case NamedActorSystem(actorSystemName) => actorPath.root.address.system == actorSystemName && localAccept(actorPath, actorClassName)
+  override def accept(pathAndClass: PathAndClass): Boolean = actorSystem match {
+    case AnyActorSystem                    => localAccept(pathAndClass)
+    case NamedActorSystem(actorSystemName) => pathAndClass.actorPath.root.address.system == actorSystemName && localAccept(pathAndClass)
     case _                                 => false
   }
 
-  private def localAccept(actorPath: ActorPath, actorClassName: Option[String]): Boolean =
-    actorClassName.map({ clazz =>
+  private def localAccept(pathAndClass: PathAndClass): Boolean =
+    pathAndClass.actorClassName.map({ clazz =>
       actorType match {
         case SameType(`clazz`) => true
         case _                 => false

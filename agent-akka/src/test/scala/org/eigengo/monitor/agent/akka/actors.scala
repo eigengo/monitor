@@ -21,7 +21,7 @@ class SimpleActor extends Actor {
 
   def receive: Receive = {
     case s: String =>
-      // do nothing
+    // do nothing
     case i: Int =>
       // for speed testing
       Thread.sleep(i)
@@ -30,5 +30,37 @@ class SimpleActor extends Actor {
     case false =>
       throw new RuntimeException("Bantha poodoo!")
   }
+
+}
+
+class WithUnhandledActor extends Actor {
+
+  def receive: Receive = {
+    case i: Int =>
+  }
+
+  override def unhandled(message: Any): Unit = {
+    // eat my shorts
+  }
+
+}
+
+class NullTestingActor1 extends Actor {
+
+  def receive: Receive = {
+    case i: Int =>
+  }
+
+  override def unhandled(message: Any): Unit = ()
+
+}
+
+class NullTestingActor2 extends Actor {
+
+  def receive: Receive = {
+    case i: Int =>
+  }
+
+  override def unhandled(message: Any): Unit = ()
 
 }

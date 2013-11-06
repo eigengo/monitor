@@ -26,6 +26,11 @@ public class NullCounterInterface implements CounterInterface {
     }
 
     @Override
+    public void incrementCounter(String aspect, int delta, String... tags) {
+        // noop
+    }
+
+    @Override
     public void decrementCounter(String aspect, String... tags) {
         // noop
     }

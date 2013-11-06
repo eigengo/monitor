@@ -15,7 +15,7 @@
  */
 package org.eigengo.monitor.agent.akka
 
-import com.typesafe.config.Config
+import com.typesafe.config.{ConfigObject, Config}
 import org.eigengo.monitor.agent.akka.ActorFilter._
 import org.eigengo.monitor.agent.akka.ActorFilter.NamedActorSystem
 import org.eigengo.monitor.agent.akka.ActorFilter.SameType
@@ -27,8 +27,10 @@ import org.eigengo.monitor.agent.akka.ActorFilter.SameType
  * @param includeSystemAgents include the system agents in the monitoring?
  * @param incuded the filter that matches the included actors
  * @param excluded the filter that matches the excluded actors
+ * @param sampling defines the sampling rate for any actors where we don't want to log every message received
  */
-case class AkkaAgentConfiguration(includeRoutees: Boolean, includeSystemAgents: Boolean, incuded: ActorFilter, excluded: ActorFilter)
+case class AkkaAgentConfiguration(includeRoutees: Boolean, includeSystemAgents: Boolean, incuded: ActorFilter,
+                                  excluded: ActorFilter, sampling: SamplingRates)
 
 /**
  * Companion for AkkaAgentConfiguration that provides a method to turn a ``Config`` into
@@ -50,7 +52,9 @@ object AkkaAgentConfiguration {
     val includeRoutees = if (config.hasPath("includeRoutees")) config.getBoolean("includeRoutees") else false
     val included = if (config.hasPath("included")) config.getStringList("included").map(parseFilter).toList else Nil
     val excluded = if (config.hasPath("excluded")) config.getStringList("included").map(parseFilter).toList else Nil
-    AkkaAgentConfiguration(includeRoutees, false, AnyAcceptActorFilter(included, true), AnyAcceptActorFilter(excluded, false))
+    val sampling = if (config.hasPath("sampling")) config.getObjectList("sampling").flatMap(parseSampling).toList else Nil
+    AkkaAgentConfiguration(includeRoutees, false, AnyAcceptActorFilter(included, true),
+                            AnyAcceptActorFilter(excluded, false), SamplingRates(sampling))
   }
 
   private def parseActorSystemFilter(actorSystemName: String): ActorSystemNameFilter =
@@ -65,6 +69,14 @@ object AkkaAgentConfiguration {
   private def parseFilter(expression: String): ActorFilter = expression match {
     case ActorPathPattern(name, path)  => ActorPathFilter(parseActorSystemFilter(name), parseActorPathElements(path))
     case ActorTypePattern(name, clazz) => ActorTypeFilter(parseActorSystemFilter(name), SameType(clazz))
+  }
+
+  private def parseSampling(samplingObject: ConfigObject): Iterable[SamplingRate] = {
+    import scala.collection.JavaConversions._
+    (samplingObject.get("rate").unwrapped(), samplingObject.get("for").unwrapped()) match {
+      case (rate: Number, filters: java.util.List[String @unchecked]) =>
+        filters.map(filter => SamplingRate(parseFilter(filter), rate.intValue()))
+    }
   }
 
 }
@@ -83,5 +95,24 @@ object AkkaAgentConfigurationJapi {
 
 }
 
-//TODO: complete me
-//case class SamplingRate(included: ActorFilter, sampleEvery: Int)
+/**
+* Represents a sampling rate provided by a conf object
+*
+* @param included the filter over the actors
+* @param sampleEvery how often to sample (e.g. every 5 messages)
+*/
+case class SamplingRate(included: ActorFilter, sampleEvery: Int)
+
+/**
+* A wrapper for holding multiple sampling rates
+*/
+case class SamplingRates(samplingRates: List[SamplingRate]) {
+  /**
+  * Gets the sampling rate for a particular actor
+  *
+  * @param pathAndClass an object representing the actor's path and (optionally) its class name
+  * @return the rate as an integer
+  */
+  def getRate(pathAndClass: PathAndClass): Int =
+    samplingRates.find(_.included.accept(pathAndClass)).map(_.sampleEvery).getOrElse(1)
+}

@@ -22,6 +22,8 @@ import scala.Option;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Contains advices for monitoring behaviour of an actor; typically imprisoned in an {@code ActorCell}.
@@ -30,6 +32,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
     private final Option<String> noActorClazz = Option.empty();
+    private final ConcurrentHashMap<Option<String>, AtomicLong> concurrentCounters;
 
     /**
      * Constructs this aspect
@@ -38,6 +41,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.agentConfiguration = configuration.agent();
         this.counterInterface = createCounterInterface(configuration.common());
+        this.concurrentCounters = new ConcurrentHashMap<Option<String>, AtomicLong>();
     }
 
     /**
@@ -50,14 +54,29 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     // decide whether to include this ActorCell in our measurements
-    private boolean includeActorPath(final ActorPath actorPath, final Option<String> actorClassName) {
-        if (!this.agentConfiguration.incuded().accept(actorPath, actorClassName)) return false;
-        if (this.agentConfiguration.excluded().accept(actorPath, actorClassName)) return false;
+    private boolean includeActorPath(final PathAndClass pathAndClass) {
+        if (!this.agentConfiguration.incuded().accept(pathAndClass)) return false;
+        if (this.agentConfiguration.excluded().accept(pathAndClass)) return false;
 
         if (this.agentConfiguration.includeSystemAgents()) return true;
 
-        String userOrSystem = actorPath.getElements().iterator().next();
+        String userOrSystem = pathAndClass.actorPath().getElements().iterator().next();
         return "user".equals(userOrSystem);
+    }
+
+    // get the sample rate for an actor
+    private int getSampleRate(final PathAndClass pathAndClass) {
+        return this.agentConfiguration.sampling().getRate(pathAndClass);
+    }
+
+    // decide whether to sample an actor on a particular occasion
+    private final boolean sampleMessage(final PathAndClass pathAndClass) {
+        int sampleRate = getSampleRate(pathAndClass);
+        if (sampleRate == 1) return true;
+
+        this.concurrentCounters.putIfAbsent(pathAndClass.actorClassName(), new AtomicLong(0));
+        long timesSeenSoFar = this.concurrentCounters.get(pathAndClass.actorClassName()).incrementAndGet();
+        return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
     // get the tags for the cell
@@ -83,13 +102,21 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
     /**
      * Advises the {@code ActorCell.receiveMessage(message: Object): Unit}
+     * We proceed with the pointcut if the actor is to be included in the monitoring *and* this is
+     * the 'multiple-of-n'th time we've seen a message for an actor with a sample rate of n.
+     *
+     * Currently, we sample queue size, the fact that the message is delivered, the simple name of the class of the
+     * message, and the time taken to complete the actor's reactive action.
      *
      * @param actorCell the ActorCell where the actor that receives the message "lives"
      * @param msg the incoming message
      */
     Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
         final ActorPath actorPath = actorCell.self().path();
-        if (!includeActorPath(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()))) return proceed(actorCell, msg);
+        final PathAndClass pathAndClass = new PathAndClass(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()));
+        if (!includeActorPath(pathAndClass) || !sampleMessage(pathAndClass)) return proceed(actorCell, msg);
+
+        int samplingRate = getSampleRate(pathAndClass);
 
         // we tag by actor name
         final String[] tags = getTags(actorPath, actorCell.actor());
@@ -97,8 +124,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         // record the queue size
         this.counterInterface.recordGaugeValue("akka.queue.size", actorCell.numberOfMessages(), tags);
         // record the message, general and specific
-        this.counterInterface.incrementCounter("akka.actor.delivered", tags);
-        this.counterInterface.incrementCounter("akka.actor.delivered." + msg.getClass().getSimpleName(), tags);
+        this.counterInterface.incrementCounter("akka.actor.delivered", samplingRate, tags);
+        this.counterInterface.incrementCounter("akka.actor.delivered." + msg.getClass().getSimpleName(), samplingRate, tags);
 
         // measure the time. we're using the ``nanoTime`` call to access the high-precision timer.
         // since we're not really interested in wall time, but just some increasing measure of
@@ -150,7 +177,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param actor the {@code ActorRef} returned from the call
      */
     after() returning (ActorRef actor): Pointcuts.anyActorOf() {
-        if (!includeActorPath(actor.path(), this.noActorClazz)) return;
+        if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
 
         final String tag = actor.path().root().toString();
         this.counterInterface.incrementCounter("akka.actor.count", tag);
@@ -162,7 +189,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param actor the actor being stopped
      */
     after(ActorRef actor) : Pointcuts.actorCellStop(actor) {
-        if (!includeActorPath(actor.path(), this.noActorClazz)) return;
+        if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
 
         final String tag = actor.path().root().toString();
         this.counterInterface.decrementCounter("akka.actor.count", tag);

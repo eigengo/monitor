@@ -24,18 +24,19 @@ class ActorPathFilterSpec extends Specification {
   "Path filter" should {
     val actorSystemName = "default"
     val singlePath = ActorPath.fromString(s"akka://$actorSystemName/foo/bar/baz")
+    val singlePathNullClass = PathAndClass(singlePath, null)
 
     "Match concrete path" in {
-      ActorPathFilter(AnyActorSystem, List("foo", "bar", "baz").map(NamedPathElement)).accept(singlePath, null) mustEqual true
-      ActorPathFilter(NamedActorSystem(actorSystemName), List("foo", "bar", "baz").map(NamedPathElement)).accept(singlePath, null) mustEqual true
-      ActorPathFilter(NamedActorSystem("asdadasdadsad"), List("foo", "bar", "baz").map(NamedPathElement)).accept(singlePath, null) mustEqual false
+      ActorPathFilter(AnyActorSystem, List("foo", "bar", "baz").map(NamedPathElement)).accept(singlePathNullClass) mustEqual true
+      ActorPathFilter(NamedActorSystem(actorSystemName), List("foo", "bar", "baz").map(NamedPathElement)).accept(singlePathNullClass) mustEqual true
+      ActorPathFilter(NamedActorSystem("asdadasdadsad"), List("foo", "bar", "baz").map(NamedPathElement)).accept(singlePathNullClass) mustEqual false
 
-      ActorPathFilter(AnyActorSystem, List("faa", "bar", "baz").map(NamedPathElement)).accept(singlePath, null) mustEqual false
+      ActorPathFilter(AnyActorSystem, List("faa", "bar", "baz").map(NamedPathElement)).accept(singlePathNullClass) mustEqual false
     }
 
     "Match wildcard path" in {
-      ActorPathFilter(AnyActorSystem, SingleWildcardPathElement :: List("bar", "baz").map(NamedPathElement)).accept(singlePath, null) mustEqual true
-      ActorPathFilter(AnyActorSystem, SingleWildcardPathElement :: List("baa", "baz").map(NamedPathElement)).accept(singlePath, null) mustEqual false
+      ActorPathFilter(AnyActorSystem, SingleWildcardPathElement :: List("bar", "baz").map(NamedPathElement)).accept(singlePathNullClass) mustEqual true
+      ActorPathFilter(AnyActorSystem, SingleWildcardPathElement :: List("baa", "baz").map(NamedPathElement)).accept(singlePathNullClass) mustEqual false
     }
 
   /*
