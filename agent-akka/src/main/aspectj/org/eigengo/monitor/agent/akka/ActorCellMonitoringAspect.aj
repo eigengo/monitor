@@ -102,8 +102,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
     /**
      * Advises the {@code ActorCell.receiveMessage(message: Object): Unit}
-     * We proceed with the pointcut if the actor is to be included in the monitoring, *and* if
-     * this is the 'multiple-of-n'th time we've seen a message for an actor with a sample rate of n.
+     * We proceed with the pointcut if the actor is to be included in the monitoring *and* this is
+     * the 'multiple-of-n'th time we've seen a message for an actor with a sample rate of n.
      *
      * Currently, we sample queue size, the fact that the message is delivered, the simple name of the class of the
      * message, and the time taken to complete the actor's reactive action.
