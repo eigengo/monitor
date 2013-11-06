@@ -177,6 +177,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     /**
      * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem}
      *
+     * @param props the {@code Props} instance used in the call
      * @param actor the {@code ActorRef} returned from the call
      */
     after(Props props) returning (ActorRef actor): Pointcuts.anyActorOf(props) {
@@ -187,40 +188,22 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
         final long value = this.numberOfActors.get(className).incrementAndGet();
 
-        System.out.println("+++++"+className + " : " + value);
         // record the current number of actors of this type
         this.counterInterface.recordGaugeValue("akka.actor.new.count", (int)value, className);
     }
 
     /**
-     * Advises the {@code ActorCell.stop} method
+     * Advises the {@code LocalActorRef.stop} method
      *
-     * @param actor the actor being stopped
+     * @param actorRef the {@code LocalActorRef} of the actor being stopped
      */
-//    after(ActorRef actor) : Pointcuts.actorCellStop(actor) {
-//        if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
-////        final String className = actor.getClass().getCanonicalName();
-//
-//        final String tag = actor.path().root().toString();
-//        this.numberOfActors.putIfAbsent(tag, new AtomicLong(0));
-//        final long value = this.numberOfActors.get(tag).decrementAndGet();
-//
-//        System.out.println("-----"+tag + " : " + value);
-//        this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, tag);
-//    }
-    /**
-     * Advises the {@code ActorCell.stop} method
-     *
-     * @param actor the actor being stopped
-     */
-    after(LocalActorRef actorRef) : Pointcuts.anotherKindOfStop(actorRef) {
-//        if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
+    after(LocalActorRef actorRef) : Pointcuts.localActorRefStop(actorRef) {
+        if (!includeActorPath(new PathAndClass(actorRef.path(), this.noActorClazz))) return;
         final String className = actorRef.underlying().actor().getClass().getCanonicalName();
 
         this.numberOfActors.putIfAbsent(className, new AtomicLong(0));
         final long value = this.numberOfActors.get(className).decrementAndGet();
 
-        System.out.println("-----"+className + " : " + value);
         this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, className);
     }
 

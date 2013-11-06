@@ -53,7 +53,10 @@ abstract privileged aspect Pointcuts {
     /**
      * Pointcut for {@code ActorCell.stop(actor)} method, extracting the {@code ActorRef}
      */
-//    static pointcut actorCellStop(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor);
+    static pointcut actorCellStop(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor);
 
-    static pointcut anotherKindOfStop(LocalActorRef localRef) : target(localRef) && execution(* akka.actor.LocalActorRef.stop());
+    /**
+     * Pointcut for {@code LocalActorRef.stop(actor)} method, extracting the {@code LocalActorRef}
+     */
+    static pointcut localActorRefStop(LocalActorRef localRef) : target(localRef) && execution(* akka.actor.LocalActorRef.stop());
 }
