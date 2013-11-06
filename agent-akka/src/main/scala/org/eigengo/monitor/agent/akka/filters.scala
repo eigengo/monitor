@@ -20,6 +20,7 @@ import org.eigengo.monitor.agent.akka.ActorFilter._
 
 import scala.annotation.tailrec
 
+// a case class for holding information about an actor's path and (optionally) its type
 case class PathAndClass(actorPath: ActorPath, actorClassName: Option[String])
 /**
  * ActorFilters always start by filtering the actor system, and then filtering either by looking
@@ -43,8 +44,7 @@ sealed trait ActorFilter {
   /**
    * Decides whether to accept this ``actorSystemName`` and ``actorPath``
    *
-   * @param actorPath the actor path being examined
-   * @param actorClassName the type of the actor being examined
+   * @param pathAndClass the path and type of the actor being examined
    * @return ``true`` if the actor system and path are acceptable
    */
   def accept(pathAndClass: PathAndClass): Boolean
