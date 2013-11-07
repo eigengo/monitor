@@ -52,8 +52,8 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
       simpleActor ! 'stop
 
       Thread.sleep(500)   // wait for the messages
-
-      TestCounterInterface.foldlByAspect(actorCount)(TestCounter.plus) must contain(TestCounter(actorCount, 0, List(tag)))
+       // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
+      TestCounterInterface.foldlByAspect(actorCount)((a,_) =>a) must contain(TestCounter(actorCount, 0, List(tag)))
     }
 
     // records the count of messages received, grouped by message type
