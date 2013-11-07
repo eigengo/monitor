@@ -40,20 +40,19 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
 
   "Non-routed actor monitoring" should {
 
-    // records the count of messages received, grouped by message type
+    // records the count of actors, grouped by simple class name
     "Record the actor count" in {
       TestCounterInterface.clear()
       val actorName = "counter"
-//      val tag = "akka://default/"
-      val tag = "akka.actor.RepointableActorRef"
+      val tag = "org.eigengo.monitor.agent.akka.SimpleActor"
       val simpleActor = system.actorOf(Props[SimpleActor], actorName)
 
       // stop(self)
       simpleActor ! 'stop
 
       Thread.sleep(500)   // wait for the messages
-
-      TestCounterInterface.foldlByAspect(actorCount)(TestCounter.plus) must contain(TestCounter(actorCount, 0, List(tag)))
+       // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
+      TestCounterInterface.foldlByAspect(actorCount)((a,_) =>a) must contain(TestCounter(actorCount, 0, List(tag)))
     }
 
     // records the count of messages received, grouped by message type
