@@ -40,7 +40,7 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
 
   "Non-routed actor monitoring" should {
 
-    // records the count of messages received, grouped by message type
+    // records the count of actors, grouped by simple class name
     "Record the actor count" in {
       TestCounterInterface.clear()
       val actorName = "counter"
