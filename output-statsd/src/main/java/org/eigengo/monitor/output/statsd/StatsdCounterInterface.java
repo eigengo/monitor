@@ -15,10 +15,9 @@
  */
 package org.eigengo.monitor.output.statsd;
 
-import org.apache.commons.lang3.StringUtils;
-import org.eigengo.monitor.output.CounterInterface;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
+import org.eigengo.monitor.output.CounterInterface;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +39,6 @@ public class StatsdCounterInterface implements CounterInterface {
             @Override
             public void run() {
                 for (Metric metric : GAUGE_VALUES.values()) {
-                    //System.out.println("metric = " + metric);
                     statsd.recordGaugeValue(metric.aspect, metric.value, metric.tags);
                 }
             }
@@ -81,7 +79,11 @@ public class StatsdCounterInterface implements CounterInterface {
     }
 
     private static String joinTags(String[] tags) {
-        return StringUtils.join(tags, ':');
+        StringBuilder builder = new StringBuilder(256);
+        for (String tag : tags) {
+            builder.append(tag).append('|');
+        }
+        return builder.toString();
     }
 
     private static class Metric {
