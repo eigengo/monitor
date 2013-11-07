@@ -23,7 +23,7 @@ import akka.actor.LocalActorRef;
 /**
  * Centralises the pointcuts
  */
-abstract privileged aspect Pointcuts {
+abstract aspect Pointcuts {
 
     /**
      * Pointcut for {@code ActorCell.receiveMessage(msg)}, extracting the {@code ActorCell} and the message being received
@@ -50,6 +50,10 @@ abstract privileged aspect Pointcuts {
      */
     static pointcut anyActorOf(Props props) : (execution(* akka.actor.ActorSystem.actorOf(..)) || execution(* akka.actor.ActorCell.actorOf(..))) && args(props);
 
+    static pointcut namedActorOf(Props props, String actorName) :
+            (execution(* akka.actor.ActorSystem.actorOf(..)) ||
+                execution(* akka.actor.ActorCell.actorOf(..))) && args(props, actorName);
+
     /**
      * Pointcut for {@code ActorCell.stop(actor)} method, extracting the {@code ActorRef}
      */
@@ -58,5 +62,5 @@ abstract privileged aspect Pointcuts {
     /**
      * Pointcut for {@code LocalActorRef.stop(actor)} method, extracting the {@code LocalActorRef}
      */
-    static pointcut localActorRefStop(LocalActorRef localRef) : target(localRef) && execution(* akka.actor.LocalActorRef.stop());
+    static pointcut localActorRefStop(ActorCell localRef) : target(localRef) && execution(* akka.actor.ActorCell.stop());
 }

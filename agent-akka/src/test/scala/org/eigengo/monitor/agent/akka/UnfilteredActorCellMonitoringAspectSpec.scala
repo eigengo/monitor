@@ -45,7 +45,7 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
       TestCounterInterface.clear()
       val actorName = "counter"
 //      val tag = "akka://default/"
-      val tag = "akka.actor.RepointableActorRef"
+      val tag = "org.eigengo.monitor.agent.akka.SimpleActor"
       val simpleActor = system.actorOf(Props[SimpleActor], actorName)
 
       // stop(self)

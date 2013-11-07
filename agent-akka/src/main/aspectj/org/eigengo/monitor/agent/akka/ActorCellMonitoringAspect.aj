@@ -181,6 +181,21 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param actor the {@code ActorRef} returned from the call
      */
     after(Props props) returning (ActorRef actor): Pointcuts.anyActorOf(props) {
+        recordActorCreation(props, actor);
+    }
+    /**
+     * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem} when actor is named in construction
+     *
+     * @param props the {@code Props} instance used in the call
+     * @param actorName the {@code String} used to name the actor at creation site
+     * @param actor the {@code ActorRef} returned from the call
+     */
+    after(Props props, String actorName) returning (ActorRef actor): Pointcuts.namedActorOf(props, actorName) {
+        recordActorCreation(props, actor);
+    }
+
+    // method containing the recording logic for advising actor creation
+    void recordActorCreation(Props props, ActorRef actor) {
         if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
         final String className = props.actorClass().getCanonicalName();
 
@@ -188,6 +203,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
         final long value = this.numberOfActors.get(className).incrementAndGet();
 
+        System.out.println("+++++"+className + " : " + value);
         // record the current number of actors of this type
         this.counterInterface.recordGaugeValue("akka.actor.new.count", (int)value, className);
     }
@@ -195,16 +211,19 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     /**
      * Advises the {@code LocalActorRef.stop} method
      *
-     * @param actorRef the {@code LocalActorRef} of the actor being stopped
+     * @param actorCell the {@code ActorCell} of the actor being stopped
      */
-    after(LocalActorRef actorRef) : Pointcuts.localActorRefStop(actorRef) {
-        if (!includeActorPath(new PathAndClass(actorRef.path(), this.noActorClazz))) return;
-        final String className = actorRef.underlying().actor().getClass().getCanonicalName();
+    Object around(ActorCell actorCell) : Pointcuts.localActorRefStop(actorCell) {
+        if (!includeActorPath(new PathAndClass(actorCell.self().path(), this.noActorClazz))) return proceed(actorCell);
+        final String className = actorCell.actor().getClass().getCanonicalName();
 
         this.numberOfActors.putIfAbsent(className, new AtomicLong(0));
         final long value = this.numberOfActors.get(className).decrementAndGet();
 
+        System.out.println("-----"+className + " : " + value);
         this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, className);
+
+        return proceed(actorCell);
     }
 
 }
