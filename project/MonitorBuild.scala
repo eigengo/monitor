@@ -56,8 +56,7 @@ object MonitorBuild extends Build {
   )
   lazy val output = module("output") 
   lazy val output_statsd = module("output-statsd") dependsOn (output) settings (
-  	libraryDependencies += dogstatsd_client,
-    libraryDependencies += commons_lang
+  	libraryDependencies += dogstatsd_client
   )
   lazy val test = module("test") dependsOn (output) settings (
   	libraryDependencies += specs2,
