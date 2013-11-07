@@ -206,7 +206,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
         System.out.println("+++++"+className + " : " + value);
         // record the current number of actors of this type
-        this.counterInterface.recordGaugeValue("akka.actor.new.count", (int)value, uncheckedClassName);
+        this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, uncheckedClassName);
     }
 
     /**
