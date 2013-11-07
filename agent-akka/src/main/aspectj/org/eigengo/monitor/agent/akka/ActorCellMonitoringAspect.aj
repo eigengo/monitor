@@ -103,9 +103,12 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return tags.toArray(new String[tags.size()]);
     }
 
+    // returns the canonical name of the actor type associated with an ActorCell
     private String uncheckedActorNameFrom(final ActorCell actorCell) {
         return uncheckedActorNameFrom(actorCell.props());
     }
+
+    // returns the canonical name of the actor type associated with a Props instance
     private String uncheckedActorNameFrom(final Props props) {
         return props.actorClass().getCanonicalName();
     }
@@ -202,7 +205,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     // method containing the recording logic for advising actor creation
-    void recordActorCreation(Props props, ActorRef actor) {
+    private void recordActorCreation(Props props, ActorRef actor) {
         if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
         final String uncheckedClassName = uncheckedActorNameFrom(props);
         final Option<String> className = Option.apply(uncheckedClassName);
