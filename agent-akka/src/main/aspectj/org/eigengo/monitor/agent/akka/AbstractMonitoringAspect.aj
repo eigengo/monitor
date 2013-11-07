@@ -15,25 +15,19 @@
  */
 package org.eigengo.monitor.agent.akka;
 
+import com.typesafe.config.Config;
 import org.eigengo.monitor.agent.AgentConfiguration;
 import org.eigengo.monitor.agent.AgentConfigurationFactory;
+import org.eigengo.monitor.agent.CommonAgentConfiguration;
 import org.eigengo.monitor.output.CounterInterface;
 import org.eigengo.monitor.output.NullCounterInterface;
+import scala.Function1;
 
 abstract aspect AbstractMonitoringAspect {
-    // if true, the monitoring will include the /system actors
-    protected boolean includeSystemActors = false;
-    // if true, the monitoring will include the child actors created as routees
-    protected boolean includeRoutees = getAgentConfiguration().config().getBoolean("includeRoutees");
-    // if true, the monitoring will include the actor class name as one of the tags
-    protected boolean includeActorClassName = true;
 
-    protected static final CounterInterface counterInterface = createCounterInterface();
-
-    private static CounterInterface createCounterInterface() {
+    protected final CounterInterface createCounterInterface(CommonAgentConfiguration configuration) {
         try {
-            AgentConfiguration configuration = getAgentConfiguration();
-            CounterInterface counterInterface = (CounterInterface)Class.forName(configuration.common().counterInterfaceClassName()).newInstance();
+            CounterInterface counterInterface = (CounterInterface)Class.forName(configuration.counterInterfaceClassName()).newInstance();
             return counterInterface;
         } catch (final ReflectiveOperationException e) {
             return new NullCounterInterface();
@@ -42,7 +36,7 @@ abstract aspect AbstractMonitoringAspect {
         }
     }
 
-    private static AgentConfiguration getAgentConfiguration() {
-        return AgentConfigurationFactory.getAgentCofiguration("akka");
+    protected final <A> AgentConfiguration<A> getAgentConfiguration(String agentName, Function1<Config, A> agent) {
+        return AgentConfigurationFactory.getAgentCofiguration(agentName, agent);
     }
 }

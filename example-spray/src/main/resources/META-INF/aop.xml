@@ -1,0 +1,11 @@
+<aspectj>
+
+    <aspects>
+        <aspect name="org.eigengo.monitor.agent.akka.ActorCellMonitoringAspect"/>
+    </aspects>
+
+    <weaver options="-verbose -XnoInline -showWeaveInfo">
+        <include within="akka.actor.*"/>
+    </weaver>
+
+</aspectj>

@@ -15,15 +15,18 @@
  */
 package org.eigengo.monitor.agent
 
-import com.typesafe.config.Config
-
 /**
- *   A case class for packaging configuration settings common across agents
+ * A case class for packaging configuration settings common across agents.
  *
+ * @param counterInterfaceClassName the name of the class that implements the ``CounterInterface``
  */
 case class CommonAgentConfiguration(counterInterfaceClassName: String)
 
 /**
- *  A case class for packaging agent-specific configuration settings together with the common agent settings.
+ * A case class for packaging agent-specific configuration settings together with the common agent settings.
+ *
+ * @param common the cross-agent configuration
+ * @param agent the agent-specific configuration
+ *
  */
-case class AgentConfiguration(common: CommonAgentConfiguration, config: Config)
+case class AgentConfiguration[A](common: CommonAgentConfiguration, agent: A)

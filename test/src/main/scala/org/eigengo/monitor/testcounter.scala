@@ -29,6 +29,10 @@ class TestCounterInterface extends CounterInterface {
     TestCounterInterface.add(aspect, 1, tags.toList)
   }
 
+  override def incrementCounter(aspect: String, delta: Int, tags: String*): Unit = {
+    TestCounterInterface.add(aspect, delta, tags.toList)
+  }
+
   override def recordGaugeValue(aspect: String, value: Int, tags: String*): Unit = {
     TestCounterInterface.set(aspect, value, tags.toList)
   }
@@ -99,19 +103,19 @@ object TestCounterInterface {
   private val counters = new mutable.ListBuffer[TestCounter]()
 
   // adds a new counter
-  private def add(aspect: String, delta: Int, tags: List[String]): Unit = {
+  private def add(aspect: String, delta: Int, tags: List[String]): Unit = synchronized {
     val counter: TestCounter = TestCounter(aspect, delta, tags)
     counters += counter
 
-    println(s"**counter: $aspect -> $counter")
+//    println(s"**counter: $aspect -> $counter")
   }
 
   // sets a gauge
-  private def set(aspect: String, value: Int, tags: List[String]): Unit = {
+  private def set(aspect: String, value: Int, tags: List[String]): Unit = synchronized {
     val gauge = TestCounter(aspect, value, tags)
     counters += gauge
 
-    println(s"**gauge:   $aspect -> $gauge")
+//    println(s"**gauge:   $aspect -> $gauge")
   }
 
   /**

@@ -15,9 +15,8 @@
  */
 package org.eigengo.monitor.agent.akka
 
-import org.specs2.mutable.SpecificationLike
-import akka.actor.{Props, ActorSystem}
-import akka.testkit.{TestActorRef, TestKit}
+import akka.actor.Props
+import akka.testkit.TestActorRef
 import akka.routing.RoundRobinRouter
 import org.eigengo.monitor.{TestCounterInterface, ContainsTag, TestCounter}
 
@@ -31,15 +30,9 @@ import org.eigengo.monitor.{TestCounterInterface, ContainsTag, TestCounter}
  * -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  * in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  */
-class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike {
+class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("unfiltered.conf")) {
   sequential
-  val deliveredIntegerAspect = "akka.actor.delivered.Integer"
-  val deliveredStringAspect  = "akka.actor.delivered.String"
-  val undeliveredAspect      = "akka.actor.undelivered"
-  val queueSizeAspect        = "akka.queue.size"
-  val actorDurationAspect    = "akka.actor.duration"
-  val actorErrorAspect       = "akka.actor.error"
-  val actorCountAspect       = "akka.actor.count"
+  import Aspects._
 
   val simpleActorClassTag    = "akka:default.org.eigengo.monitor.agent.akka.SimpleActor"
 
@@ -51,13 +44,16 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
     "Record the actor count" in {
       TestCounterInterface.clear()
       val actorName = "counter"
-      val tag = "akka://default/"
+//      val tag = "akka://default/"
+      val tag = "akka.actor.RepointableActorRef"
       val simpleActor = system.actorOf(Props[SimpleActor], actorName)
 
       // stop(self)
       simpleActor ! 'stop
 
-      TestCounterInterface.foldlByAspect(actorCountAspect)(TestCounter.plus) must contain(TestCounter(actorCountAspect, 0, List(tag)))
+      Thread.sleep(500)   // wait for the messages
+
+      TestCounterInterface.foldlByAspect(actorCount)(TestCounter.plus) must contain(TestCounter(actorCount, 0, List(tag)))
     }
 
     // records the count of messages received, grouped by message type
@@ -73,11 +69,13 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
 
       simpleActor ! 'stop             // OK. stop self
 
+      Thread.sleep(500)   // wait for the messages
+
       // we expect to see 2 integers, 1 string and 1 undelivered
-      TestCounterInterface.foldlByAspect(deliveredIntegerAspect)(TestCounter.plus) must contain(TestCounter(deliveredIntegerAspect, 2, simpleActorTagWithTag(tag)))
-      TestCounterInterface.foldlByAspect(deliveredStringAspect)(TestCounter.plus) must contain(TestCounter(deliveredStringAspect, 1, simpleActorTagWithTag(tag)))
+      TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus) must contain(TestCounter(deliveredInteger, 2, simpleActorTagWithTag(tag)))
+      TestCounterInterface.foldlByAspect(deliveredString)(TestCounter.plus) must contain(TestCounter(deliveredString, 1, simpleActorTagWithTag(tag)))
       // NB: undelivered does not include the actor class name
-      TestCounterInterface.foldlByAspect(undeliveredAspect)(TestCounter.plus) must contain(TestCounter(undeliveredAspect, 1, List(tag)))
+      TestCounterInterface.foldlByAspect(undelivered)(TestCounter.plus) must contain(TestCounter(undelivered, 1, List(tag)))
     }
 
     // records the queue size at any given time
@@ -95,7 +93,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       Thread.sleep(count * (10 + 2))
 
       // fold by _max_ over the counters by the ``queueSizeAspect``, tagged with this actor's name
-      val counter = TestCounterInterface.foldlByAspect(queueSizeAspect, ContainsTag(tag))(TestCounter.max)(0)
+      val counter = TestCounterInterface.foldlByAspect(queueSize, ContainsTag(tag))(TestCounter.max)(0)
       counter.value must beGreaterThan(count - tolerance)
       counter.tags must containAllOf(simpleActorTagWithTag(tag))
     }
@@ -110,7 +108,7 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
 
       Thread.sleep(1100)
 
-      val counter = TestCounterInterface.foldlByAspect(actorDurationAspect, ContainsTag(tag))(TestCounter.max)(0)
+      val counter = TestCounterInterface.foldlByAspect(actorDuration, ContainsTag(tag))(TestCounter.max)(0)
       counter.value must beGreaterThan(900)
       counter.value must beLessThan(1100)
       counter.tags must containAllOf(simpleActorTagWithTag(tag))
@@ -124,7 +122,9 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       // match error in receive
       simpleActor ! false
 
-      TestCounterInterface.foldlByAspect(actorErrorAspect)(TestCounter.plus) must contain(TestCounter(actorErrorAspect, 1, simpleActorTagWithTag(tag)))
+      Thread.sleep(500)   // wait for the messages
+
+      TestCounterInterface.foldlByAspect(actorError)(TestCounter.plus) must contain(TestCounter(actorError, 1, simpleActorTagWithTag(tag)))
     }
 
   }
@@ -141,15 +141,15 @@ class ActorCellCounterTest extends TestKit(ActorSystem()) with SpecificationLike
       val actorName = "routedFoo"
       val tag = s"akka://default/user/$actorName"
       val count = 10
-      val simpleActor = system.actorOf(Props[SimpleActor].withRouter(RoundRobinRouter(nrOfInstances = count * 2)), actorName)
+      val simpleActor = system.actorOf(Props[SimpleActor].withRouter(RoundRobinRouter(nrOfInstances = count)), actorName)
 
       for (i <- 0 until count) simpleActor ! 100
 
       Thread.sleep(3500)
 
       // we expect to see 10 integers for the supervisor and 1 integer for each child
-      val supCounter = TestCounterInterface.foldlByAspect(deliveredIntegerAspect, ContainsTag(tag))(TestCounter.plus)(0)
-      val c1Counter  = TestCounterInterface.foldlByAspect(deliveredIntegerAspect, ContainsTag(tag + "/$a"))(TestCounter.plus)(0)
+      val supCounter = TestCounterInterface.foldlByAspect(deliveredInteger, ContainsTag(tag))(TestCounter.plus)(0)
+      val c1Counter  = TestCounterInterface.foldlByAspect(deliveredInteger, ContainsTag(tag + "/$a"))(TestCounter.plus)(0)
 
       supCounter.value mustEqual 10
       c1Counter.value mustEqual 1
