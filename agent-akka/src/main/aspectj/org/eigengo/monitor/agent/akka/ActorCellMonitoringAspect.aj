@@ -103,6 +103,13 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return tags.toArray(new String[tags.size()]);
     }
 
+    private String uncheckedActorNameFrom(final ActorCell actorCell) {
+        return uncheckedActorNameFrom(actorCell.props());
+    }
+    private String uncheckedActorNameFrom(final Props props) {
+        return props.actorClass().getCanonicalName();
+    }
+
     /**
      * Advises the {@code ActorCell.receiveMessage(message: Object): Unit}
      * We proceed with the pointcut if the actor is to be included in the monitoring *and* this is
@@ -116,7 +123,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
         final ActorPath actorPath = actorCell.self().path();
-        final PathAndClass pathAndClass = new PathAndClass(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()));
+        final PathAndClass pathAndClass = new PathAndClass(actorPath, Option.apply(uncheckedActorNameFrom(actorCell)));
         if (!includeActorPath(pathAndClass) || !sampleMessage(pathAndClass)) return proceed(actorCell, msg);
 
         int samplingRate = getSampleRate(pathAndClass);
@@ -197,7 +204,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     // method containing the recording logic for advising actor creation
     void recordActorCreation(Props props, ActorRef actor) {
         if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
-        final String uncheckedClassName = props.actorClass().getCanonicalName();
+        final String uncheckedClassName = uncheckedActorNameFrom(props);
         final Option<String> className = Option.apply(uncheckedClassName);
 
         this.numberOfActors.putIfAbsent(className, new AtomicLong(0));
@@ -217,7 +224,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     after(ActorCell actorCell) : Pointcuts.actorCellInternalStop(actorCell) {
         if (!includeActorPath(new PathAndClass(actorCell.self().path(), this.noActorClazz))) return;
-        final String uncheckedClassName = actorCell.props().actorClass().getCanonicalName();
+        final String uncheckedClassName = uncheckedActorNameFrom(actorCell);
         final Option<String> className = Option.apply(uncheckedClassName);
 
         this.numberOfActors.putIfAbsent(className, new AtomicLong(0));
