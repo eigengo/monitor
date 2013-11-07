@@ -17,6 +17,10 @@ package org.eigengo.monitor.output.statsd;
 
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigResolveOptions;
 import org.eigengo.monitor.output.CounterInterface;
 
 import java.util.Arrays;
@@ -25,10 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigParseOptions;
-import com.typesafe.config.ConfigResolveOptions;
 
 /**
  * Submits the counters to the local statsd interface
@@ -42,6 +42,8 @@ public class StatsdCounterInterface implements CounterInterface {
     private static final String prefix = outputConfig.getString("prefix");
     private static final String remoteAddress = outputConfig.getString("remoteAddress");
     private static final int remotePort = outputConfig.getInt("remotePort");
+    private static final int refresh = outputConfig.getInt("refresh");
+    private static final int delay = outputConfig.getInt("initialDelay");
     private static final List<String> tagList = outputConfig.getStringList("constantTags");
     private static final String[] constantTags = tagList.toArray(new String[tagList.size()]);
 
@@ -58,7 +60,7 @@ public class StatsdCounterInterface implements CounterInterface {
                     statsd.recordGaugeValue(metric.aspect, metric.value, metric.tags);
                 }
             }
-        }, 5, 5, TimeUnit.SECONDS);
+        }, delay, refresh, TimeUnit.SECONDS);
         //Shutdown scheduler
         Runtime.getRuntime().addShutdownHook(new Thread(){
             @Override
