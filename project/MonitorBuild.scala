@@ -54,7 +54,9 @@ object MonitorBuild extends Build {
   lazy val agent = module("agent") settings (
   	libraryDependencies += typesafe_config
   )
-  lazy val output = module("output") 
+  lazy val output = module("output") settings (
+    libraryDependencies += typesafe_config
+    )
   lazy val output_statsd = module("output-statsd") dependsOn (output) settings (
   	libraryDependencies += dogstatsd_client
   )

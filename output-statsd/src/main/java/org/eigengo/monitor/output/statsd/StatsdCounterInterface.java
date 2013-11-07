@@ -20,16 +20,32 @@ import com.timgroup.statsd.StatsDClient;
 import org.eigengo.monitor.output.CounterInterface;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigResolveOptions;
 
 /**
  * Submits the counters to the local statsd interface
  */
 public class StatsdCounterInterface implements CounterInterface {
-    private static final StatsDClient statsd = new NonBlockingStatsDClient("", "localhost", 8125, new String[]{"tag:value"});
+    private static final Config config = ConfigFactory.load("META-INF/monitor/output.conf",
+            ConfigParseOptions.defaults().setAllowMissing(false),
+            ConfigResolveOptions.defaults());
+    private static final Config outputConfig = config.getConfig("org.eigengo.monitor.output");
+
+    private static final String prefix = outputConfig.getString("prefix");
+    private static final String remoteAddress = outputConfig.getString("remoteAddress");
+    private static final int remotePort = outputConfig.getInt("remotePort");
+    private static final List<String> tagList = outputConfig.getStringList("constantTags");
+    private static final String[] constantTags = tagList.toArray(new String[tagList.size()]);
+
+    private static final StatsDClient statsd = new NonBlockingStatsDClient(prefix, remoteAddress, remotePort, constantTags);
     private static final ConcurrentHashMap<String, Metric> GAUGE_VALUES = new ConcurrentHashMap<>();
 
     public StatsdCounterInterface() {
