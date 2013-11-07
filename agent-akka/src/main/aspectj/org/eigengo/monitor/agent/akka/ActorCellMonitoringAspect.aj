@@ -212,10 +212,11 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     /**
      * Advises the {@code LocalActorRef.stop} method
      *
+     *
      * @param actorCell the {@code ActorCell} of the actor being stopped
      */
-    Object around(ActorCell actorCell) : Pointcuts.localActorRefStop(actorCell) {
-        if (!includeActorPath(new PathAndClass(actorCell.self().path(), this.noActorClazz))) return proceed(actorCell);
+    after(ActorCell actorCell) : Pointcuts.actorCellInternalStop(actorCell) {
+        if (!includeActorPath(new PathAndClass(actorCell.self().path(), this.noActorClazz))) return;
         final String uncheckedClassName = actorCell.props().actorClass().getCanonicalName();
         final Option<String> className = Option.apply(uncheckedClassName);
 
@@ -224,8 +225,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
         System.out.println("-----"+className + " : " + value);
         this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, uncheckedClassName);
-
-        return proceed(actorCell);
     }
 
 }
