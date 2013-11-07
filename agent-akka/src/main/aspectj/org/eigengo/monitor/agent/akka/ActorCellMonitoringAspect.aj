@@ -211,7 +211,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
         final long value = this.numberOfActors.get(className).incrementAndGet();
 
-        System.out.println("+++++"+className + " : " + value);
         // record the current number of actors of this type
         this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, uncheckedClassName);
     }
@@ -230,7 +229,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         this.numberOfActors.putIfAbsent(className, new AtomicLong(0));
         final long value = this.numberOfActors.get(className).decrementAndGet();
 
-        System.out.println("-----"+className + " : " + value);
         this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, uncheckedClassName);
     }
 

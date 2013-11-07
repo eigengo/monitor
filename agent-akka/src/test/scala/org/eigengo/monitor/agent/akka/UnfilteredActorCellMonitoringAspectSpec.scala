@@ -44,7 +44,6 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
     "Record the actor count" in {
       TestCounterInterface.clear()
       val actorName = "counter"
-//      val tag = "akka://default/"
       val tag = "org.eigengo.monitor.agent.akka.SimpleActor"
       val simpleActor = system.actorOf(Props[SimpleActor], actorName)
 
