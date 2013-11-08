@@ -22,6 +22,7 @@ import scala.Option;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,7 +34,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private final CounterInterface counterInterface;
     private final Option<String> noActorClazz = Option.empty();
     private final ConcurrentHashMap<Option<String>, AtomicLong> samplingCounters;
-    private final ConcurrentHashMap<Option<String>, AtomicLong> numberOfActors;
+    private final ConcurrentHashMap<Option<String>, AtomicInteger> numberOfActors;
 
 
     /**
@@ -44,7 +45,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         this.agentConfiguration = configuration.agent();
         this.counterInterface = createCounterInterface(configuration.common());
         this.samplingCounters = new ConcurrentHashMap<Option<String>, AtomicLong>();
-        this.numberOfActors = new ConcurrentHashMap<Option<String>, AtomicLong>();
+        this.numberOfActors = new ConcurrentHashMap<Option<String>, AtomicInteger>();
     }
 
     /**
@@ -210,12 +211,12 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         final String uncheckedClassName = uncheckedActorNameFrom(props);
         final Option<String> className = Option.apply(uncheckedClassName);
 
-        this.numberOfActors.putIfAbsent(className, new AtomicLong(0));
+        this.numberOfActors.putIfAbsent(className, new AtomicInteger(0));
         // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
-        final long currentNumberOfActors = this.numberOfActors.get(className).incrementAndGet();
+        final int currentNumberOfActors = this.numberOfActors.get(className).incrementAndGet();
 
         // record the current number of actors of this type
-        this.counterInterface.recordGaugeValue("akka.actor.count", (int)currentNumberOfActors, uncheckedClassName);
+        this.counterInterface.recordGaugeValue("akka.actor.count", currentNumberOfActors, uncheckedClassName);
     }
 
     /**
@@ -229,11 +230,11 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         final String uncheckedClassName = uncheckedActorNameFrom(actorCell);
         final Option<String> className = Option.apply(uncheckedClassName);
 
-        this.numberOfActors.putIfAbsent(className, new AtomicLong(0));
+        this.numberOfActors.putIfAbsent(className, new AtomicInteger(0));
         // decrement and get the current number of actors of this type (if the value was 1, then this returns 0 -- which is correct)
-        final long currentNumberOfActors = this.numberOfActors.get(className).decrementAndGet();
+        final int currentNumberOfActors = this.numberOfActors.get(className).decrementAndGet();
 
-        this.counterInterface.recordGaugeValue("akka.actor.count", (int)currentNumberOfActors, uncheckedClassName);
+        this.counterInterface.recordGaugeValue("akka.actor.count", currentNumberOfActors, uncheckedClassName);
     }
 
 }
