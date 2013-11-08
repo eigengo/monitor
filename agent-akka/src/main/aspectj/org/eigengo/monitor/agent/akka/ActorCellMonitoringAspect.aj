@@ -33,8 +33,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
     private final Option<String> noActorClazz = Option.empty();
-    private final ConcurrentHashMap<Option<String>, AtomicLong> samplingCounters;
-    private final ConcurrentHashMap<Option<String>, AtomicInteger> numberOfActors;
+    private final Map<Option<String>, AtomicLong> samplingCounters  = new ConcurrentHashMap<Option<String>, AtomicLong>();
+    private final Map<Option<String>, AtomicInteger> numberOfActors = new ConcurrentHashMap<Option<String>, AtomicInteger>();
 
 
     /**
@@ -44,8 +44,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.agentConfiguration = configuration.agent();
         this.counterInterface = createCounterInterface(configuration.common());
-        this.samplingCounters = new ConcurrentHashMap<Option<String>, AtomicLong>();
-        this.numberOfActors = new ConcurrentHashMap<Option<String>, AtomicInteger>();
     }
 
     /**
