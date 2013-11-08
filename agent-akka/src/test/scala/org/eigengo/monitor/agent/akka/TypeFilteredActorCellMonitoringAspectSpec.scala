@@ -48,10 +48,9 @@ class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
 
       // we expect to see 2 integers, 1 string and 1 undelivered
       val counter = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)
-
-      counter(0).value mustEqual 4
-      counter.size mustEqual 1
-      counter(0).tags must contain(a.path.toString)
+      counter(0).value mustEqual 1                      // "akka:*.org.eigengo.monitor.agent.akka.SimpleActor" sampling rate is 1.
+      counter.size mustEqual 1                          // and WithUnhandledActor isn't included
+      counter(0).tags must contain(a.path.toString)     // so this should be true whether or not sampling is working.
     }
 
     "Sample concrete path of included+sampled actors" in {
@@ -63,12 +62,12 @@ class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
       // we expect to see (1000/5)*5 messages to actor a
       val counter = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)
 
-      counter(0).value mustEqual 1000
+      counter(0).value mustEqual 1000                   // we include this actor, and sample one in 5
       counter(0).tags must contain(c.path.toString)
       counter.size === 200
 
 
-      TestCounterInterface.clear()
+      TestCounterInterface.clear()                     // we include this actor, and sample one in 15
       (0 until 1000) foreach {_ => d ! 1}
       Thread.sleep(500)   // wait for the messages
 
@@ -83,12 +82,12 @@ class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
 
     "Skip sampled non-included actors" in {
 
-      TestCounterInterface.clear()
+      TestCounterInterface.clear()                      // we don't include this actor in the monitoring
       e ! 1
 
-      val counter3 = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)
+      val monitoredIntegerMessages = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)
 
-      counter3.size === 0
+      monitoredIntegerMessages.size === 0
 
     }
   }
