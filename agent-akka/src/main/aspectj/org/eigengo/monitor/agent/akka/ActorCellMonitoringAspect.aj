@@ -55,7 +55,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         this.agentConfiguration = agentConfiguration;
     }
 
-    // decide whether to include this ActorCell in our measurements
+    /**
+     * decide whether to include this ActorCell in our measurements
+     * */
     private boolean includeActorPath(final PathAndClass pathAndClass) {
         if (!this.agentConfiguration.incuded().accept(pathAndClass)) return false;
         if (this.agentConfiguration.excluded().accept(pathAndClass)) return false;
@@ -66,12 +68,19 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return "user".equals(userOrSystem);
     }
 
-    // get the sample rate for an actor
+    /**
+     * get the sample rate for an actor
+     * */
     private int getSampleRate(final PathAndClass pathAndClass) {
         return this.agentConfiguration.sampling().getRate(pathAndClass);
     }
 
-    // decide whether to sample an actor on a particular occasion
+    /**
+     * decide whether to sample an actor on a particular occasion
+     *
+     * @param pathAndClass
+     * @return true if we should sample this actor, otherwise false.
+     */
     private final boolean sampleMessage(final PathAndClass pathAndClass) {
         int sampleRate = getSampleRate(pathAndClass);
         if (sampleRate == 1) return true;
@@ -81,7 +90,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
-    // get the tags for the cell
+    /**
+     * get the tags for the cell
+     * */
     private String[] getTags(final ActorPath actorPath, final Actor actor) {
         List<String> tags = new ArrayList<String>();
 
@@ -102,12 +113,16 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return tags.toArray(new String[tags.size()]);
     }
 
-    // returns the canonical name of the actor type associated with an ActorCell
+    /**
+     * returns the canonical name of the actor type associated with an ActorCell
+     * */
     private String uncheckedActorNameFrom(final ActorCell actorCell) {
         return uncheckedActorNameFrom(actorCell.props());
     }
 
-    // returns the canonical name of the actor type associated with a Props instance
+    /**
+     * returns the canonical name of the actor type associated with a Props instance
+     * */
     private String uncheckedActorNameFrom(final Props props) {
         return props.actorClass().getCanonicalName();
     }
@@ -203,7 +218,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         recordActorCreation(props, actor);
     }
 
-    // method containing the recording logic for advising actor creation
+    /**
+     * method containing the recording logic for advising actor creation
+     * */
     private void recordActorCreation(Props props, ActorRef actor) {
         if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
         final String uncheckedClassName = uncheckedActorNameFrom(props);
@@ -219,7 +236,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
     /**
      * Advises the {@code LocalActorRef.stop} method
-     *
      *
      * @param actorCell the {@code ActorCell} of the actor being stopped
      */
