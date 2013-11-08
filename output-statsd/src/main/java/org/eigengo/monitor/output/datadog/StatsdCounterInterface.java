@@ -117,10 +117,10 @@ public class StatsdCounterInterface implements CounterInterface {
         return builder.toString();
     }
 
-    private static class Metric {
-        private String aspect;
-        private int value;
-        private String[] tags;
+    private final static class Metric {
+        private final String aspect;
+        private final int value;
+        private final String[] tags;
 
         private Metric(String aspect, int value, String[] tags) {
             this.aspect = aspect;
