@@ -25,6 +25,7 @@ import org.eigengo.monitor.output.CounterInterface;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -45,7 +46,7 @@ public class StatsdCounterInterface implements CounterInterface {
     private static final String[] constantTags = tagList.toArray(new String[tagList.size()]);
 
     private static final StatsDClient statsd = new NonBlockingStatsDClient(prefix, remoteAddress, remotePort, constantTags);
-    private static final ConcurrentHashMap<String, Metric> GAUGE_VALUES = new ConcurrentHashMap<>();
+    private static final Map<String, Metric> GAUGE_VALUES = new ConcurrentHashMap<>();
 
     public StatsdCounterInterface() {
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
