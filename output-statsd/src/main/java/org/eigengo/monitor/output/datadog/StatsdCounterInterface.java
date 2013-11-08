@@ -25,10 +25,7 @@ import org.eigengo.monitor.output.CounterInterface;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Submits the counters to the local statsd interface
@@ -51,8 +48,23 @@ public class StatsdCounterInterface implements CounterInterface {
     private static final ConcurrentHashMap<String, Metric> GAUGE_VALUES = new ConcurrentHashMap<>();
 
     public StatsdCounterInterface() {
-        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        //Send an update to DataDog every 5 seconds
+        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+            private final ThreadFactory delegate = Executors.defaultThreadFactory();
+
+            /**
+             * Set thread as daemon and with minimal priority using a delegate ThreadFactory
+             * @param r Runnable
+             * @return daemon thread
+             */
+            @Override
+            public Thread newThread(Runnable r) {
+                final Thread thread = delegate.newThread(r);
+                thread.setDaemon(true);
+                thread.setPriority(Thread.MIN_PRIORITY);
+                return thread;
+            }
+        });
+        //Send an update to DataDog every X seconds
         scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -62,7 +74,7 @@ public class StatsdCounterInterface implements CounterInterface {
             }
         }, delay, refresh, TimeUnit.SECONDS);
         //Shutdown scheduler
-        Runtime.getRuntime().addShutdownHook(new Thread(){
+        Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 scheduledExecutorService.shutdown();
