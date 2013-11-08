@@ -212,10 +212,10 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
         this.numberOfActors.putIfAbsent(className, new AtomicLong(0));
         // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
-        final long value = this.numberOfActors.get(className).incrementAndGet();
+        final long currentNumberOfActors = this.numberOfActors.get(className).incrementAndGet();
 
         // record the current number of actors of this type
-        this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, uncheckedClassName);
+        this.counterInterface.recordGaugeValue("akka.actor.count", (int)currentNumberOfActors, uncheckedClassName);
     }
 
     /**
@@ -230,9 +230,10 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         final Option<String> className = Option.apply(uncheckedClassName);
 
         this.numberOfActors.putIfAbsent(className, new AtomicLong(0));
-        final long value = this.numberOfActors.get(className).decrementAndGet();
+        // decrement and get the current number of actors of this type (if the value was 1, then this returns 0 -- which is correct)
+        final long currentNumberOfActors = this.numberOfActors.get(className).decrementAndGet();
 
-        this.counterInterface.recordGaugeValue("akka.actor.count", (int)value, uncheckedClassName);
+        this.counterInterface.recordGaugeValue("akka.actor.count", (int)currentNumberOfActors, uncheckedClassName);
     }
 
 }
