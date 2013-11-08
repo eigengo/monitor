@@ -184,26 +184,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         }
     }
 
-//    after() returning (ActorRef actor): execution(* akka.actor.ActorSystem.actorOf(..)) {
-//        if (!includeActorPath(actor.path())) return;
-//
-//        final String tag = actor.path().root().toString();
-//        counterInterface.incrementCounter("akka.actor.count", tag);
-//    }
-//
-//    after() returning (ActorRef actor): execution(* akka.actor.ActorCell.actorOf(..)) {
-//        if (!includeActorPath(actor.path())) return;
-//
-//        final String tag = actor.path().root().toString();
-//        counterInterface.incrementCounter("akka.actor.count", tag);
-//    }
-//
-//    after(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor) {
-//        if (!includeActorPath(actor.path())) return;
-//
-//        final String tag = actor.path().root().toString();
-//        counterInterface.decrementCounter("akka.actor.count", tag);
-//    }
     /**
      * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem}
      *

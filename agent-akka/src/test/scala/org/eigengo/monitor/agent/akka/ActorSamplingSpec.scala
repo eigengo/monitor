@@ -54,7 +54,7 @@ class ActorSamplingSpec extends ActorCellMonitoringAspectSpec(Some("sample.conf"
       counter2.size === 67
     }
 
-    "Sample wildcard path but ignore 'excluded' actors" in {
+    "Sample wildcard path but ignore only 'excluded' actors" in {
 
       TestCounterInterface.clear()
       (0 until 497) foreach {_ => c ! 1}   // if we weren't incrementing the counters separately for each actor, then we'd
