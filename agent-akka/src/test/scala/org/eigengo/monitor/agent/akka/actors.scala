@@ -48,7 +48,7 @@ class WithUnhandledActor extends Actor {
 trait NullTestingActor extends Actor {
 
   def receive: Receive = {
-    case i: Int =>
+    case _ =>
   }
 
   override def unhandled(message: Any): Unit = ()
