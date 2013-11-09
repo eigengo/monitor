@@ -16,21 +16,30 @@
 package org.eigengo.monitor.output.statsd
 
 import org.specs2.mutable.Specification
-import org.eigengo.monitor.output.OutputConfigurationFactory
 
-class StatsdOutputConfigurationSpec extends Specification {
+class PerformanceSpec extends Specification {
 
-  "Loading the configuration" should {
-
-    "Parse correct configuration" in {
-      val soc = OutputConfigurationFactory.getAgentCofiguration("statsd")(StatsdOutputConfiguration.apply).outputConfig
-
-      soc.prefix mustEqual ""
-      soc.remoteAddress mustEqual "localhost"
-      soc.remotePort mustEqual 8125
-      soc.refresh mustEqual 5
-      soc.constantTags.toList must containAllOf(List("t1:v1", "t2:v2"))
-    }
+  def timed[U](repetitions: Int)(f: => U): Long = {
+    val start = System.currentTimeMillis()
+    for (_ <- 0 to repetitions) f
+    System.currentTimeMillis() - start
   }
+
+  "Performance of the Statsd client" should {
+    val dog = new StatsdCounterInterface()
+    val aio = new AkkaIOStatsdCounterInterface()
+
+    "Be fast" in {
+      val count = 100000
+      println("DOG " + timed(count)(dog.incrementCounter("foo")))
+      println("AIO " + timed(count)(aio.incrementCounter("foo")))
+
+      Thread.sleep(10000)
+
+      success
+    }
+
+  }
+
 
 }

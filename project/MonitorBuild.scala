@@ -60,6 +60,7 @@ object MonitorBuild extends Build {
   )
   lazy val output_statsd = module("output-statsd") dependsOn (output) settings (
   	libraryDependencies += dogstatsd_client,
+    libraryDependencies += akka.actor,
     libraryDependencies += specs2 % "test"
   )
   lazy val test = module("test") dependsOn (output) settings (

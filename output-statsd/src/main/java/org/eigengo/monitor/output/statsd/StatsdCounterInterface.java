@@ -33,7 +33,7 @@ public class StatsdCounterInterface implements CounterInterface {
 
     public StatsdCounterInterface() {
         StatsdOutputConfiguration configuration =
-                OutputConfigurationFactory.getAgentCofiguration("statsd", StatsdOutputConfigurationJapi.apply());
+                OutputConfigurationFactory.getAgentCofiguration("statsd", StatsdOutputConfigurationJapi.apply()).outputConfig();
         this.statsd = new NonBlockingStatsDClient(configuration.prefix(),
                 configuration.remoteAddress(), configuration.remotePort(), configuration.constantTags());
         this.gaugeValues = new ConcurrentHashMap<>();

@@ -16,6 +16,7 @@
 package org.eigengo.monitor.output.statsd
 
 import com.typesafe.config.Config
+import java.net.InetSocketAddress
 
 /**
  * Holds the configuration for the Statsd output.
@@ -28,7 +29,15 @@ import com.typesafe.config.Config
  */
 case class StatsdOutputConfiguration(remoteAddress: String, remotePort: Int,
                                       refresh: Int,
-                                      prefix: String, constantTags: Array[String])
+                                      prefix: String, constantTags: Array[String]) {
+
+  /**
+   * Returns the ``InetSocketAddress`` from the ``remoteAddress`` and ``remotePort``
+   *
+   * @return the ``InetSocketAddress`` instance
+   */
+  def inetSocketAddress: InetSocketAddress = new InetSocketAddress(remoteAddress, remotePort)
+}
 
 /**
  * Companion object that makes instances of ``StatsdOutputConfiguration`` from the
