@@ -26,6 +26,7 @@ class ActorSamplingSpec extends ActorCellMonitoringAspectSpec(Some("sample.conf"
     val b = TestActorRef[WithUnhandledActor]("b")
     val c = TestActorRef[NullTestingActor1]("c")
     val d = TestActorRef[NullTestingActor2]("d")
+    val e = TestActorRef[NullTestingActor3]("e")
 
     "Sample concrete path" in {
       TestCounterInterface.clear()
@@ -53,15 +54,15 @@ class ActorSamplingSpec extends ActorCellMonitoringAspectSpec(Some("sample.conf"
       counter2.size === 67
     }
 
-    "Sample wildcard path" in {
+    "Sample wildcard path but ignore only 'excluded' actors" in {
 
       TestCounterInterface.clear()
       (0 until 497) foreach {_ => c ! 1}   // if we weren't incrementing the counters separately for each actor, then we'd
       (0 until 501) foreach {_ => d ! 1}   // expect 998 messages, and thus 250*4 = 1000 messages logged. But we are -- so
                                            // we expect 125*4 = 500 for actor c, and 126*4 = 504 for actor d
+      (0 until 500) foreach {_ => e ! 1}   // Also, we're excluding this actor, so it shouldn't contribute anything at all.
       Thread.sleep(500)   // wait for the messages
 
-      // we expect to see (500/4)*4*2 messages to actor c and d
       val counter3 = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)
 
       counter3(0).value mustEqual 1004

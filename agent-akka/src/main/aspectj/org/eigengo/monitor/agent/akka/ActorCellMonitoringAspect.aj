@@ -22,6 +22,7 @@ import scala.Option;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,7 +33,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
     private final Option<String> noActorClazz = Option.empty();
-    private final ConcurrentHashMap<Option<String>, AtomicLong> concurrentCounters;
+    private final ConcurrentHashMap<Option<String>, AtomicLong> samplingCounters  = new ConcurrentHashMap<Option<String>, AtomicLong>();
+    private final ConcurrentHashMap<Option<String>, AtomicInteger> numberOfActors = new ConcurrentHashMap<Option<String>, AtomicInteger>();
+
 
     /**
      * Constructs this aspect
@@ -41,7 +44,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.agentConfiguration = configuration.agent();
         this.counterInterface = createCounterInterface(configuration.common());
-        this.concurrentCounters = new ConcurrentHashMap<Option<String>, AtomicLong>();
     }
 
     /**
@@ -53,7 +55,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         this.agentConfiguration = agentConfiguration;
     }
 
-    // decide whether to include this ActorCell in our measurements
+    /**
+     * decide whether to include this ActorCell in our measurements
+     * */
     private boolean includeActorPath(final PathAndClass pathAndClass) {
         if (!this.agentConfiguration.incuded().accept(pathAndClass)) return false;
         if (this.agentConfiguration.excluded().accept(pathAndClass)) return false;
@@ -64,22 +68,31 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return "user".equals(userOrSystem);
     }
 
-    // get the sample rate for an actor
+    /**
+     * get the sample rate for an actor
+     * */
     private int getSampleRate(final PathAndClass pathAndClass) {
         return this.agentConfiguration.sampling().getRate(pathAndClass);
     }
 
-    // decide whether to sample an actor on a particular occasion
+    /**
+     * decide whether to sample an actor on a particular occasion
+     *
+     * @param pathAndClass
+     * @return true if we should sample this actor, otherwise false.
+     */
     private final boolean sampleMessage(final PathAndClass pathAndClass) {
         int sampleRate = getSampleRate(pathAndClass);
         if (sampleRate == 1) return true;
 
-        this.concurrentCounters.putIfAbsent(pathAndClass.actorClassName(), new AtomicLong(0));
-        long timesSeenSoFar = this.concurrentCounters.get(pathAndClass.actorClassName()).incrementAndGet();
+        this.samplingCounters.putIfAbsent(pathAndClass.actorClassName(), new AtomicLong(0));
+        long timesSeenSoFar = this.samplingCounters.get(pathAndClass.actorClassName()).incrementAndGet();
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
-    // get the tags for the cell
+    /**
+     * get the tags for the cell
+     * */
     private String[] getTags(final ActorPath actorPath, final Actor actor) {
         List<String> tags = new ArrayList<String>();
 
@@ -101,6 +114,20 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     /**
+     * returns the canonical name of the actor type associated with an ActorCell
+     * */
+    private String uncheckedActorNameFrom(final ActorCell actorCell) {
+        return uncheckedActorNameFrom(actorCell.props());
+    }
+
+    /**
+     * returns the canonical name of the actor type associated with a Props instance
+     * */
+    private String uncheckedActorNameFrom(final Props props) {
+        return props.actorClass().getCanonicalName();
+    }
+
+    /**
      * Advises the {@code ActorCell.receiveMessage(message: Object): Unit}
      * We proceed with the pointcut if the actor is to be included in the monitoring *and* this is
      * the 'multiple-of-n'th time we've seen a message for an actor with a sample rate of n.
@@ -113,7 +140,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
         final ActorPath actorPath = actorCell.self().path();
-        final PathAndClass pathAndClass = new PathAndClass(actorPath, Option.apply(actorCell.actor().getClass().getCanonicalName()));
+        final PathAndClass pathAndClass = new PathAndClass(actorPath, Option.apply(uncheckedActorNameFrom(actorCell)));
         if (!includeActorPath(pathAndClass) || !sampleMessage(pathAndClass)) return proceed(actorCell, msg);
 
         int samplingRate = getSampleRate(pathAndClass);
@@ -174,25 +201,54 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     /**
      * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem}
      *
+     * @param props the {@code Props} instance used in the call
      * @param actor the {@code ActorRef} returned from the call
      */
-    after() returning (ActorRef actor): Pointcuts.anyActorOf() {
-        if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
-
-        final String tag = actor.path().root().toString();
-        this.counterInterface.incrementCounter("akka.actor.count", tag);
+    after(Props props) returning (ActorRef actor): Pointcuts.anyActorOf(props) {
+        recordActorCreation(props, actor);
+    }
+    /**
+     * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem} when actor is named in construction
+     *
+     * @param props the {@code Props} instance used in the call
+     * @param actorName the {@code String} used to name the actor at creation site
+     * @param actor the {@code ActorRef} returned from the call
+     */
+    after(Props props, String actorName) returning (ActorRef actor): Pointcuts.namedActorOf(props, actorName) {
+        recordActorCreation(props, actor);
     }
 
     /**
-     * Advises the {@code ActorCell.stop} method
-     *
-     * @param actor the actor being stopped
-     */
-    after(ActorRef actor) : Pointcuts.actorCellStop(actor) {
+     * method containing the recording logic for advising actor creation
+     * */
+    private void recordActorCreation(Props props, ActorRef actor) {
         if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
+        final String uncheckedClassName = uncheckedActorNameFrom(props);
+        final Option<String> className = Option.apply(uncheckedClassName);
 
-        final String tag = actor.path().root().toString();
-        this.counterInterface.decrementCounter("akka.actor.count", tag);
+        this.numberOfActors.putIfAbsent(className, new AtomicInteger(0));
+        // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
+        final int currentNumberOfActors = this.numberOfActors.get(className).incrementAndGet();
+
+        // record the current number of actors of this type
+        this.counterInterface.recordGaugeValue("akka.actor.count", currentNumberOfActors, uncheckedClassName);
+    }
+
+    /**
+     * Advises the {@code LocalActorRef.stop} method
+     *
+     * @param actorCell the {@code ActorCell} of the actor being stopped
+     */
+    after(ActorCell actorCell) : Pointcuts.actorCellInternalStop(actorCell) {
+        if (!includeActorPath(new PathAndClass(actorCell.self().path(), this.noActorClazz))) return;
+        final String uncheckedClassName = uncheckedActorNameFrom(actorCell);
+        final Option<String> className = Option.apply(uncheckedClassName);
+
+        this.numberOfActors.putIfAbsent(className, new AtomicInteger(0));
+        // decrement and get the current number of actors of this type (if the value was 1, then this returns 0 -- which is correct)
+        final int currentNumberOfActors = this.numberOfActors.get(className).decrementAndGet();
+
+        this.counterInterface.recordGaugeValue("akka.actor.count", currentNumberOfActors, uncheckedClassName);
     }
 
 }

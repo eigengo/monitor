@@ -17,6 +17,8 @@ package org.eigengo.monitor.agent.akka;
 
 import akka.actor.ActorCell;
 import akka.actor.ActorRef;
+import akka.actor.Props;
+import akka.actor.LocalActorRef;
 
 /**
  * Centralises the pointcuts
@@ -46,10 +48,21 @@ abstract aspect Pointcuts {
      * Pointcut for the {@code actorOf} methods in {@code ActorCell} and {@code ActorSystem}. You would typically use
      * it in the {@code after returning()} advices.
      */
-    static pointcut anyActorOf() : execution(* akka.actor.ActorSystem.actorOf(..)) || execution(* akka.actor.ActorCell.actorOf(..));
+    static pointcut anyActorOf(Props props) : (execution(* akka.actor.ActorSystem.actorOf(..)) || execution(* akka.actor.ActorCell.actorOf(..))) && args(props);
+    /**
+     * Pointcut for the {@code actorOf} methods in {@code ActorCell} and {@code ActorSystem} where actor is named on creation
+     */
+    static pointcut namedActorOf(Props props, String actorName) :
+            (execution(* akka.actor.ActorSystem.actorOf(..)) ||
+                execution(* akka.actor.ActorCell.actorOf(..))) && args(props, actorName);
 
     /**
      * Pointcut for {@code ActorCell.stop(actor)} method, extracting the {@code ActorRef}
      */
     static pointcut actorCellStop(ActorRef actor) : execution(* akka.actor.ActorCell.stop(..)) && args(actor);
+
+    /**
+     * Pointcut for {@code ActorCell.stop()} method, extracting the targeted {@code ActorCell}
+     */
+    static pointcut actorCellInternalStop(ActorCell actorCell) : target(actorCell) && execution(* akka.actor.ActorCell.stop());
 }
