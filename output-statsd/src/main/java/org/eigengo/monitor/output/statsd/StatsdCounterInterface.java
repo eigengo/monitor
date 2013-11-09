@@ -17,14 +17,10 @@ package org.eigengo.monitor.output.statsd;
 
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigParseOptions;
-import com.typesafe.config.ConfigResolveOptions;
 import org.eigengo.monitor.output.CounterInterface;
+import org.eigengo.monitor.output.OutputConfigurationFactory;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -32,23 +28,16 @@ import java.util.concurrent.*;
  * Submits the counters to the local statsd interface
  */
 public class StatsdCounterInterface implements CounterInterface {
-    private static final Config config = ConfigFactory.load("META-INF/monitor/output.conf",
-            ConfigParseOptions.defaults().setAllowMissing(false),
-            ConfigResolveOptions.defaults());
-    private static final Config outputConfig = config.getConfig("org.eigengo.monitor.output.statsd");
-
-    private static final String prefix = outputConfig.getString("prefix");
-    private static final String remoteAddress = outputConfig.getString("remoteAddress");
-    private static final int remotePort = outputConfig.getInt("remotePort");
-    private static final int refresh = outputConfig.getInt("refresh");
-    private static final int delay = outputConfig.getInt("initialDelay");
-    private static final List<String> tagList = outputConfig.getStringList("constantTags");
-    private static final String[] constantTags = tagList.toArray(new String[tagList.size()]);
-
-    private static final StatsDClient statsd = new NonBlockingStatsDClient(prefix, remoteAddress, remotePort, constantTags);
-    private static final Map<String, Metric> GAUGE_VALUES = new ConcurrentHashMap<>();
+    private final StatsDClient statsd;
+    private final Map<String, Metric> gaugeValues;
 
     public StatsdCounterInterface() {
+        StatsdOutputConfiguration configuration =
+                OutputConfigurationFactory.getAgentCofiguration("statsd", StatsdOutputConfigurationJapi.apply());
+        this.statsd = new NonBlockingStatsDClient(configuration.prefix(),
+                configuration.remoteAddress(), configuration.remotePort(), configuration.constantTags());
+        this.gaugeValues = new ConcurrentHashMap<>();
+
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
             private final ThreadFactory delegate = Executors.defaultThreadFactory();
 
@@ -69,11 +58,11 @@ public class StatsdCounterInterface implements CounterInterface {
         scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                for (Metric metric : GAUGE_VALUES.values()) {
+                for (Metric metric : gaugeValues.values()) {
                     statsd.recordGaugeValue(metric.aspect, metric.value, metric.tags);
                 }
             }
-        }, delay, refresh, TimeUnit.SECONDS);
+        }, configuration.refresh(), configuration.refresh(), TimeUnit.SECONDS);
         //Shutdown scheduler
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -85,28 +74,28 @@ public class StatsdCounterInterface implements CounterInterface {
 
     @Override
     public void incrementCounter(String aspect, String... tags) {
-        statsd.incrementCounter(aspect, tags);
+        this.statsd.incrementCounter(aspect, tags);
     }
 
     @Override
     public void incrementCounter(String aspect, int delta, String... tags) {
-        statsd.count(aspect, delta, tags);
+        this.statsd.count(aspect, delta, tags);
     }
 
     @Override
     public void decrementCounter(String aspect, String... tags) {
-        statsd.decrementCounter(aspect, tags);
+        this.statsd.decrementCounter(aspect, tags);
     }
 
     @Override
     public void recordGaugeValue(String aspect, int value, String... tags) {
-        statsd.recordGaugeValue(aspect, value, tags);
-        GAUGE_VALUES.put(aspect + joinTags(tags), new Metric(aspect, value, tags));
+        this.statsd.recordGaugeValue(aspect, value, tags);
+        this.gaugeValues.put(aspect + joinTags(tags), new Metric(aspect, value, tags));
     }
 
     @Override
     public void recordExecutionTime(String aspect, int duration, String... tags) {
-        statsd.recordExecutionTime(aspect, duration, tags);
+        this.statsd.recordExecutionTime(aspect, duration, tags);
     }
 
     private static String joinTags(String[] tags) {
@@ -133,6 +122,5 @@ public class StatsdCounterInterface implements CounterInterface {
             return "Metric{aspect='" + aspect + '\'' + ", value=" + value + ", tags=" + Arrays.toString(tags) + '}';
         }
     }
-
 
 }
