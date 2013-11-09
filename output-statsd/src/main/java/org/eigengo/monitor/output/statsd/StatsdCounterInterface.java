@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.eigengo.monitor.output.datadog;
+package org.eigengo.monitor.output.statsd;
 
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
@@ -35,7 +35,7 @@ public class StatsdCounterInterface implements CounterInterface {
     private static final Config config = ConfigFactory.load("META-INF/monitor/output.conf",
             ConfigParseOptions.defaults().setAllowMissing(false),
             ConfigResolveOptions.defaults());
-    private static final Config outputConfig = config.getConfig("org.eigengo.monitor.output");
+    private static final Config outputConfig = config.getConfig("org.eigengo.monitor.output.statsd");
 
     private static final String prefix = outputConfig.getString("prefix");
     private static final String remoteAddress = outputConfig.getString("remoteAddress");

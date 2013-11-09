@@ -20,8 +20,15 @@ import org.eigengo.monitor.agent.akka.ActorFilter._
 
 import scala.annotation.tailrec
 
-// a case class for holding information about an actor's path and (optionally) its type
+/**
+ * Combines the actor path (i.e. ``akka://system/user/foo``) and the class name of the actor that
+ * "lives" at that path
+ *
+ * @param actorPath the actor path
+ * @param actorClassName the actor class name, if available
+ */
 case class PathAndClass(actorPath: ActorPath, actorClassName: Option[String])
+
 /**
  * ActorFilters always start by filtering the actor system, and then filtering either by looking
  * at the actor path, or by looking at the actor type
