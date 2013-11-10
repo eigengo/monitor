@@ -16,12 +16,24 @@
 package org.eigengo.monitor.output.statsd
 
 import org.specs2.mutable.Specification
+import akka.actor.{Props, ActorSystem}
+import akka.routing.RoundRobinRouter
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 class PerformanceSpec extends Specification {
+  val system = ActorSystem()
+  val map = new ConcurrentHashMap[String, AtomicInteger]()
+  private def recordCount(payload: String): Unit = {
+    map.putIfAbsent(payload, new AtomicInteger(1))
+    map.get(payload).incrementAndGet()
+  }
+  val statsd = system.actorOf(Props(new StatsdRecorderActor(12345, recordCount)).withRouter(RoundRobinRouter(nrOfInstances = 5)))
+  sequential
 
   def timed[U](repetitions: Int)(f: => U): Long = {
     val start = System.currentTimeMillis()
-    for (_ <- 0 to repetitions) f
+    for (_ <- 0 until repetitions) f
     System.currentTimeMillis() - start
   }
 
@@ -30,16 +42,19 @@ class PerformanceSpec extends Specification {
     val aio = new AkkaIOStatsdCounterInterface()
 
     "Be fast" in {
-      val count = 100000
-      println("DOG " + timed(count)(dog.incrementCounter("foo")))
-      println("AIO " + timed(count)(aio.incrementCounter("foo")))
+      val count = 10000
+      val dogTime = timed(count)(dog.incrementCounter("dog"))
+      val aioTime = timed(count)(aio.incrementCounter("aio"))
 
-      Thread.sleep(10000)
+      // wait for all messages
+      Thread.sleep(2000)
 
-      success
+      println(map)
+
+      // we expect to be at least 5 times faster
+      aioTime < (dogTime / 5)
     }
 
   }
-
 
 }

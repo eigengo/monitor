@@ -23,16 +23,24 @@ import akka.util.ByteString
 object StatsdActor {
 
   trait StatsdStatisticMarshaller[-A] {
-    def toByteString(statistic: A, prefix: String): ByteString
+    def toByteString(statistic: A, prefix: String, constantTags: Seq[String]): ByteString
   }
   object StandardStatsdStatisticMarshaller extends StatsdStatisticMarshaller[StatsdStatistic] {
-    private def format(prefix: String, aspect: String, value: Int, clazz: String): ByteString =
-      ByteString("%s.%s:%d|%s".format(prefix, aspect, value, clazz))
+    private def tagString(tags: Seq[String]): String =
+      if (tags.isEmpty) "" else {
+        // mutable, but we need speed
+        val b = new StringBuilder("|#")
+        tags.foreach { tag => if (b.length > 2) b.append(','); b.append(tag) }
+        b.toString()
+      }
 
-    def toByteString(statistic: StatsdStatistic, prefix: String): ByteString = statistic match {
-      case Counter(aspect, delta, _)        => format(prefix, aspect, delta, "c")
-      case Gauge(aspect, value, _)          => format(prefix, aspect, value, "g")
-      case ExecutionTime(aspect, timeMs, _) => format(prefix, aspect, timeMs, "ms")
+    private def format(prefix: String, aspect: String, value: Int, clazz: String, tags: Seq[String]): ByteString =
+      ByteString("%s%s:%d|%s%s".format(prefix, aspect, value, clazz, tagString(tags)))
+
+    def toByteString(statistic: StatsdStatistic, prefix: String, constantTags: Seq[String]): ByteString = statistic match {
+      case Counter(aspect, delta, tags)        => format(prefix, aspect, delta, "c", constantTags ++ tags)
+      case Gauge(aspect, value, tags)          => format(prefix, aspect, value, "g", constantTags ++ tags)
+      case ExecutionTime(aspect, timeMs, tags) => format(prefix, aspect, timeMs, "ms", constantTags ++ tags)
     }
   }
 
@@ -44,7 +52,7 @@ object StatsdActor {
 
 }
 
-class StatsdActor(remote: InetSocketAddress, prefix: String) extends Actor {
+class StatsdActor(remote: InetSocketAddress, prefix: String, constantTags: Seq[String]) extends Actor {
   import context.system
   import StatsdActor._
 
@@ -57,7 +65,7 @@ class StatsdActor(remote: InetSocketAddress, prefix: String) extends Actor {
 
   def ready(send: ActorRef): Receive = {
     case stat: StatsdStatistic =>
-      val payload = StandardStatsdStatisticMarshaller.toByteString(stat, prefix)
+      val payload = StandardStatsdStatisticMarshaller.toByteString(stat, prefix, constantTags)
       send ! Udp.Send(payload, remote)
   }
 }

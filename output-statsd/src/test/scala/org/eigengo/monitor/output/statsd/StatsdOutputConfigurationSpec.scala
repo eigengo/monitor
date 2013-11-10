@@ -27,7 +27,7 @@ class StatsdOutputConfigurationSpec extends Specification {
 
       soc.prefix mustEqual ""
       soc.remoteAddress mustEqual "localhost"
-      soc.remotePort mustEqual 8125
+      soc.remotePort mustEqual 12345
       soc.refresh mustEqual 5
       soc.constantTags.toList must containAllOf(List("t1:v1", "t2:v2"))
     }
