@@ -45,7 +45,7 @@ class PerformanceSpec extends Specification {
     val aio = new AkkaIOStatsdCounterInterface()
 
     "Be fast" in {
-      val count = 5000
+      val count = 2000
       val dogTime = timed(count)(dog.incrementCounter("dog"))
       // wait for all messages
       Thread.sleep(2000)
