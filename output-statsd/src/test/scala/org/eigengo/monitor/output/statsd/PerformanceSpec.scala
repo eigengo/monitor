@@ -21,6 +21,9 @@ import akka.routing.RoundRobinRouter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Checks the performance of our statsd clients
+ */
 class PerformanceSpec extends Specification {
   val system = ActorSystem()
   val map = new ConcurrentHashMap[String, AtomicInteger]()

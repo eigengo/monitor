@@ -15,27 +15,73 @@
  */
 package org.eigengo.monitor.output.statsd
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Udp}
 import java.net.InetSocketAddress
 import akka.util.ByteString
 
+/**
+ * Companion object for the ``StatsdActor``, containing the messages that it can handle
+ */
 object StatsdActor {
 
+  /**
+   * Common supertype for all ``StatsdStatistic``s
+   */
   sealed trait StatsdStatistic
-  case class Counter(aspect: String, delta: Int, tags: Seq[String]) extends StatsdStatistic
-  case class Gauge(aspect: String, value: Int, tags: Seq[String]) extends StatsdStatistic
-  case class ExecutionTime(aspect: String, timeMs: Int, tags: Seq[String]) extends StatsdStatistic
+
+  /**
+   * A counter increments or decrements the specified ``aspect`` by ``delta``, optionally containing
+   * non-empty ``tags``.
+   *
+   * @param aspect the aspect identifying the counter
+   * @param delta the delta
+   * @param tags the optional tags (DD extension)
+   */
+  case class Counter(aspect: String, delta: Int, tags: Seq[String] = Nil) extends StatsdStatistic
+
+  /**
+   * A gauge records a ``value`` identified by ``aspect``, optionally containing
+   * non-empty ``tags``.
+   *
+   * @param aspect the aspect identifying the gauge
+   * @param value the gauge value
+   * @param tags the optional tags (DD extension)
+   */
+  case class Gauge(aspect: String, value: Int, tags: Seq[String] = Nil) extends StatsdStatistic
+
+  /**
+   * An execution execution time records time in milliseconds for the given ``aspect``, with
+   * optional ``tags``.
+   *
+   * @param aspect the aspect identifying the execution time
+   * @param timeMs the time in milliseconds
+   * @param tags the optional tags (DD extension)
+   */
+  case class ExecutionTime(aspect: String, timeMs: Int, tags: Seq[String] = Nil) extends StatsdStatistic
 
 }
 
+/**
+ * Turns the ``StatsdStatistic`` and some ``prefix`` into a ``ByteString``
+ */
 trait StatisticMarshaller {
   import StatsdActor._
 
+  /**
+   * Formats the ``statistic`` into the appropriate ``ByteString``
+   *
+   * @param statistic the statistic to format
+   * @param prefix the prefix, including the trailing ``.``
+   * @return the formatted value that can be sent to the statsd server
+   */
   def toByteString(statistic: StatsdStatistic, prefix: String): ByteString
 
 }
 
+/**
+ * Implements the DataDog extensions
+ */
 trait DataDogStatisticMarshaller extends StatisticMarshaller {
   import StatsdActor._
   def constantTags: Seq[String]
@@ -51,7 +97,7 @@ trait DataDogStatisticMarshaller extends StatisticMarshaller {
   private def format(prefix: String, aspect: String, value: Int, clazz: String, tags: Seq[String]): ByteString =
     ByteString("%s%s:%d|%s%s".format(prefix, aspect, value, clazz, tagString(tags)))
 
-  def toByteString(statistic: StatsdStatistic, prefix: String): ByteString = statistic match {
+  override def toByteString(statistic: StatsdStatistic, prefix: String): ByteString = statistic match {
     case Counter(aspect, delta, tags)        => format(prefix, aspect, delta, "c", constantTags ++ tags)
     case Gauge(aspect, value, tags)          => format(prefix, aspect, value, "g", constantTags ++ tags)
     case ExecutionTime(aspect, timeMs, tags) => format(prefix, aspect, timeMs, "ms", constantTags ++ tags)
@@ -59,8 +105,16 @@ trait DataDogStatisticMarshaller extends StatisticMarshaller {
 
 }
 
+/**
+ * Sends the received ``StatsdStatistic`` messages to the statsd server.
+ *
+ * @param remote the address of the statsd server
+ * @param prefix the constant prefix for all messages. Must be empty or end with ``.``
+ */
 class StatsdActor(remote: InetSocketAddress, prefix: String) extends Actor {
   this: StatisticMarshaller =>
+
+  require(prefix.isEmpty || prefix.endsWith("."), "Prefix must be empty or end with '.'")
 
   import context.system
   import StatsdActor._
