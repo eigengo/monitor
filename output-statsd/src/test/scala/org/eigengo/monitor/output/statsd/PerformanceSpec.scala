@@ -59,8 +59,8 @@ class PerformanceSpec extends Specification {
       map.size() mustEqual 2
       map.elements().toList.map(_.intValue()) must containAllOf(List(count, count))
 
-      // we expect to be at least 5 times faster
-      aioTime < (dogTime / 5)
+      // we expect to be at least 2 times faster
+      aioTime < (dogTime / 2)
     }
 
   }
