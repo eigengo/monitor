@@ -15,8 +15,21 @@
  */
 package org.eigengo.monitor.agent.akka;
 
-public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect {
+import akka.dispatch.MessageDispatcher;
 
+import java.util.concurrent.ForkJoinPool;
+
+privileged aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect issingleton() {
+
+    before(MessageDispatcher dispatcher) : execution(* akka.dispatch.MessageDispatcher.dispatch(..)) && target(dispatcher) {
+        System.out.println("*****Dispatching a task");
+    }
+
+    before(ForkJoinPool pool) : execution(* scala.concurrent.forkjoin.ForkJoinPool.execute(..)) && target(pool) {
+        System.out.println("*****Active threads>> " + pool.getActiveThreadCount());
+        System.out.println("*****Queue size>> " + pool.getQueuedTaskCount());
+        System.out.println("*****Running thread count>> " + pool.getRunningThreadCount());
+    }
 
 
 }
