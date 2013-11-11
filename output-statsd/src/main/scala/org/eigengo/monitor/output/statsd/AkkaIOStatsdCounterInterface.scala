@@ -46,5 +46,5 @@ class AkkaIOStatsdCounterInterface extends CounterInterface {
     statsd ! Counter(aspect, delta, tags)
 
   def incrementCounter(aspect: String, tags: String*): Unit =
-    statsd ! Counter(aspect, +1, tags)
+    statsd ! Counter(aspect, 1, tags)
 }

@@ -36,7 +36,7 @@ object MonitorBuild extends Build {
       fork in run := true,
       connectInput in run := true,
       mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")),
-    aggregate = Seq(agent, output, agent_akka, agent_spray, agent_play, example_akka, docs)) dependsOn (example_akka)
+    aggregate = Seq(agent, output, output_statsd, agent_akka, agent_spray, agent_play, example_akka, docs)) dependsOn (example_akka)
 
 /*
   lazy val macros = module("macros") settings(
