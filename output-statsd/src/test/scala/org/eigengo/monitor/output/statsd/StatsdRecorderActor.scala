@@ -15,22 +15,28 @@
  */
 package org.eigengo.monitor.output.statsd
 
-import org.specs2.mutable.Specification
-import org.eigengo.monitor.output.OutputConfigurationFactory
+import akka.actor.Actor
+import akka.io.{Udp, IO}
+import java.net.InetSocketAddress
 
-class StatsdOutputConfigurationSpec extends Specification {
+/**
+ * Starts a UDP listener that sends all received messages to ``sink``.
+ *
+ * @param port the port, e.g. 12345
+ * @param sink the function that will be called on every message
+ * @tparam U the return type of the ``sink`` function
+ */
+class StatsdRecorderActor[U](port: Int, sink: String => U) extends Actor {
+  import context.system
 
-  "Loading the configuration" should {
+  IO(Udp) ! Udp.Bind(self, new InetSocketAddress(port))
 
-    "Parse correct configuration" in {
-      val soc = OutputConfigurationFactory.getAgentCofiguration("statsd")(StatsdOutputConfiguration.apply).outputConfig
-
-      soc.prefix mustEqual ""
-      soc.remoteAddress mustEqual "localhost"
-      soc.remotePort mustEqual 12345
-      soc.refresh mustEqual 5
-      soc.constantTags.toList must containAllOf(List("t1:v1", "t2:v2"))
-    }
+  def receive = {
+    case Udp.Bound(localAddress) =>
+      context.become(ready)
   }
 
+  def ready: Receive = {
+    case Udp.Received(data, _) => sink(data.utf8String)
+  }
 }

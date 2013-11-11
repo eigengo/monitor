@@ -59,9 +59,17 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * decide whether to include this ActorCell in our measurements
      * */
     private boolean includeActorPath(final PathAndClass pathAndClass) {
+        // do not monitor our own output code
+        if (pathAndClass.actorClassName().isDefined()) {
+            if (pathAndClass.actorClassName().get().startsWith("org.eigengo.monitor.output")) return false;
+        }
+
+        // skip if not included
         if (!this.agentConfiguration.incuded().accept(pathAndClass)) return false;
+        // skip if excluded
         if (this.agentConfiguration.excluded().accept(pathAndClass)) return false;
 
+        // skip system actor checks if we wish to monitor them
         if (this.agentConfiguration.includeSystemAgents()) return true;
 
         String userOrSystem = pathAndClass.actorPath().getElements().iterator().next();

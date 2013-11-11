@@ -34,9 +34,9 @@ object OutputConfigurationFactory {
    *
    * @return the loaded ``A`` instance
    */
-  def getAgentCofiguration[A](agentName: String)(agent: Config => A): A = {
+  def getAgentCofiguration[A](agentName: String)(agent: Config => A): OutputConfiguration[A] = {
     val outputConfig = Try(config.getConfig(s"org.eigengo.monitor.output.$agentName")).getOrElse(ConfigFactory.empty())
-    agent(outputConfig)
+    OutputConfiguration(config, agent(outputConfig))
   }
 
 }
