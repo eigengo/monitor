@@ -36,7 +36,7 @@ class PerformanceSpec extends Specification {
 
   def timed[U](repetitions: Int)(f: => U): Long = {
     val start = System.currentTimeMillis()
-    for (_ <- 0 until repetitions) f
+    for (_ <- 1 until repetitions) f
     System.currentTimeMillis() - start
   }
 
@@ -52,7 +52,10 @@ class PerformanceSpec extends Specification {
       // wait for all messages
       Thread.sleep(2000)
 
-      println(map)
+      // we should see 2 entries, each with $count values
+      import scala.collection.JavaConversions._
+      map.size() mustEqual 2
+      map.elements().toList.map(_.intValue()) must containAllOf(List(count, count))
 
       // we expect to be at least 5 times faster
       aioTime < (dogTime / 5)
