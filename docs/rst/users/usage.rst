@@ -16,7 +16,7 @@ Dependencies
 
 For sbt::
 
-    "org.eigengo.monitor" % "output-statsd" % "0.1-SNAPSHOT"
+    "org.eigengo.monitor" % "output-statsd" % "@version@"
 
 For maven
 
@@ -25,7 +25,7 @@ For maven
     <dependency>
         <groupId>org.eigengo.monitor</groupId>
         <artifactId>output-statsd</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>@version@</version>
     </dependency>
 
 **Monitoring Agent modules**
@@ -34,7 +34,7 @@ For maven
 
 For sbt::
 
-    "org.eigengo.monitor" % "agent-akka" % "0.1-SNAPSHOT"
+    "org.eigengo.monitor" % "agent-akka" % "@version@"
 
 For maven
 
@@ -43,5 +43,5 @@ For maven
     <dependency>
         <groupId>org.eigengo.monitor</groupId>
         <artifactId>agent-akka</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>@version@</version>
     </dependency>
