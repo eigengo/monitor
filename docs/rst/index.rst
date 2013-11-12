@@ -6,4 +6,5 @@ Contents
 
    intro
    engineering/index
+   users/index
    sponsors

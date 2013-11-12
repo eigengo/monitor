@@ -13,4 +13,5 @@ Alex Lashford        Production lead
 Cornel Foltea        Infrastructure lead
 Hugh Simpson         Committer
 Matt Squire          Committer
+Mario Arias          Committer
 ===================  ============================

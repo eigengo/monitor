@@ -5,6 +5,7 @@ Information for Monitor Developers
    :maxdepth: 2
 
    building
+   pointcuts
    contributing
    team
 
