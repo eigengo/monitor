@@ -25,11 +25,11 @@ import org.eigengo.monitor.agent.akka.ActorFilter.SameType
  *
  * @param includeRoutees include the routed instances in the monitoring?
  * @param includeSystemAgents include the system agents in the monitoring?
- * @param incuded the filter that matches the included actors
+ * @param included the filter that matches the included actors
  * @param excluded the filter that matches the excluded actors
  * @param sampling defines the sampling rate for any actors where we don't want to log every message received
  */
-case class AkkaAgentConfiguration(includeRoutees: Boolean, includeSystemAgents: Boolean, incuded: ActorFilter,
+case class AkkaAgentConfiguration(includeRoutees: Boolean, includeSystemAgents: Boolean, included: ActorFilter,
                                   excluded: ActorFilter, sampling: SamplingRates)
 
 /**
