@@ -49,14 +49,14 @@ object AkkaAgentConfiguration {
   def apply(config: Config): AkkaAgentConfiguration = {
     import scala.collection.JavaConversions._
 
-    val allowExclusions = if (config.hasPath("allowExclusions")) config.getBoolean("allowExclusions") else false
+    val excludeAllNotIncluded = if (config.hasPath("excludeAllNotIncluded")) config.getBoolean("excludeAllNotIncluded") else false
     val includeRoutees = if (config.hasPath("includeRoutees")) config.getBoolean("includeRoutees") else false
     val includeSystemAgents = if (config.hasPath("includeSystemAgents")) config.getBoolean("includeSystemAgents") else false
     val included = if (config.hasPath("included")) config.getStringList("included").map(parseFilter).toList else Nil
     val excluded = if (config.hasPath("excluded")) config.getStringList("excluded").map(parseFilter).toList else Nil
     val sampling = if (config.hasPath("sampling")) config.getObjectList("sampling").flatMap(parseSampling).toList else Nil
-    AkkaAgentConfiguration(includeRoutees, includeSystemAgents, AnyAcceptActorFilter(included, true),
-                            AnyAcceptActorFilter(excluded, allowExclusions), SamplingRates(sampling))
+    AkkaAgentConfiguration(includeRoutees, includeSystemAgents, AnyAcceptActorFilter(included, false),
+                            AnyAcceptActorFilter(excluded, excludeAllNotIncluded), SamplingRates(sampling))
   }
 
   private def parseActorSystemFilter(actorSystemName: String): ActorSystemNameFilter =

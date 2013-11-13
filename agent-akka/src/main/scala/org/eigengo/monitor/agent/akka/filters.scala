@@ -66,8 +66,7 @@ sealed trait ActorFilter {
  */
 case class AnyAcceptActorFilter(filters: List[ActorFilter], zero: Boolean) extends ActorFilter {
   override def accept(pathAndClass: PathAndClass): Boolean = {
-    for (filter <- filters) if (!filter.accept(pathAndClass)) return false
-    zero
+    filters.foldLeft(zero)((b, filter) => b || filter.accept(pathAndClass))
   }
 }
 

@@ -65,7 +65,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         }
 
         // skip if not included
-        if (!this.agentConfiguration.included().accept(pathAndClass)) return false;
+        if (this.agentConfiguration.included().accept(pathAndClass)) return true;
         // skip if excluded
         if (this.agentConfiguration.excluded().accept(pathAndClass)) return false;
 
