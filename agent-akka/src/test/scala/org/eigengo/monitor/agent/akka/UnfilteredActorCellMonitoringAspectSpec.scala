@@ -47,6 +47,8 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
       val tag = "org.eigengo.monitor.agent.akka.SimpleActor"
       val simpleActor = system.actorOf(Props[SimpleActor], actorName)
 
+      TestCounterInterface.foldlByAspect(actorCount)((a,_) =>a) must contain(TestCounter(actorCount, 1, List(tag)))
+
       // stop(self)
       simpleActor ! 'stop
 
