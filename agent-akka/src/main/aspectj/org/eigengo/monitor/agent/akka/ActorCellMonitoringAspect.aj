@@ -65,7 +65,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         }
 
         // skip if not included
-        if (!this.agentConfiguration.incuded().accept(pathAndClass)) return false;
+        if (!this.agentConfiguration.included().accept(pathAndClass)) return false;
         // skip if excluded
         if (this.agentConfiguration.excluded().accept(pathAndClass)) return false;
 
@@ -147,6 +147,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param msg the incoming message
      */
     Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
+
         final ActorPath actorPath = actorCell.self().path();
         final PathAndClass pathAndClass = new PathAndClass(actorPath, Option.apply(uncheckedActorNameFrom(actorCell)));
         if (!includeActorPath(pathAndClass) || !sampleMessage(pathAndClass)) return proceed(actorCell, msg);
