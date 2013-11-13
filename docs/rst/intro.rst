@@ -67,8 +67,8 @@ When you execute this application, and issue a few ``go`` commands; and a few in
 If you don't want to write the code yourself, all you have to do is to add the ``libraryDependencies``::
 
 
-    "org.eigengo.monitor" % "agent-akka" % "0.1-SNAPSHOT"
-    "org.eigengo.monitor" % "output-statsd" % "0.1-SNAPSHOT"
+    "org.eigengo.monitor" % "agent-akka" % "0.2-SNAPSHOT"
+    "org.eigengo.monitor" % "output-statsd" % "0.2-SNAPSHOT"
 
 Once you have the added the dependencies to your module, add files ``/META-INF/aop.xml`` and ``/META-INF/monitor/agent.conf``, start your JVM with ``-javaagent:$PATH-TO/aspectjweaver-1.7.3.jar``, start the `Datadog <http://http://www.datadoghq.com/>`_ agent, and you're all ready to keep an eye on your Akka code.
 
