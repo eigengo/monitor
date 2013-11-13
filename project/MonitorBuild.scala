@@ -5,7 +5,7 @@ object MonitorBuild extends Build {
 
   override val settings = super.settings ++ Seq(
     organization := "org.eigengo.monitor",
-    version := "0.1-SNAPSHOT",
+    version := "0.2-SNAPSHOT",
     scalaVersion := "2.10.2"
   )
 
