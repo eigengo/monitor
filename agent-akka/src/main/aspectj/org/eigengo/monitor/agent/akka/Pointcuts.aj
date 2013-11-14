@@ -47,13 +47,19 @@ abstract aspect Pointcuts {
      * Pointcut for the {@code actorOf} method in {@code ActorRefFactory} implementations. You would typically use
      * it in the {@code after returning()} advices.
      */
-    static pointcut anyActorOf(Props props) :
-            execution(* akka.actor.ActorRefFactory+.actorOf(..)) && args(props);
+    private static pointcut unnamedActorOf(Props props) :
+            execution(* akka.actor.ActorRefFactory+.actorOf(*)) && args(props);
     /**
      * Pointcut for the {@code actorOf} method in {@code ActorRefFactory} implementations where actor is named on creation
      */
-    static pointcut namedActorOf(Props props, String actorName) :
-            execution(* akka.actor.ActorRefFactory+.actorOf(..)) && args(props, actorName);
+    private static pointcut namedActorOf(Props props) :
+            execution(* akka.actor.ActorRefFactory+.actorOf(*,*)) && args(props, *);
+    /**
+     * Public pointcut for retrieving Props instance used by {@code actorOf} method in {@code ActorRefFactory}
+     */
+    static pointcut anyActorOf(Props props) : namedActorOf(props) || unnamedActorOf(props);
+
+
 
 
     /**
