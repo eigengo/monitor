@@ -216,16 +216,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     after(Props props) returning (ActorRef actor): Pointcuts.anyActorOf(props) {
         recordActorCreation(props, actor);
     }
-    /**
-     * Advises the {@code actorOf} method of {@code ActorRefFactory} implementations when actor is named in construction
-     *
-     * @param props the {@code Props} instance used in the call
-     * @param actorName the {@code String} used to name the actor at creation site
-     * @param actor the {@code ActorRef} returned from the call
-     */
-    after(Props props, String actorName) returning (ActorRef actor): Pointcuts.namedActorOf(props, actorName) {
-        recordActorCreation(props, actor);
-    }
 
     /**
      * method containing the recording logic for advising actor creation
