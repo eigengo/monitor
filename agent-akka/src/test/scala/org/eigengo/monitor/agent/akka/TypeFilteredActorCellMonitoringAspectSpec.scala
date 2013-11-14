@@ -48,8 +48,8 @@ class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
 
       // we expect to see 2 integers, 1 string and 1 undelivered
       val counter = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)
-      counter(0).value mustEqual 1                      // "akka:*.org.eigengo.monitor.agent.akka.SimpleActor" sampling rate is 1.
-      counter.size mustEqual 1                          // and WithUnhandledActor isn't included
+      counter.size mustEqual 1                          // "akka:*.org.eigengo.monitor.agent.akka.SimpleActor" sampling rate is 1
+      counter(0).value mustEqual 1                      // and WithUnhandledActor isn't included
       counter(0).tags must contain(a.path.toString)     // so this should be true whether or not sampling is working.
     }
 
@@ -77,7 +77,7 @@ class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
       counter2(0).value mustEqual 1005
       counter2(0).tags must contain(d.path.toString)
       counter2.size === 67
-    }.pendingUntilFixed("we should be able to include more than one actor!")
+    }
 
 
     "Skip sampled non-included actors" in {

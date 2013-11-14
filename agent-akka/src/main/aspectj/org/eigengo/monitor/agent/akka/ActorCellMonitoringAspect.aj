@@ -64,9 +64,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
             if (pathAndClass.actorClassName().get().startsWith("org.eigengo.monitor.output")) return false;
         }
 
-        // skip if not included
-        if (!this.agentConfiguration.included().accept(pathAndClass)) return false;
-        // skip if excluded
+        // include actor if it's in 'included' list
+        if (this.agentConfiguration.included().accept(pathAndClass)) return true;
+        // exclude actor if excluded (i.e. is in 'excluded' list, or excludeAllNotIncluded = true, and actor is not included)
         if (this.agentConfiguration.excluded().accept(pathAndClass)) return false;
 
         // skip system actor checks if we wish to monitor them
