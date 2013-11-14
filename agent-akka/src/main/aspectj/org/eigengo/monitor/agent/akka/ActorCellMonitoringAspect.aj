@@ -214,9 +214,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param actor the {@code ActorRef} returned from the call
      */
     after(Props props) returning (ActorRef actor) : Pointcuts.anyActorOf(props) {
-        if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
         final String uncheckedClassName = uncheckedActorNameFrom(props);
         final Option<String> className = Option.apply(uncheckedClassName);
+        if (!includeActorPath(new PathAndClass(actor.path(), className))) return;
 
         this.numberOfActors.putIfAbsent(className, new AtomicInteger(0));
         // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
@@ -232,9 +232,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param actorCell the {@code ActorCell} of the actor being stopped
      */
     after(ActorCell actorCell) : Pointcuts.actorCellInternalStop(actorCell) {
-        if (!includeActorPath(new PathAndClass(actorCell.self().path(), this.noActorClazz))) return;
         final String uncheckedClassName = uncheckedActorNameFrom(actorCell);
         final Option<String> className = Option.apply(uncheckedClassName);
+        if (!includeActorPath(new PathAndClass(actorCell.self().path(), className))) return;
 
         this.numberOfActors.putIfAbsent(className, new AtomicInteger(0));
         // decrement and get the current number of actors of this type (if the value was 1, then this returns 0 -- which is correct)
