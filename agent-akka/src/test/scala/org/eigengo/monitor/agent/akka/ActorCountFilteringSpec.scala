@@ -20,9 +20,6 @@ class ActorCountFilteringSpec extends ActorCellMonitoringAspectSpec(Some("count-
       // this actor is excluded -- we shouldn't be monitoring it
       val unmonitoredActor = system.actorOf(Props[KillableActor], "killable")
 
-      monitoredActor ! 1
-      unmonitoredActor ! 1
-
       Thread.sleep(1000)
 
       val counterBeforeKill = TestCounterInterface.foldlByAspect(actorCount)((a,_) =>a)
