@@ -18,7 +18,6 @@ package org.eigengo.monitor.agent.akka;
 import akka.actor.ActorCell;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.actor.LocalActorRef;
 
 /**
  * Centralises the pointcuts
@@ -45,16 +44,17 @@ abstract aspect Pointcuts {
             execution(* akka.event.EventStream.publish(..)) && args(event);
 
     /**
-     * Pointcut for the {@code actorOf} methods in {@code ActorCell} and {@code ActorSystem}. You would typically use
+     * Pointcut for the {@code actorOf} method in {@code ActorRefFactory} implementations. You would typically use
      * it in the {@code after returning()} advices.
      */
-    static pointcut anyActorOf(Props props) : (execution(* akka.actor.ActorSystem.actorOf(..)) || execution(* akka.actor.ActorCell.actorOf(..))) && args(props);
+    static pointcut anyActorOf(Props props) :
+            execution(* akka.actor.ActorRefFactory+.actorOf(..)) && args(props);
     /**
-     * Pointcut for the {@code actorOf} methods in {@code ActorCell} and {@code ActorSystem} where actor is named on creation
+     * Pointcut for the {@code actorOf} method in {@code ActorRefFactory} implementations where actor is named on creation
      */
     static pointcut namedActorOf(Props props, String actorName) :
-            (execution(* akka.actor.ActorSystem.actorOf(..)) ||
-                execution(* akka.actor.ActorCell.actorOf(..))) && args(props, actorName);
+            execution(* akka.actor.ActorRefFactory+.actorOf(..)) && args(props, actorName);
+
 
     /**
      * Pointcut for {@code ActorCell.stop(actor)} method, extracting the {@code ActorRef}

@@ -5,18 +5,17 @@ Pointcuts
 Actor creation pointcuts
 ========================
 
-Pointcut for the ``actorOf(..)`` methods in ``ActorCell`` and ``ActorSystem``, extracting the ``Props`` being used::
+Pointcut for the ``actorOf(..)`` method in ``ActorRefFactory`` implementations, extracting the ``Props`` being used::
 
     static pointcut anyActorOf(Props props) :
-        (execution(* akka.actor.ActorSystem.actorOf(..)) ||
-            execution(* akka.actor.ActorCell.actorOf(..))) && args(props);
+        execution(* akka.actor.ActorRefFactory+.actorOf(..)) && args(props);
 
 
-Pointcut for the ``actorOf(..)`` methods in ``ActorCell`` and ``ActorSystem`` where actor is named on creation, extracting the ``Props`` being used, and the ``String`` name of the actor::
+
+Pointcut for the ``actorOf(..)`` method in ``ActorRefFactory`` implementations where actor is named on creation, extracting the ``Props`` being used, and the ``String`` name of the actor::
 
     static pointcut namedActorOf(Props props, String actorName) :
-        (execution(* akka.actor.ActorSystem.actorOf(..)) ||
-            execution(* akka.actor.ActorCell.actorOf(..))) && args(props, actorName);
+        execution(* akka.actor.ActorRefFactory+.actorOf(..)) && args(props, actorName);
 
 
 Actor death pointcuts
