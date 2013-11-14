@@ -34,7 +34,7 @@ class SimpleActor extends Actor {
 
 }
 
-class SimpleActorCreator extends Creator[SimpleActor]{
+class SimpleActorCreator extends Creator[SimpleActor] {
   def create(): SimpleActor = new SimpleActor
 }
 
