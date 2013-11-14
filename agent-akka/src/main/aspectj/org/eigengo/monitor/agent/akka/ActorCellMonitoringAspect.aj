@@ -213,14 +213,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param props the {@code Props} instance used in the call
      * @param actor the {@code ActorRef} returned from the call
      */
-    after(Props props) returning (ActorRef actor): Pointcuts.anyActorOf(props) {
-        recordActorCreation(props, actor);
-    }
-
-    /**
-     * method containing the recording logic for advising actor creation
-     * */
-    private void recordActorCreation(Props props, ActorRef actor) {
+    after(Props props) returning (ActorRef actor) : Pointcuts.anyActorOf(props) {
         if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
         final String uncheckedClassName = uncheckedActorNameFrom(props);
         final Option<String> className = Option.apply(uncheckedClassName);
