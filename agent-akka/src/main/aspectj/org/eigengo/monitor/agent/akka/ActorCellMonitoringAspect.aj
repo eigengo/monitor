@@ -208,7 +208,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     /**
-     * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem}
+     * Advises the {@code actorOf} method of {@code ActorRefFactory} implementations
      *
      * @param props the {@code Props} instance used in the call
      * @param actor the {@code ActorRef} returned from the call
@@ -217,7 +217,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         recordActorCreation(props, actor);
     }
     /**
-     * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem} when actor is named in construction
+     * Advises the {@code actorOf} method of {@code ActorRefFactory} implementations when actor is named in construction
      *
      * @param props the {@code Props} instance used in the call
      * @param actorName the {@code String} used to name the actor at creation site
