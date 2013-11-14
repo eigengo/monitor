@@ -208,29 +208,12 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     /**
-     * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem}
+     * Advises the {@code actorOf} method of {@code ActorRefFactory} implementations
      *
      * @param props the {@code Props} instance used in the call
      * @param actor the {@code ActorRef} returned from the call
      */
-    after(Props props) returning (ActorRef actor): Pointcuts.anyActorOf(props) {
-        recordActorCreation(props, actor);
-    }
-    /**
-     * Advises the {@code actorOf} method of {@code ActorCell} and {@code ActorSystem} when actor is named in construction
-     *
-     * @param props the {@code Props} instance used in the call
-     * @param actorName the {@code String} used to name the actor at creation site
-     * @param actor the {@code ActorRef} returned from the call
-     */
-    after(Props props, String actorName) returning (ActorRef actor): Pointcuts.namedActorOf(props, actorName) {
-        recordActorCreation(props, actor);
-    }
-
-    /**
-     * method containing the recording logic for advising actor creation
-     * */
-    private void recordActorCreation(Props props, ActorRef actor) {
+    after(Props props) returning (ActorRef actor) : Pointcuts.anyActorOf(props) {
         if (!includeActorPath(new PathAndClass(actor.path(), this.noActorClazz))) return;
         final String uncheckedClassName = uncheckedActorNameFrom(props);
         final Option<String> className = Option.apply(uncheckedClassName);
