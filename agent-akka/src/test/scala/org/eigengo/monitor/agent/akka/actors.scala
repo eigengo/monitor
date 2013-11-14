@@ -34,6 +34,9 @@ class SimpleActor extends Actor {
 
 }
 
+/**
+ * Creator implementation to test Akka Java API
+ */
 class SimpleActorCreator extends Creator[SimpleActor] {
   def create(): SimpleActor = new SimpleActor
 }
