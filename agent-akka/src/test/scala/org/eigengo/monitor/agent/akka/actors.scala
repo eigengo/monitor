@@ -68,3 +68,13 @@ class NullTestingActor1 extends NullTestingActor
 class NullTestingActor2 extends NullTestingActor
 
 class NullTestingActor3 extends NullTestingActor
+
+class KillableActor extends Actor {
+
+  def receive: Receive = {
+    case 'stop =>
+      context.stop(self)
+    case _ =>
+  }
+
+}
