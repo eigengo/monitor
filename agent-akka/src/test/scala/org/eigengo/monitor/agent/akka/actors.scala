@@ -16,6 +16,7 @@
 package org.eigengo.monitor.agent.akka
 
 import akka.actor.Actor
+import akka.japi.Creator
 
 class SimpleActor extends Actor {
 
@@ -31,6 +32,13 @@ class SimpleActor extends Actor {
       throw new RuntimeException("Bantha poodoo!")
   }
 
+}
+
+/**
+ * Creator implementation to test Akka Java API
+ */
+class SimpleActorCreator extends Creator[SimpleActor] {
+  def create(): SimpleActor = new SimpleActor
 }
 
 class WithUnhandledActor extends Actor {
