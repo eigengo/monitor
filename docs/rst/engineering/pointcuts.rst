@@ -17,7 +17,7 @@ Pointcut for the ``actorOf(..)`` method in ``ActorRefFactory`` implementations w
         execution(* akka.actor.ActorRefFactory+.actorOf(*,*)) && args(props, *);
 
 
-Public pointcut for exposing ``Props`` obtained from ``actorOf(..)`` methods in ``ActorRefFactory`` implementations, whether new actor is named or not.
+Public pointcut for exposing ``Props`` obtained from ``actorOf(..)`` methods in ``ActorRefFactory`` implementations, whether new actor is named or not.::
 
     static pointcut anyActorOf(Props props) : namedActorOf(props) || unnamedActorOf(props);
 
