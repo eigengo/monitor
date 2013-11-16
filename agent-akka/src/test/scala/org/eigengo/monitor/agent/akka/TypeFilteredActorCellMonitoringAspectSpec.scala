@@ -29,7 +29,7 @@ import org.eigengo.monitor.{TestCounter, TestCounterInterface}
  * -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  * in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  */
-class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("type-filter.conf")) {
+class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("TypeFiltered.conf")) {
   import Aspects._
 
   "With path included filter" should {

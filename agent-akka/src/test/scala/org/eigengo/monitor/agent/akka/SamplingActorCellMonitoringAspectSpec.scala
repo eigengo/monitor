@@ -19,7 +19,7 @@ import org.eigengo.monitor.{TestCounter, TestCounterInterface}
 import org.eigengo.monitor.agent.akka.Aspects._
 import akka.testkit.TestActorRef
 
-class ActorSamplingSpec extends ActorCellMonitoringAspectSpec(Some("sample.conf")){
+class SamplingActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("Sampling.conf")){
 
   "Actor sampling" should {
     val a = TestActorRef[SimpleActor]("a")

@@ -30,130 +30,114 @@ import org.eigengo.monitor.{TestCounterInterface, ContainsTag, TestCounter}
  * -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  * in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
  */
-class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("unfiltered.conf")) {
+class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpec(Some("Unfiltered.conf")) {
   sequential
   import Aspects._
-
-  val simpleActorClassTag    = "akka:default.org.eigengo.monitor.agent.akka.SimpleActor"
-
-  def simpleActorTagWithTag(tag: String): List[String] = List(tag, simpleActorClassTag)
+  import TestCounterInterface.takeLHS
 
   "Non-routed actor monitoring" should {
 
     // records the count of actors, grouped by simple class name
     "Record the actor count" in {
-      TestCounterInterface.clear()
-      val actorName = "counter"
-      val tag = "org.eigengo.monitor.agent.akka.SimpleActor"
-      val simpleActor = system.actorOf(Props[SimpleActor], actorName)
+      withActorOf(Props[SimpleActor]) { ca =>
+        TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 1, ca.pathTags))
 
-      TestCounterInterface.foldlByAspect(actorCount)((a, _) => a) must contain(TestCounter(actorCount, 1, List(tag)))
+        // stop(self)
+        ca.actor ! 'stop
 
-      // stop(self)
-      simpleActor ! 'stop
-
-      Thread.sleep(500)   // wait for the messages
-       // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
-      TestCounterInterface.foldlByAspect(actorCount)((a, _) => a) must contain(TestCounter(actorCount, 0, List(tag)))
+        Thread.sleep(500)   // wait for the messages
+         // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
+        TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 0, ca.pathTags))
+      }
     }
 
     "Record the actor count using a creator" in {
       TestCounterInterface.clear()
-      val tag = "org.eigengo.monitor.agent.akka.SimpleActor"
+      val tags = List("akka://default/user", "akka://default/user/$a")
 
       val simpleActor = system.actorOf(Props.create(new SimpleActorCreator))
-      TestCounterInterface.foldlByAspect(actorCount)((a, _) => a) must contain(TestCounter(actorCount, 1, List(tag)))
+      TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 1, tags))
       // stop(self)
       simpleActor ! 'stop
 
       Thread.sleep(500) // wait for the messages
       // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
-      TestCounterInterface.foldlByAspect(actorCount)((a, _) => a) must contain(TestCounter(actorCount, 0, List(tag)))
+      TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 0, tags))
     }
 
     "Record the actor count of a named actor using a creator" in {
-      TestCounterInterface.clear()
-      val tag = "org.eigengo.monitor.agent.akka.SimpleActor"
+      withActorOf(Props.create(new SimpleActorCreator)) { ca =>
+        TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 1, ca.pathTags))
+        // stop(self)
+        ca.actor ! 'stop
 
-      val simpleActor = system.actorOf(Props.create(new SimpleActorCreator), "SomeMame")
-      TestCounterInterface.foldlByAspect(actorCount)((a, _) => a) must contain(TestCounter(actorCount, 1, List(tag)))
-      // stop(self)
-      simpleActor ! 'stop
-
-      Thread.sleep(500) // wait for the messages
-      // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
-      TestCounterInterface.foldlByAspect(actorCount)((a, _) => a) must contain(TestCounter(actorCount, 0, List(tag)))
+        Thread.sleep(500) // wait for the messages
+        // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
+        TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 0, ca.pathTags))
+      }
     }
 
     // records the count of messages received, grouped by message type
     "Record the message sent to actor" in {
-      val actorName = "foo"
-      val tag = s"akka://default/user/$actorName"
-      val simpleActor = TestActorRef[SimpleActor](actorName)
+      withActorOf(Props[SimpleActor]) { ca =>
+        ca.actor ! 1                 // OK
+        ca.actor ! 1                 // OK
+        ca.actor ! "Bantha Poodoo!"  // OK
+        ca.actor ! 2.2               // original Actor.unhandled
 
-      simpleActor ! 1                 // OK
-      simpleActor ! 1                 // OK
-      simpleActor ! "Bantha Poodoo!"  // OK
-      simpleActor ! 2.2               // original Actor.unhandled
+        ca.actor ! 'stop             // OK. stop self
 
-      simpleActor ! 'stop             // OK. stop self
+        Thread.sleep(500)   // wait for the messages
 
-      Thread.sleep(500)   // wait for the messages
-
-      // we expect to see 2 integers, 1 string and 1 undelivered
-      TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus) must contain(TestCounter(deliveredInteger, 2, simpleActorTagWithTag(tag)))
-      TestCounterInterface.foldlByAspect(deliveredString)(TestCounter.plus) must contain(TestCounter(deliveredString, 1, simpleActorTagWithTag(tag)))
-      // NB: undelivered does not include the actor class name
-      TestCounterInterface.foldlByAspect(undelivered)(TestCounter.plus) must contain(TestCounter(undelivered, 1, List(tag)))
+        // we expect to see 2 integers, 1 string and 1 undelivered
+        TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus) must contain(TestCounter(deliveredInteger, 2, ca.tags))
+        TestCounterInterface.foldlByAspect(deliveredString)(TestCounter.plus) must contain(TestCounter(deliveredString, 1, ca.tags))
+        // NB: undelivered does not include the actor class name
+        TestCounterInterface.foldlByAspect(undelivered)(TestCounter.plus) must contain(TestCounter(undelivered, 1, ca.pathTags))
+      }
     }
 
     // records the queue size at any given time
     "Record the message queue size" in {
-      val actorName = "bar"
-      val tag = s"akka://default/user/$actorName"
-      val simpleActor = system.actorOf(Props[SimpleActor], actorName)
+      withActorOf(Props[SimpleActor]) { ca =>
+        // because we are using the test ActorSystem, which uses single-threaded dispatcher
+        // we expect to see the queue size to reach the count in size. But we must
+        // allow for some crafty threading, and allow 3 the queue to be a bit smaller
+        val count = 100
+        val tolerance = 3
+        for (i <- 0 to count) ca.actor ! 10
+        Thread.sleep(count * (10 + 2))
 
-      // because we are using the test ActorSystem, which uses single-threaded dispatcher
-      // we expect to see the queue size to reach the count in size. But we must
-      // allow for some crafty threading, and allow 3 the queue to be a bit smaller
-      val count = 100
-      val tolerance = 3
-      for (i <- 0 to count) simpleActor ! 10
-      Thread.sleep(count * (10 + 2))
-
-      // fold by _max_ over the counters by the ``queueSizeAspect``, tagged with this actor's name
-      val counter = TestCounterInterface.foldlByAspect(queueSize, ContainsTag(tag))(TestCounter.max)(0)
-      counter.value must beGreaterThan(count - tolerance)
-      counter.tags must containAllOf(simpleActorTagWithTag(tag))
+        // fold by _max_ over the counters by the ``queueSizeAspect``, tagged with this actor's name
+        val counter = TestCounterInterface.foldlByAspect(queueSize, ContainsTag(ca.pathTag))(TestCounter.max)(0)
+        counter.value must beGreaterThan(count - tolerance)
+        counter.tags must containAllOf(ca.tags)
+      }
     }
 
     // keep track of the actor duration; that is the time the receive method takes
     "Record the actor duration" in {
-      val actorName = "dur"
-      val tag = s"akka://default/user/$actorName"
-      val simpleActor = system.actorOf(Props[SimpleActor], actorName)
+      withActorOf(Props[SimpleActor]) { ca =>
+        ca.actor ! 1000
 
-      simpleActor ! 1000
+        Thread.sleep(1100)
 
-      Thread.sleep(1100)
-
-      val counter = TestCounterInterface.foldlByAspect(actorDuration, ContainsTag(tag))(TestCounter.max)(0)
-      counter.value must beGreaterThan(900)
-      counter.value must beLessThan(1100)
-      counter.tags must containAllOf(simpleActorTagWithTag(tag))
+        val counter = TestCounterInterface.foldlByAspect(actorDuration, ContainsTag(ca.pathTag))(TestCounter.max)(0)
+        counter.value must beGreaterThan(900)
+        counter.value must beLessThan(1100)
+        counter.tags must containAllOf(ca.tags)
+      }
     }
 
     "Record the errors" in {
-      val actorName = "sodoff"
-      val tag = s"akka://default/user/$actorName"
-      val simpleActor = TestActorRef[SimpleActor](actorName)
+      withActorOf(Props[SimpleActor]) { ca =>
+        // match error in receive
+        ca.actor ! false
 
-      // match error in receive
-      simpleActor ! false
+        Thread.sleep(500)   // wait for the messages
 
-      Thread.sleep(500)   // wait for the messages
-
-      TestCounterInterface.foldlByAspect(actorError)(TestCounter.plus) must contain(TestCounter(actorError, 1, simpleActorTagWithTag(tag)))
+        TestCounterInterface.foldlByAspect(actorError)(TestCounter.plus) must contain(TestCounter(actorError, 1, ca.tags))
+      }
     }
 
   }
@@ -166,22 +150,19 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
   "Routed actor monitoring" should {
 
     "Record the message sent to actor" in {
-      TestCounterInterface.clear()
-      val actorName = "routedFoo"
-      val tag = s"akka://default/user/$actorName"
       val count = 10
-      val simpleActor = system.actorOf(Props[SimpleActor].withRouter(RoundRobinRouter(nrOfInstances = count)), actorName)
+      withActorOf(Props[SimpleActor].withRouter(RoundRobinRouter(nrOfInstances = count))) { ca =>
+        for (i <- 0 until count) ca.actor ! 100
 
-      for (i <- 0 until count) simpleActor ! 100
+        Thread.sleep(3500)
 
-      Thread.sleep(3500)
+        // we expect to see 10 integers for the supervisor and 1 integer for each child
+        val supCounter = TestCounterInterface.foldlByAspect(deliveredInteger, ContainsTag(ca.pathTag))(TestCounter.plus)(0)
+        val c1Counter  = TestCounterInterface.foldlByAspect(deliveredInteger, ContainsTag(ca.pathTag + "/$a"))(TestCounter.plus)(0)
 
-      // we expect to see 10 integers for the supervisor and 1 integer for each child
-      val supCounter = TestCounterInterface.foldlByAspect(deliveredInteger, ContainsTag(tag))(TestCounter.plus)(0)
-      val c1Counter  = TestCounterInterface.foldlByAspect(deliveredInteger, ContainsTag(tag + "/$a"))(TestCounter.plus)(0)
-
-      supCounter.value mustEqual 10
-      c1Counter.value mustEqual 1
+        supCounter.value mustEqual 10
+        c1Counter.value mustEqual 1
+      }
     }
   }
 
