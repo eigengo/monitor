@@ -82,17 +82,11 @@ public class JavaApiAkkaApplication {
         // Reply should go to the "actor-in-a-box"
         inbox.send(greeter, new Greet());
 
-        // Wait 5 seconds for the reply with the 'greeting' message
-        Greeting greeting1 = (Greeting) inbox.receive(Duration.create(5, TimeUnit.SECONDS));
-        System.out.println("Greeting: " + greeting1.message);
-
         // Change the greeting and ask for it again
         greeter.tell(new WhoToGreet("typesafe"), ActorRef.noSender());
         inbox.send(greeter, new Greet());
-        Greeting greeting2 = (Greeting) inbox.receive(Duration.create(5, TimeUnit.SECONDS));
-        System.out.println("Greeting: " + greeting2.message);
 
-        ActorRef greetPrinter = system.actorOf(Props.create(GreetPrinter.class), "greetPrinter");
+        system.actorOf(Props.create(GreetPrinter.class), "greetPrinter");
 
         return system;
     }

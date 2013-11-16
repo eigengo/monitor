@@ -28,22 +28,14 @@ class JavaApiActorCellMonitoringAspectSpec extends Specification with ActorCellM
     configure("JavaApi.conf")
     // records the count of actors, grouped by simple class name
     "Record the actor count, and let us exclude an unnamed anonymous inner class actor" in {
-
-      /*
       TestCounterInterface.clear()
-      val akkaSystem = JavaApiAkkaApplication.create()
-      val parentPath = "parent.akka://helloakka/user"
-      val actorPath = "path.akka://helloakka/user/$a"
-      val propsClazz = "props.class org.eigengo.monitor.agent.akka.JavaApiAkkaApplication$GreetPrinter"
-      val className = "className.org.eigengo.monitor.agent.akka.JavaApiAkkaApplication.GreetPrinter"
+      val system = JavaApiAkkaApplication.create()
 
-      val unnamedGreetPrinterTags = List(parentPath, actorPath, propsClazz, className)
-      val namedGreetPrinterTags = List(parentPath, "path.akka://helloakka/user/greetPrinter", propsClazz, className)
-      val greeterTags = List(parentPath, "path.akka://helloakka/user/greeter",
-        "props.class org.eigengo.monitor.agent.akka.JavaApiAkkaApplication$Greeter",
-        "className.org.eigengo.monitor.agent.akka.JavaApiAkkaApplication.Greeter")
+      val unnamedGreetPrinterTags = List("akka://javaapi/user", "akka://javaapi/user/$a")
+      val namedGreetPrinterTags = List("akka://javaapi/user/greetPrinter")
+      val greeterTags = List("akka://javaapi/user/greeter")
 
-      akkaSystem.actorOf(Props[JavaApiAkkaApplication.GreetPrinter])
+      system.actorOf(Props[JavaApiAkkaApplication.GreetPrinter])
 
       Thread.sleep(100L)
       TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must containAllOf(Seq(
@@ -51,16 +43,13 @@ class JavaApiActorCellMonitoringAspectSpec extends Specification with ActorCellM
         TestCounter(actorCount, 1, namedGreetPrinterTags),
         TestCounter(actorCount, 1, greeterTags)))
 
-
-      akkaSystem.shutdown()
+      system.shutdown()
       Thread.sleep(1000L)
 
       TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must containAnyOf(Seq(
         TestCounter(actorCount, 0, unnamedGreetPrinterTags),
         TestCounter(actorCount, 0, namedGreetPrinterTags),
         TestCounter(actorCount, 0, greeterTags)))
-      */
-      pending
     }
 
   }
