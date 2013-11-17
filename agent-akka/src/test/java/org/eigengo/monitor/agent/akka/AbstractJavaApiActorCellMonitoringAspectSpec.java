@@ -19,7 +19,10 @@ import akka.actor.*;
 
 import java.io.Serializable;
 
-abstract class JavaApiAkkaContainer {
+/**
+ * Exercises Akka's Java API for testing.
+ */
+abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
     public static final String ACTOR_SYSTEM_NAME = "javaapi";
 
     public static class Greet implements Serializable {}
@@ -43,9 +46,8 @@ abstract class JavaApiAkkaContainer {
 
         public void onReceive(Object message) {
             if (message.toString().equals("die")) context().stop(self());
-            else if (message instanceof WhoToGreet) greeting = "hello, " + ((WhoToGreet) message).who;
-            // Send the current greeting back to the sender
-            else if (message instanceof Greet) getSender().tell(new Greeting(greeting), getSelf());
+            else if (message instanceof WhoToGreet) this.greeting = "hello, " + ((WhoToGreet) message).who;
+            else if (message instanceof Greet) getSender().tell(new Greeting(this.greeting), getSelf());
             else unhandled(message);
         }
     }
@@ -58,15 +60,21 @@ abstract class JavaApiAkkaContainer {
         }
     }
 
-    ActorRef greeter;
-    ActorRef greetPrinter;
-    ActorRef unnamedGreetPrinter;
-    Props greeterProps;
-    Props greetPrinterProps;
-    Props unnamedGreetPrinterProps;
-    ActorSystem system;
+    // The ActorSystem under test
+    protected final ActorSystem system;
+    // The following fields are the Props used to create the matching ActorRefs below
+    protected final Props greeterProps;
+    protected final Props greetPrinterProps;
+    protected final Props unnamedGreetPrinterProps;
+    // The following fields are the ActorRefs constructed using the Props above
+    protected final ActorRef greeter;
+    protected final ActorRef greetPrinter;
+    protected final ActorRef unnamedGreetPrinter;
 
-    public JavaApiAkkaContainer() {
+    /**
+     * Constructs the ActorSystem under test, and creates the Props and ActorRefs above
+     */
+    public AbstractJavaApiActorCellMonitoringAspectSpec() {
         // Create the 'helloakka' actor system
         this.system = ActorSystem.create(ACTOR_SYSTEM_NAME);
 

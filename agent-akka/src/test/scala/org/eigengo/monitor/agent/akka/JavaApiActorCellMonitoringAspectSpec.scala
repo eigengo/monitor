@@ -19,7 +19,7 @@ import org.eigengo.monitor.{TestCounter, TestCounterInterface}
 import org.specs2.mutable.SpecificationLike
 
 class JavaApiActorCellMonitoringAspectSpec
-  extends JavaApiAkkaContainer
+  extends AbstractJavaApiActorCellMonitoringAspectSpec
   with SpecificationLike with ActorCellMonitoringAspectConfigurer with ActorCellMonitoringTaggingConvention {
 
   sequential
@@ -30,9 +30,9 @@ class JavaApiActorCellMonitoringAspectSpec
     configure("JavaApi.conf")
     // records the count of actors, grouped by simple class name
     "Record the actor count, and let us exclude an unnamed anonymous inner class actor" in {
-      val unnamedGreetPrinterTags = getTags(unnamedGreetPrinter, unnamedGreetPrinterProps) // List("akka://javaapi/user", "akka://javaapi/user/$a", "akka:javaapi.org.eigengo.monitor.agent.akka.JavaApiAkkaContainer.GreetPrinter")
-      val namedGreetPrinterTags = getTags(greetPrinter, greetPrinterProps) // List("akka://javaapi/user/greetPrinter", "akka:javaapi.org.eigengo.monitor.agent.akka.JavaApiAkkaContainer.GreetPrinter")
-      val greeterTags = getTags(greeter, greeterProps) // List("akka://javaapi/user/greeter", "akka:javaapi.org.eigengo.monitor.agent.akka.JavaApiAkkaContainer.Greeter")
+      val unnamedGreetPrinterTags = getTags(unnamedGreetPrinter, unnamedGreetPrinterProps)
+      val namedGreetPrinterTags = getTags(greetPrinter, greetPrinterProps)
+      val greeterTags = getTags(greeter, greeterProps)
 
       Thread.sleep(100L)
       TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must containAllOf(Seq(

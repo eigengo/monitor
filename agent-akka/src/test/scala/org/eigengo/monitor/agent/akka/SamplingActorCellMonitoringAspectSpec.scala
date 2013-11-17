@@ -56,20 +56,17 @@ class SamplingActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpe
     }
 
     "Sample wildcard path but ignore only 'excluded' actors" in {
-
       TestCounterInterface.clear()
       (0 until 497) foreach {_ => c.actor ! 1}   // if we weren't incrementing the counters separately for each actor, then we'd
       (0 until 501) foreach {_ => d.actor ! 1}   // expect 998 messages, and thus 250*4 = 1000 messages logged. But we are -- so
-                                           // we expect 125*4 = 500 for actor c, and 126*4 = 504 for actor d
+                                                 // we expect 125*4 = 500 for actor c, and 126*4 = 504 for actor d
       (0 until 500) foreach {_ => e.actor ! 1}   // Also, we're excluding this actor, so it shouldn't contribute anything at all.
-      Thread.sleep(500)   // wait for the messages
+      Thread.sleep(500)                          // wait for the messages
 
       val counter3 = TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus)
 
       counter3(0).value mustEqual 1004
       counter3(0).tags must contain(d.pathTag)
-      counter3(125).tags must contain(d.pathTag)
-      counter3(126).tags must contain(c.pathTag)
       counter3.size === 251
     }
   }
