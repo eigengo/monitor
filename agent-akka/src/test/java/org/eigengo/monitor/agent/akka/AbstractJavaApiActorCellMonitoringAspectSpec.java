@@ -75,7 +75,7 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
      * Constructs the ActorSystem under test, and creates the Props and ActorRefs above
      */
     public AbstractJavaApiActorCellMonitoringAspectSpec() {
-        // Create the 'helloakka' actor system
+        // Create the actor system
         this.system = ActorSystem.create(ACTOR_SYSTEM_NAME);
 
         // Create the 'greeter' actor

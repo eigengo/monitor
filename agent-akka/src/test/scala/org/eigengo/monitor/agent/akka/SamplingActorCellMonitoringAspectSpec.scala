@@ -66,7 +66,6 @@ class SamplingActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpe
       val counter3 = TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus)
 
       counter3(0).value mustEqual 1004
-      counter3(0).tags must contain(d.pathTag)
       counter3.size === 251
     }
   }
