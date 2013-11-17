@@ -36,7 +36,7 @@ class JavaApiActorCellMonitoringAspectSpec
 
       Thread.sleep(100L)
       TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must containAllOf(Seq(
-        TestCounter(actorCount, 2, unnamedGreetPrinterTags),
+        TestCounter(actorCount, 1, unnamedGreetPrinterTags),
         TestCounter(actorCount, 1, namedGreetPrinterTags),
         TestCounter(actorCount, 1, greeterTags)))
 

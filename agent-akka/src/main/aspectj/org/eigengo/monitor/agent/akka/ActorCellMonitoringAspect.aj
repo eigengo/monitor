@@ -249,6 +249,16 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     /**
+     * Decides whether {@code path} represents the "root" of the user actors
+     *
+     * @param path the actor path
+     * @return {@code true} if root of user actors
+     */
+    private boolean isUserRoot(ActorPath path) {
+        return "user".equals(path.elements().mkString("/"));
+    }
+
+    /**
      * Computes the tags for the given {@code actorPath} and {@code actor} instances.
      *
      * @param actorPath the actor path; never {@code null}
@@ -258,12 +268,19 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private String[] getTags(final ActorPath actorPath, final Option<String> actorClassName) {
         List<String> tags = new ArrayList<String>();
 
-        // TODO: Improve detection of routed actors. This relies only on the naming :(.
+        // TODO: Improve detection of routed actors. This only detects "root" unnamed actors
         String lastPathElement = actorPath.elements().last();
         if (lastPathElement.startsWith("$")) {
             // this is routed actor.
-            tags.add(actorPathToString(actorPath.parent()));
-            if (this.agentConfiguration.includeRoutees()) tags.add(actorPathToString(actorPath));
+            final ActorPath parent = actorPath.parent();
+            if (isUserRoot(parent)) {
+                // the parent is akka://xxx/user
+                tags.add(actorPathToString(actorPath));
+            } else {
+                // the parent is some other actor, akka://xxx/user/foo
+                tags.add(actorPathToString(parent));
+                if (this.agentConfiguration.includeRoutees()) tags.add(actorPathToString(actorPath));
+            }
         } else {
             // there is no supervisor
             tags.add(actorPathToString(actorPath));

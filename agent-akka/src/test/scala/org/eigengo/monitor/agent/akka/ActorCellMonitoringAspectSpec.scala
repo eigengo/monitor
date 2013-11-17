@@ -38,7 +38,7 @@ trait ActorCellMonitoringTaggingConvention {
    * @return the tags
    */
   def getTags(ref: ActorRef, props: Props, routees: Int = 0): List[String] =
-    getPathTags(ref, routees) ++ getTypeTags(props)
+    getPathTags(ref, routees) ++ getTypeTags(ref, props)
 
   /**
    * Gets the path tags for the given ``ref`` and ``routees``.
@@ -61,8 +61,9 @@ trait ActorCellMonitoringTaggingConvention {
    * @param props the Props used to create the actor
    * @return the type tags
    */
-  def getTypeTags(props: Props): List[String] = {
-    List(s"akka.type:default.${props.actorClass().getCanonicalName}")
+  def getTypeTags(ref: ActorRef, props: Props): List[String] = {
+    val system = ref.path.address.system
+    List(s"akka.type:$system.${props.actorClass().getCanonicalName}")
   }
 
 }
@@ -146,7 +147,7 @@ abstract class ActorCellMonitoringAspectSpec(val agentConfig: Option[String])
     val actorName = name.getOrElse(List.fill(15)((Random.nextInt(25) + 65).toChar).mkString)
     val actorRef = system.actorOf(props, actorName)
     val pathTag = getPathTags(actorRef, 0).head
-    val typeTag = getTypeTags(props).head
+    val typeTag = getTypeTags(actorRef, props).head
 
     CreatedActor(actorRef, actorName, pathTag, typeTag)
   }
