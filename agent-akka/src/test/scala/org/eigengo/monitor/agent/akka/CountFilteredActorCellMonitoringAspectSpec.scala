@@ -10,29 +10,21 @@ class CountFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspe
 
   "Actor count monitoring" should {
 
-    // records the count of actors, grouped by simple class name
     "Not record the count of exluded actors" in {
-      TestCounterInterface.clear()
-
-      val monitoredActorTag = "akka://default/user/simple"
-      val monitoredActor = system.actorOf(Props[SimpleActor], "simple")
-      // this actor is excluded -- we shouldn't be monitoring it
-      val unmonitoredActor = system.actorOf(Props[KillableActor], "killable")
-
-      Thread.sleep(1000)
-
-      val counterBeforeKill = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
-      counterBeforeKill.size === 1
-      counterBeforeKill must contain(TestCounter(actorCount, 1, List(monitoredActorTag)))
-
-      monitoredActor ! 'stop
-      unmonitoredActor ! 'stop
-
-      Thread.sleep(500)
-
-      val counterAfterKill = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
-      counterAfterKill.size === 2
-      counterAfterKill must contain(TestCounter(actorCount, 0, List(monitoredActorTag)))
+      withActorsOf(Props[SimpleActor], Props[KillableActor]) { (monitored, unmonitored) =>
+        val counterBeforeKill = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
+        counterBeforeKill.size === 1
+        counterBeforeKill must contain(TestCounter(actorCount, 1, monitored.tags))
+  
+        monitored.actor ! 'stop
+        unmonitored.actor ! 'stop
+  
+        Thread.sleep(500)
+  
+        val counterAfterKill = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
+        counterAfterKill.size === 2
+        counterAfterKill must contain(TestCounter(actorCount, 0, monitored.tags))
+      }
     }
   }
 }

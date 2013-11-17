@@ -40,40 +40,41 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
     // records the count of actors, grouped by simple class name
     "Record the actor count" in {
       withActorOf(Props[SimpleActor]) { ca =>
-        TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 1, ca.pathTags))
+        TestCounterInterface.foldlByAspect(actorCount, ContainsTag(ca.pathTag))(takeLHS) must contain(TestCounter(actorCount, 1, ca.tags))
 
         // stop(self)
         ca.actor ! 'stop
 
         Thread.sleep(500)   // wait for the messages
          // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
-        TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 0, ca.pathTags))
+        TestCounterInterface.foldlByAspect(actorCount, ContainsTag(ca.pathTag))(takeLHS) must contain(TestCounter(actorCount, 0, ca.tags))
       }
     }
 
     "Record the actor count using a creator" in {
       TestCounterInterface.clear()
-      val tags = List("akka://default/user", "akka://default/user/$a")
+      val props = Props.create(new SimpleActorCreator)
+      val simpleActor = system.actorOf(props, "xxx")
+      val tags = getTags(simpleActor, props)
 
-      val simpleActor = system.actorOf(Props.create(new SimpleActorCreator))
-      TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 1, tags))
+      TestCounterInterface.foldlByAspect(actorCount, ContainsTag(tags.head))(takeLHS) must contain(TestCounter(actorCount, 1, tags))
       // stop(self)
       simpleActor ! 'stop
 
       Thread.sleep(500) // wait for the messages
       // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
-      TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 0, tags))
+      TestCounterInterface.foldlByAspect(actorCount, ContainsTag(tags.head))(takeLHS) must contain(TestCounter(actorCount, 0, tags))
     }
 
     "Record the actor count of a named actor using a creator" in {
       withActorOf(Props.create(new SimpleActorCreator)) { ca =>
-        TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 1, ca.pathTags))
+        TestCounterInterface.foldlByAspect(actorCount, ContainsTag(ca.pathTag))(takeLHS) must contain(TestCounter(actorCount, 1, ca.tags))
         // stop(self)
         ca.actor ! 'stop
 
         Thread.sleep(500) // wait for the messages
         // we're sending gauge values here. We want the latest (hence our fold takes the 'head')
-        TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must contain(TestCounter(actorCount, 0, ca.pathTags))
+        TestCounterInterface.foldlByAspect(actorCount, ContainsTag(ca.pathTag))(takeLHS) must contain(TestCounter(actorCount, 0, ca.tags))
       }
     }
 
@@ -90,8 +91,8 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
         Thread.sleep(500)   // wait for the messages
 
         // we expect to see 2 integers, 1 string and 1 undelivered
-        TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus) must contain(TestCounter(deliveredInteger, 2, ca.tags))
-        TestCounterInterface.foldlByAspect(deliveredString)(TestCounter.plus) must contain(TestCounter(deliveredString, 1, ca.tags))
+        TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus) must contain(TestCounter(delivered(1: Int), 2, ca.tags))
+        TestCounterInterface.foldlByAspect(delivered(""))(TestCounter.plus) must contain(TestCounter(delivered(""), 1, ca.tags))
         // NB: undelivered does not include the actor class name
         TestCounterInterface.foldlByAspect(undelivered)(TestCounter.plus) must contain(TestCounter(undelivered, 1, ca.pathTags))
       }
@@ -157,8 +158,8 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
         Thread.sleep(3500)
 
         // we expect to see 10 integers for the supervisor and 1 integer for each child
-        val supCounter = TestCounterInterface.foldlByAspect(deliveredInteger, ContainsTag(ca.pathTag))(TestCounter.plus)(0)
-        val c1Counter  = TestCounterInterface.foldlByAspect(deliveredInteger, ContainsTag(ca.pathTag + "/$a"))(TestCounter.plus)(0)
+        val supCounter = TestCounterInterface.foldlByAspect(delivered(1: Int), ContainsTag(ca.pathTag))(TestCounter.plus)(0)
+        val c1Counter  = TestCounterInterface.foldlByAspect(delivered(1: Int), ContainsTag(ca.pathTag + "/$a"))(TestCounter.plus)(0)
 
         supCounter.value mustEqual 10
         c1Counter.value mustEqual 1

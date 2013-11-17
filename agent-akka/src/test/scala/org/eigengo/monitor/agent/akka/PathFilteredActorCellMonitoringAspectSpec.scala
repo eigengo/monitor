@@ -17,6 +17,7 @@ package org.eigengo.monitor.agent.akka
 
 import akka.testkit.TestActorRef
 import org.eigengo.monitor.{TestCounter, TestCounterInterface}
+import akka.actor.Props
 
 /**
  * Checks that the ``ActorCellMonitoringAspect`` records the required information, particularly with the applied
@@ -33,7 +34,8 @@ class PathFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
   import Aspects._
 
   "With path included filter" should {
-    val a = TestActorRef[SimpleActor]("a")
+    val aProps = Props[SimpleActor]
+    val a = system.actorOf(aProps, "a")
     val b = TestActorRef[SimpleActor]("b")
 
     "Skip non-included actor" in {
@@ -44,10 +46,10 @@ class PathFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
       Thread.sleep(500)   // wait for the messages
 
       // we expect to see 2 integers, 1 string and 1 undelivered
-      val counter = TestCounterInterface.foldlByAspect(deliveredInteger)(TestCounter.plus)(0)
+      val counter = TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus)(0)
 
       counter.value mustEqual 1
-      counter.tags must contain(a.path.toString)
+      counter.tags must contain(getPathTags(a, 0).head)
     }
   }
 

@@ -15,18 +15,11 @@
  */
 package org.eigengo.monitor.agent.akka;
 
-import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
-import akka.actor.Inbox;
-import scala.concurrent.duration.Duration;
-import scala.concurrent.duration.FiniteDuration;
+import akka.actor.*;
 
 import java.io.Serializable;
-import java.util.concurrent.TimeUnit;
 
-public class JavaApiAkkaApplication {
+abstract class JavaApiAkkaContainer {
     public static final String ACTOR_SYSTEM_NAME = "javaapi";
 
     public static class Greet implements Serializable {}
@@ -65,30 +58,41 @@ public class JavaApiAkkaApplication {
         }
     }
 
-    public static ActorSystem create() {
+    ActorRef greeter;
+    ActorRef greetPrinter;
+    ActorRef unnamedGreetPrinter;
+    Props greeterProps;
+    Props greetPrinterProps;
+    Props unnamedGreetPrinterProps;
+    ActorSystem system;
+
+    public JavaApiAkkaContainer() {
         // Create the 'helloakka' actor system
-        final ActorSystem system = ActorSystem.create(ACTOR_SYSTEM_NAME);
+        this.system = ActorSystem.create(ACTOR_SYSTEM_NAME);
 
         // Create the 'greeter' actor
-        final ActorRef greeter = system.actorOf(Props.create(Greeter.class), "greeter");
+        this.greeterProps = Props.create(Greeter.class);
+        this.greeter = system.actorOf(this.greeterProps, "greeter");
 
         // Create the "actor-in-a-box"
-        final Inbox inbox = Inbox.create(system);
+        final Inbox inbox = Inbox.create(this.system);
 
         // Tell the 'greeter' to change its 'greeting' message
-        greeter.tell(new WhoToGreet("akka"), ActorRef.noSender());
+        this.greeter.tell(new WhoToGreet("akka"), ActorRef.noSender());
 
         // Ask the 'greeter for the latest 'greeting'
         // Reply should go to the "actor-in-a-box"
-        inbox.send(greeter, new Greet());
+        inbox.send(this.greeter, new Greet());
 
         // Change the greeting and ask for it again
-        greeter.tell(new WhoToGreet("typesafe"), ActorRef.noSender());
-        inbox.send(greeter, new Greet());
+        this.greeter.tell(new WhoToGreet("typesafe"), ActorRef.noSender());
+        inbox.send(this.greeter, new Greet());
 
-        system.actorOf(Props.create(GreetPrinter.class), "greetPrinter");
+        this.greetPrinterProps = Props.create(GreetPrinter.class);
+        this.greetPrinter = system.actorOf(this.greetPrinterProps, "greetPrinter");
 
-        return system;
+        this.unnamedGreetPrinterProps = Props.create(GreetPrinter.class);
+        this.unnamedGreetPrinter = system.actorOf(this.unnamedGreetPrinterProps);
     }
 
 }
