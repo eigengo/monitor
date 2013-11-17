@@ -31,6 +31,10 @@ public class StatsdCounterInterface implements CounterInterface {
     private final StatsDClient statsd;
     private final Map<String, Metric> gaugeValues;
 
+    /**
+     * Constructs this instance by loading the {@code output.conf} configuration, and then looking
+     * for the {@code org.eigengo.monitor.output.statsd} key.
+     */
     public StatsdCounterInterface() {
         StatsdOutputConfiguration configuration =
                 OutputConfigurationFactory.getAgentCofiguration("statsd", StatsdOutputConfigurationJapi.apply()).outputConfig();
@@ -74,23 +78,24 @@ public class StatsdCounterInterface implements CounterInterface {
 
     @Override
     public void incrementCounter(String aspect, String... tags) {
-        this.statsd.incrementCounter(aspect, tags);
+        this.statsd.incrementCounter(aspect, sanitize(tags));
     }
 
     @Override
     public void incrementCounter(String aspect, int delta, String... tags) {
-        this.statsd.count(aspect, delta, tags);
+        this.statsd.count(aspect, delta, sanitize(tags));
     }
 
     @Override
     public void decrementCounter(String aspect, String... tags) {
-        this.statsd.decrementCounter(aspect, tags);
+        this.statsd.decrementCounter(aspect, sanitize(tags));
     }
 
     @Override
     public void recordGaugeValue(String aspect, int value, String... tags) {
-        this.statsd.recordGaugeValue(aspect, value, tags);
-        this.gaugeValues.put(aspect + joinTags(tags), new Metric(aspect, value, tags));
+        final String[] sanitized = sanitize(tags);
+        this.statsd.recordGaugeValue(aspect, value, sanitized);
+        this.gaugeValues.put(aspect + Arrays.toString(sanitized), new Metric(aspect, value, sanitized));
     }
 
     @Override
@@ -98,14 +103,23 @@ public class StatsdCounterInterface implements CounterInterface {
         this.statsd.recordExecutionTime(aspect, duration, tags);
     }
 
-    private static String joinTags(String[] tags) {
-        StringBuilder builder = new StringBuilder(256);
-        for (String tag : tags) {
-            builder.append(tag).append('|');
+    /**
+     * Removes the non-statsd characters that made their way into the tags
+     *
+     * @param tags the raw tags.
+     * @return the sanitized tags
+     */
+    private static String[] sanitize(String[] tags) {
+        String[] sanitized = new String[tags.length];
+        for (int i = 0; i < tags.length; i++) {
+            sanitized[i] = tags[i].replace(' ', '_').replace(',', '_');
         }
-        return builder.toString();
+        return sanitized;
     }
 
+    /**
+     * Simple gauge container holding the {@code aspect}, {@code value} and {@code tags}.
+     */
     private final static class Metric {
         private final String aspect;
         private final int value;

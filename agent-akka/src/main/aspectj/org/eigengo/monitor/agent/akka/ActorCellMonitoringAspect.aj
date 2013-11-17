@@ -32,10 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingleton() {
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
-    private final Option<String> noActorClazz = Option.empty();
-    private final ConcurrentHashMap<Option<String>, AtomicLong> samplingCounters  = new ConcurrentHashMap<Option<String>, AtomicLong>();
-    private final ConcurrentHashMap<Option<String>, AtomicInteger> numberOfActors = new ConcurrentHashMap<Option<String>, AtomicInteger>();
-
+    private final Option<String> anonymousActorClassName = Option.empty();
+    private final ConcurrentHashMap<PathAndClass, AtomicLong> samplingCounters  = new ConcurrentHashMap<PathAndClass, AtomicLong>();
+    private final ConcurrentHashMap<PathAndClass, AtomicInteger> numberOfActors = new ConcurrentHashMap<PathAndClass, AtomicInteger>();
 
     /**
      * Constructs this aspect
@@ -47,6 +46,126 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     /**
+     * Advises the {@code ActorCell.receiveMessage(message: Object): Unit}
+     * We proceed with the pointcut if the actor is to be included in the monitoring *and* this is
+     * the 'multiple-of-n'th time we've seen a message for an actor with a sample rate of n.
+     *
+     * Currently, we sample queue size, the fact that the message is delivered, the simple name of the class of the
+     * message, and the time taken to complete the actor's reactive action.
+     *
+     * @param actorCell the ActorCell where the actor that receives the message "lives"
+     * @param msg the incoming message
+     */
+    Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
+        final ActorPath actorPath = actorCell.self().path();
+        final PathAndClass pathAndClass = new PathAndClass(actorPath, getActorClassName(actorCell));
+        if (!includeActorPath(pathAndClass) || !sampleMessage(pathAndClass)) return proceed(actorCell, msg);
+
+        int samplingRate = getSampleRate(pathAndClass);
+
+        // we tag by actor name
+        final String[] tags = getTags(actorPath, getActorClassName(actorCell));
+
+        // record the queue size
+        this.counterInterface.recordGaugeValue(Aspects.queueSize(), actorCell.numberOfMessages(), tags);
+        // record the message, general and specific
+        this.counterInterface.incrementCounter(Aspects.delivered(), samplingRate, tags);
+        this.counterInterface.incrementCounter(Aspects.delivered(msg), samplingRate, tags);
+
+        // measure the time. we're using the ``nanoTime`` call to access the high-precision timer.
+        // since we're not really interested in wall time, but just some increasing measure of
+        // elapsed time
+        Object result = null;
+        final long start = System.nanoTime();
+        // result will always be ``null``, because target returns ``Unit``
+        result = proceed(actorCell, msg);
+        // ns or µs is too fine. ms will do for now.
+        final long duration = (System.nanoTime() - start) / 1000000;
+
+        // record the actor duration
+        this.counterInterface.recordExecutionTime(Aspects.actorDuration(), (int)duration, tags);
+
+        // return null would do the trick, but we want to be _proper_.
+        return result;
+    }
+
+    /**
+     * Advises the {@code ActorCell.handleInvokeFailure(_, failure: Throwable): Unit}
+     *
+     * @param actorCell the ActorCell where the error spreads from
+     * @param failure the exception that escaped from the {@code receive} method
+     */
+    before(ActorCell actorCell, Throwable failure) : Pointcuts.actorCellHandleInvokeFailure(actorCell, failure) {
+        // record the error, general and specific
+        String[] tags = getTags(actorCell.self().path(), getActorClassName(actorCell));
+        this.counterInterface.incrementCounter(Aspects.actorError(), tags);
+        this.counterInterface.incrementCounter(Aspects.actorError(failure), tags);
+    }
+
+    /**
+     * Advises the {@code EventStream.publish(event: Any): Unit}
+     *
+     * @param event the received event
+     */
+    before(Object event) : Pointcuts.eventStreamPublish(event) {
+        if (event instanceof UnhandledMessage) {
+            UnhandledMessage unhandledMessage = (UnhandledMessage)event;
+            String[] tags = getTags(unhandledMessage.recipient().path(), this.anonymousActorClassName);
+            this.counterInterface.incrementCounter(Aspects.undelivered(), tags);
+            this.counterInterface.incrementCounter(Aspects.undelivered(unhandledMessage.getMessage()), tags);
+        }
+    }
+
+    /**
+     * Advises the {@code actorOf} method of {@code ActorRefFactory} implementations
+     *
+     * @param props the {@code Props} instance used in the call
+     * @param actor the {@code ActorRef} returned from the call
+     */
+    after(Props props) returning (ActorRef actor) : Pointcuts.anyActorOf(props) {
+        recordActorCount(actor.path(), props, CountType.Increment);
+    }
+
+    /**
+     * Advises the {@code LocalActorRef.stop} method
+     *
+     * @param actorCell the {@code ActorCell} of the actor being stopped
+     */
+    after(ActorCell actorCell) : Pointcuts.actorCellInternalStop(actorCell) {
+        recordActorCount(actorCell.self().path(), actorCell.props(), CountType.Decrement);
+    }
+
+    /**
+     * Records the actor count increment or decrement
+     *
+     * @param path the ActorPath being created or destroyed
+     * @param props the Props of the actor at the {@code path}
+     * @param countType the increment or decrement
+     */
+     private void recordActorCount(ActorPath path, Props props, CountType countType) {
+         final PathAndClass pac = new PathAndClass(path, getActorClassName(props));
+         if (!includeActorPath(pac)) return;
+
+         final String[] tags = getTags(path, pac.actorClassName());
+         this.numberOfActors.putIfAbsent(pac, new AtomicInteger(0));
+         // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
+         final int currentNumberOfActors;
+         switch (countType) {
+             case Increment:
+                 currentNumberOfActors = this.numberOfActors.get(pac).incrementAndGet();
+                 break;
+             case Decrement:
+                 currentNumberOfActors = this.numberOfActors.get(pac).decrementAndGet();
+                 break;
+             default:
+                 currentNumberOfActors = 0;
+                 break;
+         }
+
+         this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, tags);
+     }
+
+    /**
      * Injects the new {@code AkkaAgentConfiguration} instance.
      *
      * @param agentConfiguration the new configuration
@@ -56,8 +175,18 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     /**
-     * decide whether to include this ActorCell in our measurements
-     * */
+     * The count type for exhaustive matching
+     */
+    private static enum CountType {
+        Increment, Decrement
+    }
+
+    /**
+     * Decide whether to include this ActorCell in our measurements
+     *
+     * @param pathAndClass the PAC container
+     * @return whether to include the given actor in the metrics
+     */
     private boolean includeActorPath(final PathAndClass pathAndClass) {
         // do not monitor our own output code
         if (pathAndClass.actorClassName().isDefined()) {
@@ -77,45 +206,87 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     }
 
     /**
-     * get the sample rate for an actor
-     * */
+     * Lookup the sample rate for an actor from the configuration
+     *
+     * @param pathAndClass the PAC container
+     * @return the sampling rate as non-negative integer
+     */
     private int getSampleRate(final PathAndClass pathAndClass) {
         return this.agentConfiguration.sampling().getRate(pathAndClass);
     }
 
     /**
-     * decide whether to sample an actor on a particular occasion
+     * Decide whether to sample an actor on a particular occasion
      *
-     * @param pathAndClass
-     * @return true if we should sample this actor, otherwise false.
+     * @param pathAndClass the PAC container
+     * @return {@code true} if we should sample this actor
      */
-    private final boolean sampleMessage(final PathAndClass pathAndClass) {
+    private boolean sampleMessage(final PathAndClass pathAndClass) {
         int sampleRate = getSampleRate(pathAndClass);
         if (sampleRate == 1) return true;
 
-        this.samplingCounters.putIfAbsent(pathAndClass.actorClassName(), new AtomicLong(0));
-        long timesSeenSoFar = this.samplingCounters.get(pathAndClass.actorClassName()).incrementAndGet();
+        this.samplingCounters.putIfAbsent(pathAndClass, new AtomicLong(0));
+        long timesSeenSoFar = this.samplingCounters.get(pathAndClass).incrementAndGet();
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
     /**
-     * get the tags for the cell
-     * */
-    private String[] getTags(final ActorPath actorPath, final Actor actor) {
+     * Formats the given {@code path} in a way that can be used for tagging. For example, for
+     * path <code>akka://default/user/a/b/c</code>, it returns <code>akka.path:/default/user/a/b/c</code>
+     *
+     * @param path the path
+     * @return the tag-ready path
+     */
+    private String actorPathToString(ActorPath path) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("akka.path:/");
+        sb.append(path.address().system());
+        for (String element : path.getElements()) {
+            sb.append("/");
+            sb.append(element);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Decides whether {@code path} represents the "root" of the user actors
+     *
+     * @param path the actor path
+     * @return {@code true} if root of user actors
+     */
+    private boolean isUserRoot(ActorPath path) {
+        return "user".equals(path.elements().mkString("/"));
+    }
+
+    /**
+     * Computes the tags for the given {@code actorPath} and {@code actor} instances.
+     *
+     * @param actorPath the actor path; never {@code null}
+     * @param actorClassName the actor instance; may be {@code null}
+     * @return non-{@code null} array of tags
+     */
+    private String[] getTags(final ActorPath actorPath, final Option<String> actorClassName) {
         List<String> tags = new ArrayList<String>();
 
-        // TODO: Improve detection of routed actors. This relies only on the naming :(.
+        // TODO: Improve detection of routed actors. This only detects "root" unnamed actors
         String lastPathElement = actorPath.elements().last();
         if (lastPathElement.startsWith("$")) {
             // this is routed actor.
-            tags.add(actorPath.parent().toString());
-            if (this.agentConfiguration.includeRoutees()) tags.add(actorPath.toString());
+            final ActorPath parent = actorPath.parent();
+            if (isUserRoot(parent)) {
+                // the parent is akka://xxx/user
+                tags.add(actorPathToString(actorPath));
+            } else {
+                // the parent is some other actor, akka://xxx/user/foo
+                tags.add(actorPathToString(parent));
+                if (this.agentConfiguration.includeRoutees()) tags.add(actorPathToString(actorPath));
+            }
         } else {
             // there is no supervisor
-            tags.add(actorPath.toString());
+            tags.add(actorPathToString(actorPath));
         }
-        if (actor != null) {
-            tags.add(String.format("akka:%s.%s", actor.context().system().name(), actor.getClass().getCanonicalName()));
+        if (actorClassName.isDefined()) {
+            tags.add(String.format("akka.type:%s.%s", actorPath.address().system(), actorClassName.get()));
         }
 
         return tags.toArray(new String[tags.size()]);
@@ -123,124 +294,30 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
     /**
      * returns the canonical name of the actor type associated with an ActorCell
-     * */
-    private String uncheckedActorNameFrom(final ActorCell actorCell) {
-        return uncheckedActorNameFrom(actorCell.props());
-    }
-
-    /**
-     * returns the canonical name of the actor type associated with a Props instance
-     * */
-    private String uncheckedActorNameFrom(final Props props) {
-        return props.actorClass().getCanonicalName();
-    }
-
-    /**
-     * Advises the {@code ActorCell.receiveMessage(message: Object): Unit}
-     * We proceed with the pointcut if the actor is to be included in the monitoring *and* this is
-     * the 'multiple-of-n'th time we've seen a message for an actor with a sample rate of n.
      *
-     * Currently, we sample queue size, the fact that the message is delivered, the simple name of the class of the
-     * message, and the time taken to complete the actor's reactive action.
-     *
-     * @param actorCell the ActorCell where the actor that receives the message "lives"
-     * @param msg the incoming message
+     * @param actorCell the actor cell to get the name for
+     * @return the Option of actor class, never {@code null}.
      */
-    Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
-
-        final ActorPath actorPath = actorCell.self().path();
-        final PathAndClass pathAndClass = new PathAndClass(actorPath, Option.apply(uncheckedActorNameFrom(actorCell)));
-        if (!includeActorPath(pathAndClass) || !sampleMessage(pathAndClass)) return proceed(actorCell, msg);
-
-        int samplingRate = getSampleRate(pathAndClass);
-
-        // we tag by actor name
-        final String[] tags = getTags(actorPath, actorCell.actor());
-
-        // record the queue size
-        this.counterInterface.recordGaugeValue("akka.queue.size", actorCell.numberOfMessages(), tags);
-        // record the message, general and specific
-        this.counterInterface.incrementCounter("akka.actor.delivered", samplingRate, tags);
-        this.counterInterface.incrementCounter("akka.actor.delivered." + msg.getClass().getSimpleName(), samplingRate, tags);
-
-        // measure the time. we're using the ``nanoTime`` call to access the high-precision timer.
-        // since we're not really interested in wall time, but just some increasing measure of
-        // elapsed time
-        Object result = null;
-        final long start = System.nanoTime();
-        // result will always be ``null``, because target returns ``Unit``
-        result = proceed(actorCell, msg);
-        // ns or µs is too fine. ms will do for now.
-        final long duration = (System.nanoTime() - start) / 1000000;
-
-        // record the actor duration
-        this.counterInterface.recordExecutionTime("akka.actor.duration", (int)duration, tags);
-
-        // return null would do the trick, but we want to be _proper_.
-        return result;
+    private Option<String> getActorClassName(final ActorCell actorCell) {
+        return getActorClassName(actorCell.props());
     }
 
     /**
-     * Advises the {@code ActorCell.handleInvokeFailure(_, failure: Throwable): Unit}
+     * Returns the canonical name of the actor type associated with a Props instance
      *
-     * @param actorCell the ActorCell where the error spreads from
-     * @param failure the exception that escaped from the {@code receive} method
-     */
-    before(ActorCell actorCell, Throwable failure) : Pointcuts.actorCellHandleInvokeFailure(actorCell, failure) {
-        // record the error, general and specific
-        String[] tags = getTags(actorCell.self().path(), actorCell.actor());
-        this.counterInterface.incrementCounter("akka.actor.error", tags);
-        this.counterInterface.incrementCounter(String.format("akka.actor.error.%s", failure.getMessage()), tags);
-    }
-
-    /**
-     * Advises the {@code EventStream.publish(event: Any): Unit}
+     * Returns null if props.actorClass does not have a canonical name (i.e., if
+     * it is a local or anonymous class)
      *
-     * @param event the received event
-     */
-    before(Object event) : Pointcuts.eventStreamPublish(event) {
-        if (event instanceof UnhandledMessage) {
-            UnhandledMessage unhandledMessage = (UnhandledMessage)event;
-            String[] tags = getTags(unhandledMessage.recipient().path(), null);
-            this.counterInterface.incrementCounter("akka.actor.undelivered", tags);
-            this.counterInterface.incrementCounter("akka.actor.undelivered." + unhandledMessage.getMessage().getClass().getSimpleName(), tags);
-        }
-    }
-
-    /**
-     * Advises the {@code actorOf} method of {@code ActorRefFactory} implementations
+     * Notably, when the actor class is anonymous, the {@code getCanonicalName} returns {@code null},
+     * which we deal with here.
      *
-     * @param props the {@code Props} instance used in the call
-     * @param actor the {@code ActorRef} returned from the call
+     * @param props the ActorRef {@code Props} instance
+     * @return the Option of actor class, never {@code null}.
      */
-    after(Props props) returning (ActorRef actor) : Pointcuts.anyActorOf(props) {
-        final String uncheckedClassName = uncheckedActorNameFrom(props);
-        final Option<String> className = Option.apply(uncheckedClassName);
-        if (!includeActorPath(new PathAndClass(actor.path(), className))) return;
-
-        this.numberOfActors.putIfAbsent(className, new AtomicInteger(0));
-        // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
-        final int currentNumberOfActors = this.numberOfActors.get(className).incrementAndGet();
-
-        // record the current number of actors of this type
-        this.counterInterface.recordGaugeValue("akka.actor.count", currentNumberOfActors, uncheckedClassName);
-    }
-
-    /**
-     * Advises the {@code LocalActorRef.stop} method
-     *
-     * @param actorCell the {@code ActorCell} of the actor being stopped
-     */
-    after(ActorCell actorCell) : Pointcuts.actorCellInternalStop(actorCell) {
-        final String uncheckedClassName = uncheckedActorNameFrom(actorCell);
-        final Option<String> className = Option.apply(uncheckedClassName);
-        if (!includeActorPath(new PathAndClass(actorCell.self().path(), className))) return;
-
-        this.numberOfActors.putIfAbsent(className, new AtomicInteger(0));
-        // decrement and get the current number of actors of this type (if the value was 1, then this returns 0 -- which is correct)
-        final int currentNumberOfActors = this.numberOfActors.get(className).decrementAndGet();
-
-        this.counterInterface.recordGaugeValue("akka.actor.count", currentNumberOfActors, uncheckedClassName);
+    private Option<String> getActorClassName(final Props props) {
+        final String canonicalName = props.actorClass().getCanonicalName();
+        if (canonicalName == null) return this.anonymousActorClassName;
+        return Option.apply(canonicalName);
     }
 
 }

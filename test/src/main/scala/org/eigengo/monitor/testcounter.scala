@@ -119,6 +119,12 @@ object TestCounterInterface {
   }
 
   /**
+   * Function that takes the left-hand side that can be easily applied to the
+   * ``foldlByAspect``
+   */
+  val takeLHS: (TestCounter, TestCounter) => TestCounter = (a, _) => a
+
+  /**
    * Selects from the recorded counters those with the matching ``aspect`` and conforming to the
    * requested ``tagFilter``, and then folds the matches over some operation ``fold``.
    *

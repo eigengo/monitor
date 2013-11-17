@@ -59,9 +59,6 @@ abstract aspect Pointcuts {
      */
     static pointcut anyActorOf(Props props) : namedActorOf(props) || unnamedActorOf(props);
 
-
-
-
     /**
      * Pointcut for {@code ActorCell.stop(actor)} method, extracting the {@code ActorRef}
      */

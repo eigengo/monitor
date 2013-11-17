@@ -16,12 +16,14 @@
 package org.eigengo.monitor.agent.akka
 
 object Aspects {
-  val deliveredInteger = "akka.actor.delivered.Integer"
-  val deliveredString  = "akka.actor.delivered.String"
-  val undelivered      = "akka.actor.undelivered"
-  val queueSize        = "akka.queue.size"
-  val actorDuration    = "akka.actor.duration"
-  val actorError       = "akka.actor.error"
-  val actorCount       = "akka.actor.count"
+  def delivered(x: Any): String        = String.format("%s.%s", delivered, x.getClass.getSimpleName)
+  val delivered                        = "akka.actor.delivered"
+  val undelivered                      = "akka.actor.undelivered"
+  def undelivered(x: Any): String      = String.format("%s.%s", undelivered, x.getClass.getSimpleName)
+  val queueSize                        = "akka.queue.size"
+  val actorDuration                    = "akka.actor.duration"
+  val actorError                       = "akka.actor.error"
+  def actorError(x: Throwable): String = String.format("%s.%s", actorError, x.getMessage)
+  val actorCount                       = "akka.actor.count"
 
 }
