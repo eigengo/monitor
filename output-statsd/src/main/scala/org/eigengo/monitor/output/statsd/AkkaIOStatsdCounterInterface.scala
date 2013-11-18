@@ -25,13 +25,16 @@ import akka.actor.{Props, ActorSystem}
 class AkkaIOStatsdCounterInterface extends CounterInterface {
   val configuration = OutputConfigurationFactory.getAgentCofiguration("statsd")(StatsdOutputConfiguration.apply)
   val outputConfiguration = configuration.outputConfig
-  val system = ActorSystem("statsd", configuration.rootConfig)
-  val statsd = system.actorOf(Props(
-    new StatsdActor(outputConfiguration.inetSocketAddress, outputConfiguration.prefix) with DataDogStatisticMarshaller {
-      val constantTags: Seq[String] = configuration.outputConfig.constantTags
-    }))
 
   import StatsdActor._
+
+  lazy val statsd = {
+    val system = ActorSystem("statsd", configuration.rootConfig)
+    system.actorOf(Props(
+      new StatsdActor(outputConfiguration.inetSocketAddress, outputConfiguration.prefix) with DataDogStatisticMarshaller {
+        val constantTags: Seq[String] = configuration.outputConfig.constantTags
+      }))
+  }
 
   def recordExecutionTime(aspect: String, duration: Int, tags: String*): Unit =
     statsd ! ExecutionTime(aspect, duration, tags)
