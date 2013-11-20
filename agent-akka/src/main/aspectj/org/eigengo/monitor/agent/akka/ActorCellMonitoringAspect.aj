@@ -318,7 +318,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private Option<String> getActorClassName(final Props props) {
         final String canonicalName = props.actorClass().getCanonicalName();
         if (canonicalName == null) return this.anonymousActorClassName;
-
         return Option.apply(canonicalName);
     }
 
