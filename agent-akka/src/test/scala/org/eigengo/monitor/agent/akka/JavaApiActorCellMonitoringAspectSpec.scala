@@ -35,15 +35,20 @@ class JavaApiActorCellMonitoringAspectSpec
     val greeterTags = getTags(greeter, greeterProps)
     val outerActorTags = getTags(outerActor, outerActorProps)
     val innerActorTags = getTags(innerActor, innerActorProps)
+
     // records the count of actors, grouped by simple class name
     "Record the actor creation, and let us exclude an unnamed anonymous inner class actor" in {
 
       Thread.sleep(100L)
-      TestCounterInterface.foldlByAspect(actorCount)(takeLHS) must containAllOf(Seq(
+      val createdCounters = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
+      createdCounters must containAllOf(Seq(
         TestCounter(actorCount, 1, unnamedGreetPrinterTags),
         TestCounter(actorCount, 1, namedGreetPrinterTags),
         TestCounter(actorCount, 1, greeterTags),
         TestCounter(actorCount, 1, outerActorTags)))
+
+      createdCounters must not contain TestCounter(actorCount, 1, unnamedGreetPrinterTags)
+
 
     }
 
