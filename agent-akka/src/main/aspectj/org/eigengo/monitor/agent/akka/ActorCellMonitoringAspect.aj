@@ -35,7 +35,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private final Option<String> anonymousActorClassName = Option.empty();
     private final ConcurrentHashMap<PathAndClass, AtomicLong> samplingCounters  = new ConcurrentHashMap<PathAndClass, AtomicLong>();
     private final ConcurrentHashMap<PathAndClass, AtomicInteger> numberOfActors = new ConcurrentHashMap<PathAndClass, AtomicInteger>();
-    private final ConcurrentHashMap<ActorPath, String> pathToClass              = new ConcurrentHashMap<ActorPath, String>();
 
     /**
      * Constructs this aspect
@@ -228,11 +227,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
         this.samplingCounters.putIfAbsent(pathAndClass, new AtomicLong(0));
         long timesSeenSoFar = this.samplingCounters.get(pathAndClass).incrementAndGet();
-        // yeah yeah. Put it somewhere else. Why?
-        if (timesSeenSoFar == 1 && pathAndClass.actorClassName() != this.anonymousActorClassName) {
-            pathToClass.putIfAbsent(pathAndClass.actorPath(), pathAndClass.actorClassName().get());
-        }
-        if (sampleRate == 1) return true;
+
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
@@ -293,8 +288,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         }
         if (actorClassName.isDefined()) {
             tags.add(String.format("akka.type:%s.%s", actorPath.address().system(), actorClassName.get()));
-        } else if (pathToClass.contains(actorPath)) {
-            tags.add(String.format("akka.type:%s.%s", actorPath.address().system(), pathToClass.get(actorPath)));
         }
 
         return tags.toArray(new String[tags.size()]);
@@ -325,29 +318,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private Option<String> getActorClassName(final Props props) {
         final String canonicalName = props.actorClass().getCanonicalName();
         if (canonicalName == null) return this.anonymousActorClassName;
-
-//        final Class<?> something = props.clazz();
-//        Class<?> interim = props.actorClass();
-//        System.out.println("##@ 0 : "+something.toString());
-//        System.out.println("##@ 1 : "+interim.getDeclaredClasses().length);
-//        System.out.println("##@ 1 : "+interim);
-//        for (int i = 0; i < interim.getDeclaredClasses().length; i++) {
-//            System.out.println("##@ "+(i+2)+" : "+interim.getDeclaredClasses()[i].toString());
-//        }
-
-
-//        for (int i=0; i <something.getTypeParameters().length; i++) {
-//            System.out.println("##@ 1 : "+something.getTypeParameters()[i]);
-//        }
-//        System.out.println("# 2 : "+something.getClasses());
-//        for (Class<?> i : something.getClasses()) {
-//            System.out.println("##@ 2 : "+i);
-//        }
-//        System.out.println("##@ 3 : "+something.getComponentType());
-//        System.out.println("# 4 : "+something.getInterfaces());
-//        for (Class<?> i : something.getInterfaces()) {
-//            System.out.println("##@ 4 : "+i);
-//        }
 
         return Option.apply(canonicalName);
     }
