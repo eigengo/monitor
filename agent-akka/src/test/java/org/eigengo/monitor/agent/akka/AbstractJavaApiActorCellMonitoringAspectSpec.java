@@ -97,11 +97,13 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
     protected final Props greetPrinterProps;
     protected final Props unnamedGreetPrinterProps;
     protected final Props outerActorProps;
+    protected final Props innerActorProps;
     // The following fields are the ActorRefs constructed using the Props above
     protected final ActorRef greeter;
     protected final ActorRef greetPrinter;
     protected final ActorRef unnamedGreetPrinter;
     protected final ActorRef outerActor;
+    protected final ActorRef innerActor;
 
     /**
      * Constructs the ActorSystem under test, and creates the Props and ActorRefs above
@@ -140,6 +142,13 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
                     }
                 });
         this.outerActor = system.actorOf(this.outerActorProps);
+
+        this.innerActorProps = new Props(new UntypedActorFactory() {
+            public InnerActor create() {
+                return new InnerActor(UUID.randomUUID());
+            }
+        });
+        this.innerActor = system.actorOf(innerActorProps);
 
     }
 

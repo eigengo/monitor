@@ -18,6 +18,7 @@ package org.eigengo.monitor.agent.akka
 import org.eigengo.monitor.{TestCounter, TestCounterInterface}
 import org.specs2.mutable.SpecificationLike
 import java.util.UUID
+import akka.actor.ActorRef
 
 class JavaApiActorCellMonitoringAspectSpec
   extends AbstractJavaApiActorCellMonitoringAspectSpec
@@ -33,7 +34,7 @@ class JavaApiActorCellMonitoringAspectSpec
     val namedGreetPrinterTags = getTags(greetPrinter, greetPrinterProps)
     val greeterTags = getTags(greeter, greeterProps)
     val outerActorTags = getTags(outerActor, outerActorProps)
-    val innerActorTags = List("hi", "akka.type:javaapi.org.eigengo.monitor.agent.akka.AbstractJavaApiActorCellMonitoringAspectSpec.OuterActor.InnerActor")
+    val innerActorTags = getTags(innerActor, innerActorProps)
     // records the count of actors, grouped by simple class name
     "Record the actor creation, and let us exclude an unnamed anonymous inner class actor" in {
 
@@ -60,7 +61,16 @@ class JavaApiActorCellMonitoringAspectSpec
         TestCounter(actorCount, 5, innerActorTags)))
     }
 
+    "Record messages" in {
+      TestCounterInterface.clear()
+      val innerActorSelection = system.actorSelection("/javaapi/user/$b/$e")
+      innerActorSelection.tell(1, ActorRef.noSender)
+      TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus) must containAllOf(Seq(
+        TestCounter(actorCount, 1, innerActorTags)))
+    }
+
     "Record actor death" in {
+      TestCounterInterface.clear()
 
       system.shutdown()
       Thread.sleep(1000L)
