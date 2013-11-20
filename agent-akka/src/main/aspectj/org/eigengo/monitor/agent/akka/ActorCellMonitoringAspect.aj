@@ -229,10 +229,10 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         this.samplingCounters.putIfAbsent(pathAndClass, new AtomicLong(0));
         long timesSeenSoFar = this.samplingCounters.get(pathAndClass).incrementAndGet();
         // yeah yeah. Put it somewhere else. Why?
-//        if (timesSeenSoFar == 1 && pathAndClass.actorClassName() != Option.empty()) {
-//            pathToClass.putIfAbsent(pathAndClass.actorPath(), pathAndClass.actorClassName().get());
-//        }
-//        if (sampleRate == 1) return true;
+        if (timesSeenSoFar == 1 && pathAndClass.actorClassName() != this.anonymousActorClassName) {
+            pathToClass.putIfAbsent(pathAndClass.actorPath(), pathAndClass.actorClassName().get());
+        }
+        if (sampleRate == 1) return true;
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
@@ -293,8 +293,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         }
         if (actorClassName.isDefined()) {
             tags.add(String.format("akka.type:%s.%s", actorPath.address().system(), actorClassName.get()));
-//        } else if (pathToClass.contains(actorPath)) {
-//            tags.add(String.format("akka.type:%s.%s", actorPath.address().system(), pathToClass.get(actorPath)));
+        } else if (pathToClass.contains(actorPath)) {
+            tags.add(String.format("akka.type:%s.%s", actorPath.address().system(), pathToClass.get(actorPath)));
         }
 
         return tags.toArray(new String[tags.size()]);
