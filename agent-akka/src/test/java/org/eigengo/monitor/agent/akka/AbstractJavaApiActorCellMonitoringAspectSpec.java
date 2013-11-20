@@ -16,8 +16,12 @@
 package org.eigengo.monitor.agent.akka;
 
 import akka.actor.*;
+import akka.japi.Creator;
 
 import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -61,32 +65,28 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
         }
     }
 
-    private class OuterActor extends UntypedActor {
+    public class OuterActor extends UntypedActor {
 
-        private final InnerActorCreator innerActorCreator = new InnerActorCreator();
+        public void onReceive(final Object message) {
+            if (message instanceof UUID) {
+                getContext().actorOf(new Props(new UntypedActorFactory() {
+                    public InnerActor create() {
+                        return new InnerActor((UUID)message);
+                    }
+                }));
+            }
+        }
+    }
+
+    public class InnerActor extends UntypedActor {
+        UUID id;
+        InnerActor(UUID uuid) {this.id = uuid;}
 
         public void onReceive(Object message) {
             if (message instanceof UUID) {
-                innerActorCreator.create((UUID) message);
+                this.id = (UUID)message;
             }
-        }
-
-        private class InnerActorCreator {
-            InnerActorCreator(){}
-            Props innerActorProps(UUID uuid) {return Props.create(InnerActor.class, uuid);}
-            void create(UUID uuid) {
-                context().actorOf(innerActorProps(uuid));
-            }
-        }
-
-        class InnerActor extends UntypedActor {
-            final UUID id;
-            InnerActor(UUID uuid) {
-                this.id = uuid;
-            }
-            public void onReceive(Object message) {
-                sender().tell(id, self());
-            }
+            sender().tell(id, self());
         }
     }
 
@@ -134,7 +134,11 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
         this.unnamedGreetPrinterProps = Props.create(GreetPrinter.class);
         this.unnamedGreetPrinter = system.actorOf(this.unnamedGreetPrinterProps);
 
-        this.outerActorProps = Props.create(OuterActor.class);
+        this.outerActorProps = new Props(new UntypedActorFactory() {
+                    public UntypedActor create() {
+                        return new OuterActor();
+                    }
+                });
         this.outerActor = system.actorOf(this.outerActorProps);
 
     }

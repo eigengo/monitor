@@ -327,12 +327,18 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         if (canonicalName == null) return this.anonymousActorClassName;
 
 //        final Class<?> something = props.clazz();
-//        System.out.println("##@ 1 : "+something.getClassLoader());
-//        System.out.println("##@ 1.1 : "+something.getClassLoader().getParent());
-//        System.out.println("##@ 1.1.1 : "+something.getClassLoader().getParent().getParent());
-////        for (int i=0; i <something.getTypeParameters().length; i++) {
-////            System.out.println("##@ 1 : "+something.getTypeParameters()[i]);
-////        }
+//        Class<?> interim = props.actorClass();
+//        System.out.println("##@ 0 : "+something.toString());
+//        System.out.println("##@ 1 : "+interim.getDeclaredClasses().length);
+//        System.out.println("##@ 1 : "+interim);
+//        for (int i = 0; i < interim.getDeclaredClasses().length; i++) {
+//            System.out.println("##@ "+(i+2)+" : "+interim.getDeclaredClasses()[i].toString());
+//        }
+
+
+//        for (int i=0; i <something.getTypeParameters().length; i++) {
+//            System.out.println("##@ 1 : "+something.getTypeParameters()[i]);
+//        }
 //        System.out.println("# 2 : "+something.getClasses());
 //        for (Class<?> i : something.getClasses()) {
 //            System.out.println("##@ 2 : "+i);
