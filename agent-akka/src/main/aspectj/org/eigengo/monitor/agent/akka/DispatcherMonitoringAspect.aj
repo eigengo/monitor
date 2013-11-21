@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect {
     private final CounterInterface counterInterface;
-    private final ActorPathTagger tagger;
+    private final DispatcherTagger tagger;
 
     // this is really icky, but it replaces the failing cflowbelow pointcut
     private final Map<Long, String[]> actorCellCflowTags = new ConcurrentHashMap<Long, String[]>();
@@ -43,17 +43,14 @@ public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect {
     public DispatcherMonitoringAspect() {
         AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.counterInterface = createCounterInterface(configuration.common());
-        this.tagger = new ActorPathTagger(configuration.agent().includeRoutees());
+        this.tagger = new DispatcherTagger(configuration.agent().includeRoutees());
     }
 
     pointcut messageDispatcherDispatch(ActorCell actorCell) : execution(* akka.dispatch.MessageDispatcher+.dispatch(..)) && args(actorCell, *);
 
     before(ActorCell actorCell) : messageDispatcherDispatch(actorCell) {
-        final String[] tags = this.tagger.getTags(actorCell.self().path(), ActorPathTagger.ANONYMOUS_ACTOR_CLASS_NAME);
-        final String[] allTags = new String[tags.length + 1];
-        System.arraycopy(tags, 0, allTags, 1, tags.length);
-        allTags[0] = String.format("akka.dispatcher:%s", actorCell.dispatcher().id());
-        this.actorCellCflowTags.put(Thread.currentThread().getId(), allTags);
+        final String[] tags = this.tagger.getTags(actorCell);
+        this.actorCellCflowTags.put(Thread.currentThread().getId(), tags);
     }
 
     /**
