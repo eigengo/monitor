@@ -36,8 +36,16 @@ class JavaApiActorCellMonitoringAspectSpec
     val outerActorTags = getTags(outerActor, outerActorProps)
     val innerActorTags = getTags(innerActor, innerActorProps)
 
+    "Tag actors with appropriate names" in {
+      unnamedGreetPrinterTags.exists(_.contains("GreetPrinter"))  === true
+      namedGreetPrinterTags.exists(_.contains("GreetPrinter"))    === true
+      greeterTags.exists(_.contains("Greeter"))                   === true
+      outerActorTags.exists(_.contains("OuterActor"))             === true
+      innerActorTags.exists(_.contains("InnerActor"))             === true
+    }
+
     // records the count of actors, grouped by simple class name
-    "Record the actor creation, and let us exclude an unnamed anonymous inner class actor" in {
+    "Record the actor creation" in {
 
       Thread.sleep(100L)
       val createdCounters = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
@@ -46,14 +54,10 @@ class JavaApiActorCellMonitoringAspectSpec
         TestCounter(actorCount, 1, namedGreetPrinterTags),
         TestCounter(actorCount, 1, greeterTags),
         TestCounter(actorCount, 1, outerActorTags)))
-
-      createdCounters must not contain TestCounter(actorCount, 1, unnamedGreetPrinterTags)
-
-
     }
 
 
-    "Record the actor count of unnamed nested inner class actor" in {
+    "Group actors appropriately when measuring actor count" in {
 
       (0 until 5) foreach {_ => outerActor ! UUID.randomUUID()}
 
@@ -63,12 +67,12 @@ class JavaApiActorCellMonitoringAspectSpec
         TestCounter(actorCount, 1, namedGreetPrinterTags),
         TestCounter(actorCount, 1, greeterTags),
         TestCounter(actorCount, 1, outerActorTags),
-        TestCounter(actorCount, 5, innerActorTags)))
+        TestCounter(actorCount, 6, innerActorTags)))
     }
 
-    "Record messages" in {
+    "Record messages sent to an ActorSelection" in {
       TestCounterInterface.clear()
-      val innerActorSelection = system.actorSelection("/javaapi/user/$b/$e")
+      val innerActorSelection = system.actorSelection("/javaapi/user/$b/$e") // fixing previous tests may break this.
       innerActorSelection.tell(1, ActorRef.noSender)
       TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus) must containAllOf(Seq(
         TestCounter(actorCount, 1, innerActorTags)))
