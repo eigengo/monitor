@@ -22,6 +22,8 @@ import scala.concurrent.forkjoin.ForkJoinPool;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Monitors the performance of the ``ForkJoinPool``. This will need much more tidying up, but it
@@ -54,23 +56,39 @@ public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect {
     }
 
     /**
-     * Advises the ``execute`` method of an ``ExecutorService`` if that executor service is the
-     * ``ForkJoinPool``.
+     * Advises the ``execute`` method of an ``ExecutorService``, and then branches depending on the
+     * exact type of the {@code ExecutorService}. This is slightly better option than having multiple
+     * advices for the concrete {@code ExecutorService}s at the moment.
      *
      * Ideally, we would like to use <code>cflowbelow</code> pointcut expression, but that fails
-     * in the LTW stage with <code>NoSuchFieldError</code>
+     * in the LTW stage with <code>NoSuchFieldError</code>, because the control flow stack field
+     * does not get properly generated.
      */
-    before(ForkJoinPool es) : call(* java.util.concurrent.ExecutorService+.execute(..)) && target(es) {
+    before(ExecutorService es) : call(* java.util.concurrent.ExecutorService+.execute(..)) && target(es) {
         final String[] tags = this.actorCellCflowTags.get(Thread.currentThread().getId());
         if (tags == null) {
-            // this is execute without ActorCell.dispatch. We don't care about that.
+            // this is execute outside the ActorCell.dispatch cflow. We don't care about that.
             return;
         }
+
+        if (es instanceof ForkJoinPool) forkJoinPool((ForkJoinPool)es, tags);
+        else if (es instanceof ThreadPoolExecutor) threadPoolExecutor((ThreadPoolExecutor)es, tags);
+    }
+
+    private void forkJoinPool(ForkJoinPool es, String[] tags) {
         this.counterInterface.recordGaugeValue(Aspects.activeThreadCount(), es.getActiveThreadCount(), tags);
         this.counterInterface.recordGaugeValue(Aspects.runningThreadCount(), es.getRunningThreadCount(), tags);
 
         this.counterInterface.recordGaugeValue(Aspects.poolSize(), es.getPoolSize(), tags);
         this.counterInterface.recordGaugeValue(Aspects.queuedTaskCount(), (int) es.getQueuedTaskCount(), tags);
+    }
+
+    private void threadPoolExecutor(ThreadPoolExecutor es, String[] tags) {
+        this.counterInterface.recordGaugeValue(Aspects.activeThreadCount(), es.getActiveCount(), tags);
+        this.counterInterface.recordGaugeValue(Aspects.runningThreadCount(), es.getActiveCount(), tags);
+
+        this.counterInterface.recordGaugeValue(Aspects.poolSize(), es.getPoolSize(), tags);
+        this.counterInterface.recordGaugeValue(Aspects.queuedTaskCount(), es.getQueue().size(), tags);
     }
 
 }
