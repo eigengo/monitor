@@ -64,7 +64,7 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
     public class OuterActor extends UntypedActor {
 
         public void onReceive(final Object message) {
-            if (message instanceof UUID) {
+            if (message instanceof UUID) {   // The actors created here have anonymous tags with current monitoring
                 getContext().actorOf(new Props(new UntypedActorFactory() {
                     public InnerActor create() {
                         return new InnerActor((UUID)message);

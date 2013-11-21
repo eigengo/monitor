@@ -188,9 +188,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @return whether to include the given actor in the metrics
      */
     private boolean includeActorPath(final PathAndClass pathAndClass) {
-        if (pathAndClass.actorClassName().isDefined() && pathAndClass.actorClassName().get().contains("GreetPrinter")) {
-            System.out.println("£  :  "+pathAndClass.actorPath());
-        }
         // do not monitor our own output code
         if (pathAndClass.actorClassName().isDefined()) {
             if (pathAndClass.actorClassName().get().startsWith("org.eigengo.monitor.output")) return false;
@@ -230,7 +227,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
         this.samplingCounters.putIfAbsent(pathAndClass, new AtomicLong(0));
         long timesSeenSoFar = this.samplingCounters.get(pathAndClass).incrementAndGet();
-
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
     }
 
@@ -320,17 +316,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     private Option<String> getActorClassName(final Props props) {
         final String canonicalName = props.actorClass().getCanonicalName();
-//
-//        final Class<?> something = props.clazz();
-//        Class<?> interim = props.actorClass();
-//        System.out.println("##@ 0 : "+something.toString());
-//        System.out.println("##@ 1 : "+interim.getDeclaredClasses().length);
-//        System.out.println("##@ 2 : "+interim);
-//
-//        for (int i = 0; i < interim.getDeclaredClasses().length; i++) {
-//            System.out.println("##@ "+(i+2)+" : "+interim.getDeclaredClasses()[i].toString());
-//        }
-
         if (canonicalName == null) return this.anonymousActorClassName;
         return Option.apply(canonicalName);
     }
