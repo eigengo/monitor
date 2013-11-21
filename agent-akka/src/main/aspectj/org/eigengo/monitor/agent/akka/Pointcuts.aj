@@ -15,9 +15,11 @@
  */
 package org.eigengo.monitor.agent.akka;
 
+import akka.actor.Actor;
 import akka.actor.ActorCell;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.japi.Creator;
 
 /**
  * Centralises the pointcuts
@@ -68,4 +70,9 @@ abstract aspect Pointcuts {
      * Pointcut for {@code ActorCell.stop()} method, extracting the targeted {@code ActorCell}
      */
     static pointcut actorCellInternalStop(ActorCell actorCell) : target(actorCell) && execution(* akka.actor.ActorCell.stop());
-}
+
+    /**
+     * Pointcut for {@code ???} method in akka's java api, extracting the Actor used to construct the {@code Creator}
+     * */
+    static pointcut actorCreator(Creator creator) : target(creator) && call(* akka.japi.Creator.create());
+ }
