@@ -20,7 +20,6 @@ import org.eigengo.monitor.agent.AgentConfiguration;
 import org.eigengo.monitor.output.CounterInterface;
 import scala.concurrent.forkjoin.ForkJoinPool;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -51,7 +50,10 @@ public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect {
 
     before(ActorCell actorCell) : messageDispatcherDispatch(actorCell) {
         final String[] tags = this.tagger.getTags(actorCell.self().path(), ActorPathTagger.ANONYMOUS_ACTOR_CLASS_NAME);
-        this.actorCellCflowTags.put(Thread.currentThread().getId(), tags);
+        final String[] allTags = new String[tags.length + 1];
+        System.arraycopy(tags, 0, allTags, 1, tags.length);
+        allTags[0] = String.format("akka.dispatcher:%s", actorCell.dispatcher().id());
+        this.actorCellCflowTags.put(Thread.currentThread().getId(), allTags);
     }
 
     /**
