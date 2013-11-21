@@ -20,7 +20,7 @@ object Aspects {
   val delivered                        = "akka.actor.delivered"
   val undelivered                      = "akka.actor.undelivered"
   def undelivered(x: Any): String      = String.format("%s.%s", undelivered, x.getClass.getSimpleName)
-  val queueSize                        = "akka.queue.size"
+  val queueSize                        = "akka.actor.queue.size"
   val actorDuration                    = "akka.actor.duration"
   val actorError                       = "akka.actor.error"
   def actorError(x: Throwable): String = String.format("%s.%s", actorError, x.getMessage)
