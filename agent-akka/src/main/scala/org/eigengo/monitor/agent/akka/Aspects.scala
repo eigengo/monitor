@@ -26,4 +26,9 @@ object Aspects {
   def actorError(x: Throwable): String = String.format("%s.%s", actorError, x.getMessage)
   val actorCount                       = "akka.actor.count"
 
+  val activeThreadCount                = "akka.pool.thread.count"
+  val runningThreadCount               = "akka.pool.running.thread.count"
+  val queuedTaskCount                  = "akka.pool.queued.task.count"
+  val poolSize                         = "akka.pool.size"
+
 }

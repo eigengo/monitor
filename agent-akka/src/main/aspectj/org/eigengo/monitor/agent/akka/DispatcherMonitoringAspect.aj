@@ -15,21 +15,50 @@
  */
 package org.eigengo.monitor.agent.akka;
 
-import akka.dispatch.MessageDispatcher;
+import org.eigengo.monitor.agent.AgentConfiguration;
+import org.eigengo.monitor.output.CounterInterface;
+import scala.concurrent.forkjoin.ForkJoinPool;
 
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutorService;
 
-privileged aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect issingleton() {
+/**
+ * Monitors the performance of the ``ForkJoinPool``. This will need much more tidying up, but it
+ * outlines the strategy.
+ *
+ * The aspect contains advices that will--in the future--monitor the performance of all types of
+ * thread pools, giving the users the insight into the threading in their actor systems.
+ */
+public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect issingleton() {
+    private final CounterInterface counterInterface;
 
-    before(MessageDispatcher dispatcher) : execution(* akka.dispatch.MessageDispatcher.dispatch(..)) && target(dispatcher) {
-        System.out.println("*****Dispatching a task");
+    /**
+     * Constructs this aspects, loads its configuration and instantiates the {@code counterInterface}.
+     */
+    public DispatcherMonitoringAspect() {
+        AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
+        this.counterInterface = createCounterInterface(configuration.common());
     }
 
-    before(ForkJoinPool pool) : execution(* scala.concurrent.forkjoin.ForkJoinPool.execute(..)) && target(pool) {
-        System.out.println("*****Active threads>> " + pool.getActiveThreadCount());
-        System.out.println("*****Queue size>> " + pool.getQueuedTaskCount());
-        System.out.println("*****Running thread count>> " + pool.getRunningThreadCount());
+    /**
+     * Advises the methods of the {@link scala.concurrent.forkjoin.ForkJoinPool} to report on its
+     * performance
+     */
+    before(ForkJoinPool es) : call(* java.util.concurrent.ExecutorService+.*(..)) && target(es) {
+        this.counterInterface.recordGaugeValue(Aspects.activeThreadCount(), es.getActiveThreadCount(), getTags(es));
+        this.counterInterface.recordGaugeValue(Aspects.runningThreadCount(), es.getRunningThreadCount(), getTags(es));
+
+        this.counterInterface.recordGaugeValue(Aspects.poolSize(), es.getPoolSize(), getTags(es));
+        this.counterInterface.recordGaugeValue(Aspects.queuedTaskCount(), (int) es.getQueuedTaskCount(), getTags(es));
     }
 
+    /**
+     * Computes the tags for the given the {@code es}.
+     *
+     * @param es the ExecutorService to get the tags for
+     * @return the array of tags
+     */
+    private String[] getTags(ExecutorService es) {
+        return new String[0];
+    }
 
 }
