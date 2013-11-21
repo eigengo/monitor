@@ -23,7 +23,7 @@ abstract class AbstractTagger {
      * @param path the path
      * @return the tag-ready path
      */
-    private final String actorPathToString(ActorPath path) {
+    private String actorPathToString(ActorPath path) {
         StringBuilder sb = new StringBuilder();
         sb.append("akka.path:/");
         sb.append(path.address().system());
@@ -42,7 +42,7 @@ abstract class AbstractTagger {
      * @param path the path
      * @return the tag-ready path
      */
-    private final String actorSystemToString(ActorPath path) {
+    private String actorSystemToString(ActorPath path) {
         StringBuilder sb = new StringBuilder();
         sb.append("akka.system:");
         sb.append(path.address().system());
@@ -65,7 +65,7 @@ abstract class AbstractTagger {
      * @param actorPath the actor path
      * @param tags the tags that will be modified with the tags
      */
-    protected void addActorPathTagsTo(final ActorPath actorPath, final List<String> tags) {
+    protected final void addActorPathTagsTo(final ActorPath actorPath, final List<String> tags) {
         // TODO: Improve detection of routed actors. This only detects "root" unnamed actors
         String lastPathElement = actorPath.elements().last();
         if (lastPathElement.startsWith("$")) {
@@ -91,7 +91,7 @@ abstract class AbstractTagger {
      * @param actorPath the actor path
      * @param tags the tags that will be modified with the tags
      */
-    protected void addSystemTagsTo(final ActorPath actorPath, final List<String> tags) {
+    protected final void addSystemTagsTo(final ActorPath actorPath, final List<String> tags) {
         tags.add(actorSystemToString(actorPath));
     }
 
@@ -102,7 +102,7 @@ abstract class AbstractTagger {
      * @param actorClassName the optional actor class name
      * @param tags the tags that will be modified with the tags
      */
-    protected void addTypeTagsTo(final ActorPath actorPath, final Option<String> actorClassName, final List<String> tags) {
+    protected final void addTypeTagsTo(final ActorPath actorPath, final Option<String> actorClassName, final List<String> tags) {
         if (actorClassName.isDefined()) {
             tags.add(String.format("akka.type:%s.%s", actorPath.address().system(), actorClassName.get()));
         }

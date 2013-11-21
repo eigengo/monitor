@@ -13,6 +13,12 @@ import java.util.List;
 public class ActorPathTagger extends AbstractTagger {
     static final Option<String> ANONYMOUS_ACTOR_CLASS_NAME = Option.empty();
 
+    /**
+     * Constructs this instance, assigns the {@code includeRoutees} field.
+     *
+     * @param includeRoutees {@code true} if the tagging should include the routees
+     * @see org.eigengo.monitor.agent.akka.AbstractTagger#addActorPathTagsTo(akka.actor.ActorPath, java.util.List)
+     */
     ActorPathTagger(boolean includeRoutees) {
         super(includeRoutees);
     }

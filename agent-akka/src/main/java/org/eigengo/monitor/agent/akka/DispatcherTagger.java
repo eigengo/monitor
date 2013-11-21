@@ -10,6 +10,13 @@ import java.util.List;
  * Contains logic that performs tagging of the dispatcher.
  */
 public class DispatcherTagger extends AbstractTagger {
+
+    /**
+     * Constructs this instance, assigns the {@code includeRoutees} field.
+     *
+     * @param includeRoutees {@code true} if the tagging should include the routees
+     * @see org.eigengo.monitor.agent.akka.AbstractTagger#addActorPathTagsTo(akka.actor.ActorPath, java.util.List)
+     */
     DispatcherTagger(boolean includeRoutees) {
         super(includeRoutees);
     }
