@@ -38,7 +38,7 @@ trait ActorCellMonitoringTaggingConvention {
    * @return the tags
    */
   def getTags(ref: ActorRef, props: Props, routees: Int = 0): List[String] =
-    getPathTags(ref, routees) ++ getTypeTags(ref, props)
+    getPathTags(ref, routees) ++ getSystemTags(ref) ++ getTypeTags(ref, props)
 
   /**
    * Gets the path tags for the given ``ref`` and ``routees``.
@@ -64,6 +64,17 @@ trait ActorCellMonitoringTaggingConvention {
   def getTypeTags(ref: ActorRef, props: Props): List[String] = {
     val system = ref.path.address.system
     List(s"akka.type:$system.${props.actorClass().getCanonicalName}")
+  }
+
+  /**
+   * Gets the system tags for the given ``ref``
+   *
+   * @param ref the ActorRef for the created actor
+   * @return the system tags
+   */
+  def getSystemTags(ref: ActorRef): List[String] = {
+    val system = ref.path.address.system
+    List(s"akka.system:$system")
   }
 
 }
@@ -114,9 +125,10 @@ abstract class ActorCellMonitoringAspectSpec(val agentConfig: Option[String])
    * @param actor the valid ActorRef
    * @param name the generated or given actor name
    * @param pathTag the path tag
+   * @param systemTag the system tag
    * @param typeTag the type tag
    */
-  case class CreatedActor(actor: ActorRef, name: String, pathTag: String, typeTag: String) {
+  case class CreatedActor(actor: ActorRef, name: String, pathTag: String, systemTag: String, typeTag: String) {
     /**
      * Computes all type tags
      * @return the type tags
@@ -130,10 +142,16 @@ abstract class ActorCellMonitoringAspectSpec(val agentConfig: Option[String])
     def pathTags: List[String] = List(pathTag)
 
     /**
+     * Computes all system tags
+     * @return the system tags
+     */
+    def systemTags: List[String] = List(systemTag)
+
+    /**
      * Computes all tags (path + type)
      * @return the tags
      */
-    def tags: List[String] = List(pathTag, typeTag)
+    def tags: List[String] = List(pathTag, systemTag, typeTag)
   }
 
   /**
@@ -148,8 +166,9 @@ abstract class ActorCellMonitoringAspectSpec(val agentConfig: Option[String])
     val actorRef = system.actorOf(props, actorName)
     val pathTag = getPathTags(actorRef, 0).head
     val typeTag = getTypeTags(actorRef, props).head
+    val systemTag = getSystemTags(actorRef).head
 
-    CreatedActor(actorRef, actorName, pathTag, typeTag)
+    CreatedActor(actorRef, actorName, pathTag, systemTag, typeTag)
   }
 
   /**

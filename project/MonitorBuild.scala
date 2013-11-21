@@ -32,7 +32,7 @@ object MonitorBuild extends Build {
       generatedPdf in Sphinx <<= generatedPdf in Sphinx in LocalProject(docs.id) map identity,
       generatedEpub in Sphinx <<= generatedEpub in Sphinx in LocalProject(docs.id) map identity,
       // run options
-      javaOptions in run += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
+      javaOptions in run += "-javaagent:" + System.getProperty("user.home") + s"/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-$aspectj_version.jar",
       fork in run := true,
       connectInput in run := true,
       mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")),
@@ -71,7 +71,7 @@ object MonitorBuild extends Build {
   	libraryDependencies += aspectj_weaver,
   	libraryDependencies += akka.actor,
 
-    javaOptions in Test += "-javaagent:" + System.getProperty("user.home") + "/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.3.jar",
+    javaOptions in Test += "-javaagent:" + System.getProperty("user.home") + s"/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-$aspectj_version.jar",
     fork in Test := true
   )
   lazy val agent_spray = module("agent-spray") dependsOn(agent, output)

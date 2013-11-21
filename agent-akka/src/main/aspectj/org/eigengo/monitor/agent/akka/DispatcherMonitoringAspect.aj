@@ -15,11 +15,14 @@
  */
 package org.eigengo.monitor.agent.akka;
 
+import akka.actor.ActorCell;
 import org.eigengo.monitor.agent.AgentConfiguration;
 import org.eigengo.monitor.output.CounterInterface;
 import scala.concurrent.forkjoin.ForkJoinPool;
 
-import java.util.concurrent.ExecutorService;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Monitors the performance of the ``ForkJoinPool``. This will need much more tidying up, but it
@@ -28,8 +31,12 @@ import java.util.concurrent.ExecutorService;
  * The aspect contains advices that will--in the future--monitor the performance of all types of
  * thread pools, giving the users the insight into the threading in their actor systems.
  */
-public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect issingleton() {
+public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect {
     private final CounterInterface counterInterface;
+    private final ActorPathTagger tagger;
+
+    // this is really icky, but it replaces the failing cflowbelow pointcut
+    private final Map<Long, String[]> actorCellCflowTags = new ConcurrentHashMap<Long, String[]>();
 
     /**
      * Constructs this aspects, loads its configuration and instantiates the {@code counterInterface}.
@@ -37,28 +44,34 @@ public aspect DispatcherMonitoringAspect extends AbstractMonitoringAspect issing
     public DispatcherMonitoringAspect() {
         AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.counterInterface = createCounterInterface(configuration.common());
+        this.tagger = new ActorPathTagger(configuration.agent().includeRoutees());
+    }
+
+    pointcut messageDispatcherDispatch(ActorCell actorCell) : execution(* akka.dispatch.MessageDispatcher+.dispatch(..)) && args(actorCell, *);
+
+    before(ActorCell actorCell) : messageDispatcherDispatch(actorCell) {
+        final String[] tags = this.tagger.getTags(actorCell.self().path(), ActorPathTagger.ANONYMOUS_ACTOR_CLASS_NAME);
+        this.actorCellCflowTags.put(Thread.currentThread().getId(), tags);
     }
 
     /**
-     * Advises the methods of the {@link scala.concurrent.forkjoin.ForkJoinPool} to report on its
-     * performance
-     */
-    before(ForkJoinPool es) : call(* java.util.concurrent.ExecutorService+.*(..)) && target(es) {
-        this.counterInterface.recordGaugeValue(Aspects.activeThreadCount(), es.getActiveThreadCount(), getTags(es));
-        this.counterInterface.recordGaugeValue(Aspects.runningThreadCount(), es.getRunningThreadCount(), getTags(es));
-
-        this.counterInterface.recordGaugeValue(Aspects.poolSize(), es.getPoolSize(), getTags(es));
-        this.counterInterface.recordGaugeValue(Aspects.queuedTaskCount(), (int) es.getQueuedTaskCount(), getTags(es));
-    }
-
-    /**
-     * Computes the tags for the given the {@code es}.
+     * Advises the ``execute`` method of an ``ExecutorService`` if that executor service is the
+     * ``ForkJoinPool``.
      *
-     * @param es the ExecutorService to get the tags for
-     * @return the array of tags
+     * Ideally, we would like to use <code>cflowbelow</code> pointcut expression, but that fails
+     * in the LTW stage with <code>NoSuchFieldError</code>
      */
-    private String[] getTags(ExecutorService es) {
-        return new String[0];
+    before(ForkJoinPool es) : call(* java.util.concurrent.ExecutorService+.execute(..)) && target(es) {
+        final String[] tags = this.actorCellCflowTags.get(Thread.currentThread().getId());
+        if (tags == null) {
+            // this is execute without ActorCell.dispatch. We don't care about that.
+            return;
+        }
+        this.counterInterface.recordGaugeValue(Aspects.activeThreadCount(), es.getActiveThreadCount(), tags);
+        this.counterInterface.recordGaugeValue(Aspects.runningThreadCount(), es.getRunningThreadCount(), tags);
+
+        this.counterInterface.recordGaugeValue(Aspects.poolSize(), es.getPoolSize(), tags);
+        this.counterInterface.recordGaugeValue(Aspects.queuedTaskCount(), (int) es.getQueuedTaskCount(), tags);
     }
 
 }

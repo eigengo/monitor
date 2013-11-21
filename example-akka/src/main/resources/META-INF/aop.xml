@@ -5,7 +5,7 @@
         <aspect name="org.eigengo.monitor.agent.akka.DispatcherMonitoringAspect"/>
     </aspects>
 
-    <weaver options="-verbose -XnoInline -showWeaveInfo">
+    <weaver options="-verbose -showWeaveInfo">
         <include within="akka.actor.*"/>
         <include within="akka.dispatch.*"/>
         <include within="scala.concurrent.*"/>

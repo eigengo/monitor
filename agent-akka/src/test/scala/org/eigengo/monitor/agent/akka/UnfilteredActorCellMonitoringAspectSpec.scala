@@ -94,7 +94,7 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
         TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus) must contain(TestCounter(delivered(1: Int), 2, ca.tags))
         TestCounterInterface.foldlByAspect(delivered(""))(TestCounter.plus) must contain(TestCounter(delivered(""), 1, ca.tags))
         // NB: undelivered does not include the actor class name
-        TestCounterInterface.foldlByAspect(undelivered)(TestCounter.plus) must contain(TestCounter(undelivered, 1, ca.pathTags))
+        TestCounterInterface.foldlByAspect(undelivered)(TestCounter.plus) must contain(TestCounter(undelivered, 1, ca.pathTags ++ ca.systemTags))
       }
     }
 
