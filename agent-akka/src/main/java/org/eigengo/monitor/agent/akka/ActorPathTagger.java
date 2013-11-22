@@ -31,7 +31,7 @@ public class ActorPathTagger extends AbstractTagger {
      * @return non-{@code null} array of tags
      */
     final String[] getTags(final ActorPath actorPath, final Option<String> actorClassName) {
-        List<String> tags = new ArrayList<String>(3);
+        List<String> tags = new ArrayList<String>(4);
 
         addActorPathTagsTo(actorPath, tags);
         addSystemTagsTo(actorPath, tags);
