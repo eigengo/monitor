@@ -11,6 +11,7 @@ class CountFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspe
   "Actor count monitoring" should {
 
     "Not record the count of exluded actors" in {
+      TestCounterInterface.clear()
       withActorsOf(Props[SimpleActor], Props[KillableActor]) { (monitored, unmonitored) =>
         val counterBeforeKill = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
         counterBeforeKill.size === 1
