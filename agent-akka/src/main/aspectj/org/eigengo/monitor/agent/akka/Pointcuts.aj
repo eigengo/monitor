@@ -74,5 +74,5 @@ abstract aspect Pointcuts {
     /**
      * Pointcut for {@code Creator.create()} method in akka's java api. We use `returning(Actor actor)` to extract the actor
      * */
-    static pointcut actorCreator() : call(* akka.japi.Creator.create());
+    static pointcut actorCreator() : call(* akka.japi.Creator+.create());
  }

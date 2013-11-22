@@ -38,7 +38,7 @@ trait ActorCellMonitoringTaggingConvention {
    * @return the tags
    */
   def getTags(ref: ActorRef, props: Props, routees: Int = 0): List[String] =
-    /*getPathTags(ref, routees) ++ */getTypeTags(ref, props)
+    getPathTags(ref, routees) ++ getTypeTags(ref, props)
 
   /**
    * Gets the path tags for the given ``ref`` and ``routees``.

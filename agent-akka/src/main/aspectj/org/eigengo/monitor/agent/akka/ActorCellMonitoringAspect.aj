@@ -329,20 +329,30 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     /**
      * Catches actors created by the japi.Creator.create(), at a point when their type is visible to the runtime.
      * We use the visibility of the type at this one pointcut to create a map from the actor path to its type,
-     * which we then access within the other pointcuts (notably on actor death and message receipt) to
+     * which we then access within the other pointcuts (notably on actor death and message receipt) to get the
+     * 'real' type at those points.
+     *
+     * Since the 'ActorRefFactory.actorOf' method is guaranteed to be called on the creation of any actors after the
+     * initialisation of the actorSystem itself, and since we consider anonymous/untyped actors in our count, we also
+     * decrement the count of 'anonymous' actors here, for we know their type to be invisible to other pointcuts. This
+     * is the pattern to follow if we find that there are 'UntypedActors' created through other means.
      *
      * @param actor the Actor returned by the {@code Creator.create()} method
      * */
     after() returning(final Actor actor) : Pointcuts.actorCreator() {
         final String className = actor.getClass().getCanonicalName();
         final ActorPath actorPath = actor.self().path();
+        // add the path -> type pair to the pathTags map
         this.pathTags.putIfAbsent(actorPath, className);
 
+        // increment the count of actors of this type
         this.numberOfActors.putIfAbsent(Option.apply(className), new AtomicInteger(0));
         int currentNumberOfActors = this.numberOfActors.get(Option.apply(className)).incrementAndGet();
         this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, Option.apply(className)));
 
-        // reuse of int for (almost-?)invisible performance improvement
+        // decrement the count of anonymous/untyped actors
+        this.numberOfActors.putIfAbsent(Option.apply(className), new AtomicInteger(0));
+                // reuse of int for (almost-?)invisible performance improvement
         currentNumberOfActors = this.numberOfActors.get(this.anonymousActorClassName).decrementAndGet();
         this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, Option.apply(className)));
     }
