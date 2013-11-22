@@ -26,5 +26,10 @@ class CountFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspe
         counterAfterKill must contain(TestCounter(actorCount, 0, monitored.tags))
       }
     }
+
+    "Shutdown system" in {
+      system.shutdown()
+      success
+    }
   }
 }

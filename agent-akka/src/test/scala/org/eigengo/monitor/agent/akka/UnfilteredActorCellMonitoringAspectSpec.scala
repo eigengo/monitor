@@ -165,6 +165,11 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
         c1Counter.value mustEqual 1
       }
     }
+
+    "Shutdown system" in {
+      system.shutdown()
+      success
+    }
   }
 
 }

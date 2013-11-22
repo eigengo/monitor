@@ -68,6 +68,11 @@ class SamplingActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectSpe
       counter3(0).value mustEqual 1004
       counter3.size === 251
     }
+
+    "Shutdown system" in {
+      system.shutdown()
+      success
+    }
   }
 
 }

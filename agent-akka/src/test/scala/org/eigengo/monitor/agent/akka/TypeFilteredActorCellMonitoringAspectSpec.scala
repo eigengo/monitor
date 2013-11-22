@@ -84,6 +84,11 @@ class TypeFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
       val monitoredIntegerMessages = TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus)
       monitoredIntegerMessages.size === 0
     }
+
+    "Shutdown system" in {
+      system.shutdown()
+      success
+    }
   }
 
 }
