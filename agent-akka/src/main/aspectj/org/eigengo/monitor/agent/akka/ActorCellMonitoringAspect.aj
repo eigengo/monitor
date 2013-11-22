@@ -345,13 +345,13 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         // add the path -> type pair to the pathTags map
         this.pathTags.putIfAbsent(actorPath, className);
 
-        // increment the count of actors of this type
+        // safe increment of the count of actors of this type
         this.numberOfActors.putIfAbsent(Option.apply(className), new AtomicInteger(0));
         int currentNumberOfActors = this.numberOfActors.get(Option.apply(className)).incrementAndGet();
         this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, Option.apply(className)));
 
-        // decrement the count of anonymous/untyped actors
-        this.numberOfActors.putIfAbsent(Option.apply(className), new AtomicInteger(0));
+        // safe decrement of the count of anonymous/untyped actors
+        this.numberOfActors.putIfAbsent(this.anonymousActorClassName, new AtomicInteger(0));
                 // reuse of int for (almost-?)invisible performance improvement
         currentNumberOfActors = this.numberOfActors.get(this.anonymousActorClassName).decrementAndGet();
         this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, Option.apply(className)));
