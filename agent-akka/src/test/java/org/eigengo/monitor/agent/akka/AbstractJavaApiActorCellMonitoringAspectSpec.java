@@ -75,14 +75,11 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
     }
 
     public class InnerActor extends UntypedActor {
-        UUID id;
+        private final UUID id;
         InnerActor(UUID uuid) {this.id = uuid;}
 
         public void onReceive(Object message) {
-            if (message instanceof UUID) {
-                this.id = (UUID)message;
-            }
-            sender().tell(id, self());
+            /* noop */
         }
     }
 
@@ -133,10 +130,10 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
         this.unnamedGreetPrinter = system.actorOf(this.unnamedGreetPrinterProps);
 
         this.outerActorProps = new Props(new UntypedActorFactory() {
-                    public UntypedActor create() {
-                        return new OuterActor();
-                    }
-                });
+            public UntypedActor create() {
+                return new OuterActor();
+            }
+        });
         this.outerActor = system.actorOf(this.outerActorProps);
 
         this.innerActorProps = new Props(new UntypedActorFactory() {
