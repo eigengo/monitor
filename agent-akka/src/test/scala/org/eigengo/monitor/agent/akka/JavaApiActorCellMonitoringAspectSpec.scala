@@ -38,12 +38,6 @@ class JavaApiActorCellMonitoringAspectSpec
     val outerActorTypeTag = s"akka.type:javaapi.${classOf[OuterActor].getCanonicalName}"
     val innerActorTypeTag = s"akka.type:javaapi.${classOf[InnerActor].getCanonicalName}"
 
-    def tagsContain(tags: Seq[String], check: String): MatchResult[Any] = {
-      val doesContain = tags.exists(_.contains(check))
-      if (!doesContain) println("TEST FAILURE: "+tags + "\n doesn't contain\n  "+check)
-      doesContain === true
-    }
-
     implicit class PimpedTestCounters(testCounters: List[TestCounter]) {
 
       def containsCounters(aspect:String, counters: Seq[(Int, String)]): MatchResult[Any] = {
@@ -108,12 +102,13 @@ class JavaApiActorCellMonitoringAspectSpec
 
     "Record messages sent to an ActorSelection" in {
       TestCounterInterface.clear()
-            val innerActorSelection = system.actorSelection("javaapi/user/$b/$e")
+            val innerActorSelection = system.actorSelection("/javaapi/user/$b/$a")
             innerActorSelection.tell(1, ActorRef.noSender)
       Thread.sleep(1000L)
 
-      TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus) must containAllOf(Seq(
-        TestCounter(delivered(1: Int), 1, innerActorTags)))
+      TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus)containsCounters (delivered(1: Int), Seq(
+        (1, innerActorTypeTag)
+      ))
     }.pendingUntilFixed("this may just be failing because of actor selection syntax. This isn't needed atm, but is a test we should have for completeness")
 
     "Record actor death" in {

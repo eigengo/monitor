@@ -326,7 +326,14 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return Option.apply(canonicalName);
     }
 
-    after() returning(Actor actor) : Pointcuts.actorCreator() {
+    /**
+     * Catches actors created by the japi.Creator.create(), at a point when their type is visible to the runtime.
+     * We use the visibility of the type at this one pointcut to create a map from the actor path to its type,
+     * which we then access within the other pointcuts (notably on actor death and message receipt) to
+     *
+     * @param actor the Actor returned by the {@code Creator.create()} method
+     * */
+    after() returning(final Actor actor) : Pointcuts.actorCreator() {
         final String className = actor.getClass().getCanonicalName();
         final ActorPath actorPath = actor.self().path();
         this.pathTags.putIfAbsent(actorPath, className);
