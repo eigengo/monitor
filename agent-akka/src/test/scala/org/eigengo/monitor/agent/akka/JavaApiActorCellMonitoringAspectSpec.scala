@@ -33,16 +33,10 @@ class JavaApiActorCellMonitoringAspectSpec
   "Counting the number of actors using the java api" should {
     configure("JavaApi.conf")
 
-    val outerActorTypeTag = s"akka.type:javaapi.${classOf[OuterActor].getCanonicalName}" //org.eigengo.monitor.agent.akka.AbstractJavaApiActorCellMonitoringAspectSpec.OuterActor"
-    val innerActorTypeTag = s"akka.type:javaapi.${classOf[InnerActor].getCanonicalName}"//org.eigengo.monitor.agent.akka.AbstractJavaApiActorCellMonitoringAspectSpec.InnerActor"
     val greetPrinterTypeTag = s"akka.type:javaapi.${classOf[GreetPrinter].getCanonicalName}"
     val greeterTypeTag = s"akka.type:javaapi.${classOf[Greeter].getCanonicalName}"
-
-    val unnamedGreetPrinterTags = getTags(unnamedGreetPrinter, unnamedGreetPrinterProps)
-    val namedGreetPrinterTags = getTags(greetPrinter, greetPrinterProps)
-    val greeterTags = getTags(greeter, greeterProps)
-    val outerActorTags = List(outerActorTypeTag)
-    val innerActorTags = List("akka.path:/javaapi/user/$c",innerActorTypeTag)  // TODO: Robustness of tests :p
+    val outerActorTypeTag = s"akka.type:javaapi.${classOf[OuterActor].getCanonicalName}"
+    val innerActorTypeTag = s"akka.type:javaapi.${classOf[InnerActor].getCanonicalName}"
 
     def tagsContain(tags: Seq[String], check: String): MatchResult[Any] = {
       val doesContain = tags.exists(_.contains(check))
@@ -70,11 +64,10 @@ class JavaApiActorCellMonitoringAspectSpec
 
 
     "Tag actors with appropriate names" in {
-      tagsContain(unnamedGreetPrinterTags, "GreetPrinter")
-      tagsContain(namedGreetPrinterTags, "GreetPrinter")
-      tagsContain(greeterTags, "Greeter")
-      tagsContain(outerActorTags, "OuterActor")
-      tagsContain(innerActorTags, "InnerActor")
+      greetPrinterTypeTag.contains("GreetPrinter")
+      greeterTypeTag.contains("Greeter")
+      outerActorTypeTag.contains("OuterActor")
+      innerActorTypeTag.contains("InnerActor")
     }
 
     // records the count of actors, grouped by simple class name
@@ -108,8 +101,9 @@ class JavaApiActorCellMonitoringAspectSpec
       innerActor ! 1
       Thread.sleep(1000L)
 
-      TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus) must containAllOf(Seq(
-        TestCounter(delivered(1: Int), 1, innerActorTags)))
+      TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus) containsCounters (delivered(1: Int), Seq(
+        (1, innerActorTypeTag)
+      ))
     }
 
     "Record messages sent to an ActorSelection" in {
