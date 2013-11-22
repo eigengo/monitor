@@ -33,7 +33,7 @@ object BuildSettings {
         "Spray Releases" at "http://repo.spray.io",
         "Spray Nightlies" at "http://nightlies.spray.io"
       ),
-      parallelExecution in Test := true
+      parallelExecution in Test := false
   )
 
   lazy val aspectjCompileSettings = aspectjSettings ++ Seq(
