@@ -50,7 +50,7 @@ class JavaApiActorCellMonitoringAspectSpec
         if (!aspectIsFine.isEmpty && tagIsFine.isEmpty) println(s"Failure: no corresponding tag: ${counter._2}\n Found: $aspectIsFine")
         if (!tagIsFine.isEmpty && valueIsFine.get.value != counter._1) println(s"Failure: wrong value for tag ${counter._2}, expected: ${counter._1}\n Found ${tagIsFine.map(_.value)}")
 
-          valueIsFine.get.value == counter._1
+          valueIsFine.map(_.value) == Some(counter._1)
         } must beTrue
       }
 
