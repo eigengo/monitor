@@ -350,11 +350,12 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      *
      * @param actor the Actor returned by the {@code Creator.create()} method
      * */
-    after() returning(final Actor actor) : Pointcuts.actorCreator() {
+    Actor around() : Pointcuts.actorCreator() {
+        final Actor actor = proceed();
         final String className = actor.getClass().getCanonicalName();
         final ActorPath actorPath = actor.self().path();
         final PathAndClass pac = new PathAndClass(actorPath, Option.apply(className));
-        if (this.pathTags.containsKey(actorPath)) return; // the key is there, we need do nothing.
+        if (this.pathTags.containsKey(actorPath)) return actor; // the key is there, we need do nothing.
         // add the path -> type pair to the pathTags map
         this.pathTags.putIfAbsent(actorPath, className);
 
@@ -371,6 +372,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
             final int currentNumberOfActors = this.numberOfActors.get(this.anonymousActorClassName).decrementAndGet();
             this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, this.anonymousActorClassName));
         }
+        return actor;
     }
 
 }

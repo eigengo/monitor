@@ -61,6 +61,7 @@ class JavaApiActorCellMonitoringAspectSpec
 
       Thread.sleep(100L)
       val createdCounters = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
+      println(createdCounters)
       createdCounters containsCounters(actorCount, Seq(
         (2, greetPrinterTypeTag),  // one named, one unnamed.
         (1, greeterTypeTag),
