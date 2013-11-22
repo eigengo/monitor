@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Contains advices for monitoring behaviour of an actor; typically imprisoned in an {@code ActorCell}.
  */
-public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingleton() {
+public final aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingleton() {
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
     private final Option<String> anonymousActorClassName = Option.empty();
@@ -350,12 +350,11 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      *
      * @param actor the Actor returned by the {@code Creator.create()} method
      * */
-    Actor around() : Pointcuts.actorCreator() {
-        final Actor actor = proceed();
+    after() returning(Actor actor) : Pointcuts.actorCreator() {
         final String className = actor.getClass().getCanonicalName();
         final ActorPath actorPath = actor.self().path();
         final PathAndClass pac = new PathAndClass(actorPath, Option.apply(className));
-        if (this.pathTags.containsKey(actorPath)) return actor; // the key is there, we need do nothing.
+        if (this.pathTags.containsKey(actorPath)) return; // the key is there, we need do nothing.
         // add the path -> type pair to the pathTags map
         this.pathTags.putIfAbsent(actorPath, className);
 
@@ -372,7 +371,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
             final int currentNumberOfActors = this.numberOfActors.get(this.anonymousActorClassName).decrementAndGet();
             this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, this.anonymousActorClassName));
         }
-        return actor;
     }
 
 }
