@@ -353,20 +353,25 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     after() returning(final Actor actor) : Pointcuts.actorCreator() {
         final String className = actor.getClass().getCanonicalName();
         final ActorPath actorPath = actor.self().path();
-        if (this.pathTags.containsKey(actorPath)) return;
-        // add the path -> type pair to the pathTags map
-        this.pathTags.putIfAbsent(actorPath, className);
+        final PathAndClass pac = new PathAndClass(actorPath, Option.apply(className));
+        if (this.pathTags.containsKey(actorPath)) return; // the key is there, we need do nothing.
 
-        // safe increment of the count of actors of this type
-        this.numberOfActors.putIfAbsent(Option.apply(className), new AtomicInteger(0));
-        int currentNumberOfActors = this.numberOfActors.get(Option.apply(className)).incrementAndGet();
-        this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, Option.apply(className)));
+        if (includeActorPath(pac)) {
+            // add the path -> type pair to the pathTags map
+            this.pathTags.putIfAbsent(actorPath, className);
 
-        // safe decrement of the count of anonymous/untyped actors
-        this.numberOfActors.putIfAbsent(this.anonymousActorClassName, new AtomicInteger(0));
-                // reuse of int for (almost-?)invisible performance improvement
-        currentNumberOfActors = this.numberOfActors.get(this.anonymousActorClassName).decrementAndGet();
-        this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, this.anonymousActorClassName));
+            // safe increment of the count of actors of this type
+            this.numberOfActors.putIfAbsent(pac.actorClassName(), new AtomicInteger(0));
+            final int currentNumberOfActors = this.numberOfActors.get(pac.actorClassName()).incrementAndGet();
+            this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, pac.actorClassName()));
+        }
+
+        if (includeActorPath(new PathAndClass(actorPath, this.anonymousActorClassName))) {
+            // safe decrement of the count of anonymous/untyped actors
+            this.numberOfActors.putIfAbsent(this.anonymousActorClassName, new AtomicInteger(0));
+            final int currentNumberOfActors = this.numberOfActors.get(this.anonymousActorClassName).decrementAndGet();
+            this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, this.anonymousActorClassName));
+        }
     }
 
 }
