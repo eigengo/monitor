@@ -58,10 +58,9 @@ class JavaApiActorCellMonitoringAspectSpec
 
     // records the count of actors, grouped by simple class name
     "Record the actor creation" in {
-
+      TestCounterInterface.clear()
       Thread.sleep(100L)
       val createdCounters = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
-      println(createdCounters)
       createdCounters containsCounters(actorCount, Seq(
         (2, greetPrinterTypeTag),  // one named, one unnamed.
         (1, greeterTypeTag),
