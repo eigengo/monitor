@@ -66,7 +66,7 @@ object MonitorBuild extends Build {
   lazy val output_metrics = module("output-metrics") dependsOn (output) settings (
     libraryDependencies += codahale_metrics,
     libraryDependencies += akka.actor,
-    libraryDependencies += specs2 % "test",
+    libraryDependencies += specs2 % "test"
   )
   lazy val test = module("test") dependsOn (output) settings (
   	libraryDependencies += specs2,
