@@ -72,7 +72,7 @@ abstract aspect Pointcuts {
     static pointcut actorCellInternalStop(ActorCell actorCell) : target(actorCell) && execution(* akka.actor.ActorCell.stop());
 
     /**
-     * Pointcut for {@code ???} method in akka's java api, extracting the Actor used to construct the {@code Creator}
+     * Pointcut for {@code Creator.create()} method in akka's java api. We use `returning(Actor actor)` to extract the actor
      * */
-    static pointcut actorCreator(Creator creator) : target(creator) && call(* akka.japi.Creator.create());
+    static pointcut actorCreator() : call(* akka.japi.Creator.create());
  }

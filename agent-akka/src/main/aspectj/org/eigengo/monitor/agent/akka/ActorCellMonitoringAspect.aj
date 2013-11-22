@@ -166,7 +166,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
                  break;
          }
 
-         final String tag = (className.isDefined()) ? className.get() : "akka.actor.Actor";
          this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, tags);
      }
 
@@ -327,17 +326,18 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         return Option.apply(canonicalName);
     }
 
-    after(Creator creator) returning(Actor actor) : Pointcuts.actorCreator(creator) {
+    after() returning(Actor actor) : Pointcuts.actorCreator() {
         final String className = actor.getClass().getCanonicalName();
-        this.pathTags.putIfAbsent(actor.self().path(), className);
+        final ActorPath actorPath = actor.self().path();
+        this.pathTags.putIfAbsent(actorPath, className);
 
         this.numberOfActors.putIfAbsent(Option.apply(className), new AtomicInteger(0));
         int currentNumberOfActors = this.numberOfActors.get(Option.apply(className)).incrementAndGet();
-        this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, className);
+        this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, Option.apply(className)));
 
-        // reuse of int for almost-invisible performance improvement
+        // reuse of int for (almost-?)invisible performance improvement
         currentNumberOfActors = this.numberOfActors.get(this.anonymousActorClassName).decrementAndGet();
-        this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, "akka.actor.Actor");
+        this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, Option.apply(className)));
     }
 
 }
