@@ -44,13 +44,13 @@ class JavaApiActorCellMonitoringAspectSpec
         counters.foldLeft(true){(b, counter) =>
           val aspectIsFine = testCounters.filter(_.aspect == aspect)
           val tagIsFine = aspectIsFine.filter(_.tags.contains(counter._2))
-          val valueIsFine = tagIsFine.filter(_.value == counter._1)
+          val valueIsFine = tagIsFine.headOption
 
-        if (aspectIsFine.isEmpty) println("Failure: no corresponding aspect:  "+aspect)
+        if (aspectIsFine.isEmpty) println(s"Failure: no corresponding aspect: $aspect\n Found: ${testCounters.map(_.aspect).toSet} ")
         if (!aspectIsFine.isEmpty && tagIsFine.isEmpty) println(s"Failure: no corresponding tag: ${counter._2}\n Found: $aspectIsFine")
-        if (!tagIsFine.isEmpty && valueIsFine.isEmpty) println(s"Failure: wrong value for tag ${counter._2}, expected: ${counter._1}\n Found ${tagIsFine.map(_.value)}")
+        if (!tagIsFine.isEmpty && valueIsFine.get.value != counter._1) println(s"Failure: wrong value for tag ${counter._2}, expected: ${counter._1}\n Found ${tagIsFine.map(_.value)}")
 
-          !valueIsFine.isEmpty
+          valueIsFine.get.value == counter._1
         } must beTrue
       }
 
@@ -70,7 +70,7 @@ class JavaApiActorCellMonitoringAspectSpec
       Thread.sleep(100L)
       val createdCounters = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
       createdCounters containsCounters(actorCount, Seq(
-        (1, greetPrinterTypeTag),
+        (2, greetPrinterTypeTag),  // one named, one unnamed.
         (1, greeterTypeTag),
         (1, outerActorTypeTag),
         (1, innerActorTypeTag)))
@@ -84,7 +84,7 @@ class JavaApiActorCellMonitoringAspectSpec
       Thread.sleep(1000L)
       val testCounters: List[TestCounter] = TestCounterInterface.foldlByAspect(actorCount)(takeLHS)
       testCounters containsCounters(actorCount, Seq(
-        (1, greetPrinterTypeTag),
+        (2, greetPrinterTypeTag),
         (1, greeterTypeTag),
         (1, outerActorTypeTag),
         (6, innerActorTypeTag)))

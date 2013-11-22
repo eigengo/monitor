@@ -366,7 +366,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         this.numberOfActors.putIfAbsent(this.anonymousActorClassName, new AtomicInteger(0));
                 // reuse of int for (almost-?)invisible performance improvement
         currentNumberOfActors = this.numberOfActors.get(this.anonymousActorClassName).decrementAndGet();
-        this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, Option.apply(className)));
+        this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, getTags(actorPath, this.anonymousActorClassName));
     }
 
 }
