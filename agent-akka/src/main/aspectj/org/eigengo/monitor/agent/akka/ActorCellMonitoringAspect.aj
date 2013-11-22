@@ -34,7 +34,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private AkkaAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
     private final Option<String> anonymousActorClassName = Option.empty();
+    // we sample based on actor type (i.e. a sampling rate of 'n' for a filter means 'every nth actor with type k, for each type k that matches that filter')
     private final ConcurrentHashMap<Option<String>, AtomicLong> samplingCounters  = new ConcurrentHashMap<Option<String>, AtomicLong>();
+    // we count actors by actor type (any 'anonymous' or 'generic' actors are treated as the same type)
     private final ConcurrentHashMap<Option<String>, AtomicInteger> numberOfActors = new ConcurrentHashMap<Option<String>, AtomicInteger>();
     private final ConcurrentHashMap<ActorPath, String> pathTags                   = new ConcurrentHashMap<ActorPath, String>();
 
