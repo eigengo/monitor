@@ -35,7 +35,7 @@ class DefaultNameMarshaller(val prefix: String) extends NameMarshaller {
 
   override def buildName(aspect: String, tags: Seq[String]): String = {
 
-    def cleanPath: String = (userPathString(tags.head.replace("akka.path:/", "")))
+    def cleanPath: String = tags.head.replace("akka.path:/", "").replace('/', '.').toLowerCase
 
     val name = aspect match {
       case "akka.actor.count" =>
@@ -49,20 +49,6 @@ class DefaultNameMarshaller(val prefix: String) extends NameMarshaller {
     }
 
     s"$prefix$name"
-  }
-
-  /**
-   * Convert 'user' actors such as 'akka://server/user/myactor' to 'myactor'.
-   * Convert 'system' actors such as 'akka://server/system/'
-   * @param str
-   * @return
-   */
-  def userPathString(str: String): String = {
-    (str match {
-      case s if s.startsWith("server/user/") => s.stripPrefix("server/user/")
-      case s if s.startsWith("server/system/") => s.replace("server/system/", "internal.")
-      case s => s.replace("server/", "internal.")
-    }).replace('/', '.').toLowerCase
   }
 }
 
