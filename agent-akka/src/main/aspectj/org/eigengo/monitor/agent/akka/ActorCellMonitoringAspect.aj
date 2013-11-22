@@ -322,7 +322,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     private Option<String> getActorClassName(final Props props, final ActorPath actorPath) {
         final String canonicalName = props.actorClass().getCanonicalName();
         if (this.pathTags.containsKey(actorPath)) return Option.apply(this.pathTags.get(actorPath));
-        if (canonicalName == null || canonicalName.endsWith("akka.actor.Actor")) return this.anonymousActorClassName;
+        if (canonicalName == null /*if actor is anonymous*/||/*OR actor is generic*/
+                canonicalName.endsWith("akka.actor.Actor")) return this.anonymousActorClassName;
         return Option.apply(canonicalName);
     }
 
@@ -334,14 +335,20 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      *
      * Since the 'ActorRefFactory.actorOf' method is guaranteed to be called on the creation of any actors after the
      * initialisation of the actorSystem itself, and since we consider anonymous/untyped actors in our count, we also
-     * decrement the count of 'anonymous' actors here, for we know their type to be invisible to other pointcuts. This
-     * is the pattern to follow if we find that there are 'UntypedActors' created through other means.
+     * decrement the count of 'anonymous' actors here, for we know their type to be invisible to other pointcuts, and
+     * that the element mapping path to type will not have been created (i.e. we generally assume actor paths are unique,
+     * and that the actorOf advice will access the 'pathTags' map before we've inserted this new value). This approach
+     * may not be robust enough -- in particular, with regards the second assumption.
+     *
+     * Regardless, we still double check that the map element doesn't already exist. If it does, we make the assumption
+     * that it was created 'a while ago', and that the path referred to an actor of the same type.
      *
      * @param actor the Actor returned by the {@code Creator.create()} method
      * */
     after() returning(final Actor actor) : Pointcuts.actorCreator() {
         final String className = actor.getClass().getCanonicalName();
         final ActorPath actorPath = actor.self().path();
+        if this.pathTags.containsKey(actorPath) return;
         // add the path -> type pair to the pathTags map
         this.pathTags.putIfAbsent(actorPath, className);
 
