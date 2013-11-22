@@ -355,11 +355,10 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         final ActorPath actorPath = actor.self().path();
         final PathAndClass pac = new PathAndClass(actorPath, Option.apply(className));
         if (this.pathTags.containsKey(actorPath)) return; // the key is there, we need do nothing.
+        // add the path -> type pair to the pathTags map
+        this.pathTags.putIfAbsent(actorPath, className);
 
         if (includeActorPath(pac)) {
-            // add the path -> type pair to the pathTags map
-            this.pathTags.putIfAbsent(actorPath, className);
-
             // safe increment of the count of actors of this type
             this.numberOfActors.putIfAbsent(pac.actorClassName(), new AtomicInteger(0));
             final int currentNumberOfActors = this.numberOfActors.get(pac.actorClassName()).incrementAndGet();
