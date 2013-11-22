@@ -323,9 +323,12 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     private Option<String> getActorClassName(final Props props, final ActorPath actorPath) {
         final String canonicalName = props.actorClass().getCanonicalName();
-        if (this.pathTags.containsKey(actorPath)) return Option.apply(this.pathTags.get(actorPath));
         if (canonicalName == null /*if actor is anonymous*/||/*OR actor is generic*/
-                canonicalName.endsWith("akka.actor.Actor")) return this.anonymousActorClassName;
+                canonicalName.endsWith("akka.actor.Actor")) {
+            // then we check to see if our path->className map can help...
+            if (this.pathTags.containsKey(actorPath)) return Option.apply(this.pathTags.get(actorPath));
+            return this.anonymousActorClassName;
+        }
         return Option.apply(canonicalName);
     }
 

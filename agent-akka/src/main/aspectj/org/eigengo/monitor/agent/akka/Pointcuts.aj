@@ -15,6 +15,7 @@
  */
 package org.eigengo.monitor.agent.akka;
 
+import akka.actor.Actor;
 import akka.actor.ActorCell;
 import akka.actor.ActorRef;
 import akka.actor.Props;
@@ -49,12 +50,12 @@ abstract aspect Pointcuts {
      * it in the {@code after returning()} advices.
      */
     private static pointcut unnamedActorOf(Props props) :
-            execution(* akka.actor.ActorRefFactory+.actorOf(*)) && args(props);
+            execution(ActorRef akka.actor.ActorRefFactory+.actorOf(*)) && args(props);
     /**
      * Pointcut for the {@code actorOf} method in {@code ActorRefFactory} implementations where actor is named on creation
      */
     private static pointcut namedActorOf(Props props) :
-            execution(* akka.actor.ActorRefFactory+.actorOf(*,*)) && args(props, *);
+            execution(ActorRef akka.actor.ActorRefFactory+.actorOf(*,*)) && args(props, *);
     /**
      * Public pointcut for retrieving Props instance used by {@code actorOf} method in {@code ActorRefFactory}
      */
@@ -73,5 +74,5 @@ abstract aspect Pointcuts {
     /**
      * Pointcut for {@code Creator.create()} method in akka's java api. We use `returning(Actor actor)` to extract the actor
      * */
-    static pointcut actorCreator() : call(* akka.japi.Creator+.create());
+    static pointcut actorCreator() : call(Actor akka.japi.Creator.create());
  }
