@@ -31,8 +31,9 @@ object Dependencies {
     val httpx = "io.spray" % "spray-httpx" % spray_version
   }
 
-  val typesafe_config  = "com.typesafe"	      % "config"                % "1.0.2"
-  val dogstatsd_client = "com.indeed"         % "java-dogstatsd-client" % "2.0.7"
+  val typesafe_config  = "com.typesafe"	        % "config"                % "1.0.2"
+  val dogstatsd_client = "com.indeed"           % "java-dogstatsd-client" % "2.0.7"
+  val codahale_metrics = "com.codahale.metrics" % "metrics-core"          % "3.0.1"
 
   val specs2           = "org.specs2"        %% "specs2"                % "2.2.3"
 }

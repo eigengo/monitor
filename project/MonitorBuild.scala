@@ -36,7 +36,7 @@ object MonitorBuild extends Build {
       fork in run := true,
       connectInput in run := true,
       mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")),
-    aggregate = Seq(agent, output, output_statsd, agent_akka, agent_spray, agent_play, example_akka, docs)) dependsOn (example_akka)
+    aggregate = Seq(agent, output, output_statsd, output_metrics, agent_akka, agent_spray, agent_play, example_akka, docs)) dependsOn (example_akka)
 
 /*
   lazy val macros = module("macros") settings(
@@ -62,6 +62,11 @@ object MonitorBuild extends Build {
   	libraryDependencies += dogstatsd_client,
     libraryDependencies += akka.actor,
     libraryDependencies += specs2 % "test"
+  )
+  lazy val output_metrics = module("output-metrics") dependsOn (output) settings (
+    libraryDependencies += codahale_metrics,
+    libraryDependencies += akka.actor,
+    libraryDependencies += specs2 % "test",
   )
   lazy val test = module("test") dependsOn (output) settings (
   	libraryDependencies += specs2,
