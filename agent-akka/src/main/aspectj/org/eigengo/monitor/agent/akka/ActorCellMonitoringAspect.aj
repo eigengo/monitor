@@ -350,7 +350,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     after() returning(final Actor actor) : Pointcuts.actorCreator() {
         final String className = actor.getClass().getCanonicalName();
         final ActorPath actorPath = actor.self().path();
-        if this.pathTags.containsKey(actorPath) return;
+        if (this.pathTags.containsKey(actorPath)) return;
         // add the path -> type pair to the pathTags map
         this.pathTags.putIfAbsent(actorPath, className);
 
