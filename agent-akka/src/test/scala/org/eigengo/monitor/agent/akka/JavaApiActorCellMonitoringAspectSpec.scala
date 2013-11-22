@@ -56,14 +56,6 @@ class JavaApiActorCellMonitoringAspectSpec
 
     }
 
-
-    "Tag actors with appropriate names" in {
-      greetPrinterTypeTag.contains("GreetPrinter")
-      greeterTypeTag.contains("Greeter")
-      outerActorTypeTag.contains("OuterActor")
-      innerActorTypeTag.contains("InnerActor")
-    }
-
     // records the count of actors, grouped by simple class name
     "Record the actor creation" in {
 
