@@ -2,7 +2,7 @@ object BuildSettings {
   import sbt._
   import Keys._
   import com.typesafe.sbt.SbtAspectj.{ Aspectj, aspectjSettings }
-  import com.typesafe.sbt.SbtAspectj.AspectjKeys.{ compileOnly, sourceLevel, aspectjDirectory }
+  import com.typesafe.sbt.SbtAspectj.AspectjKeys.{ compileOnly, sourceLevel, aspectjDirectory, aspectjVersion }
   import org.scalastyle.sbt.ScalastylePlugin
 
   lazy val buildSettings = 
@@ -41,6 +41,7 @@ object BuildSettings {
     compileOnly in Aspectj := true,
     aspectjDirectory in Aspectj <<= crossTarget,
     sourceLevel in Aspectj := "-1.6",
+    aspectjVersion in Aspectj := Dependencies.aspectj_version,
 
     // add the compiled aspects as products
     products in Compile <++= products in Aspectj

@@ -39,6 +39,7 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
 
     // records the count of actors, grouped by simple class name
     "Record the actor count" in {
+      TestCounterInterface.clear()
       withActorOf(Props[SimpleActor]) { ca =>
         TestCounterInterface.foldlByAspect(actorCount, ContainsTag(ca.pathTag))(takeLHS) must contain(TestCounter(actorCount, 1, ca.tags))
 
@@ -94,7 +95,7 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
         TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus) must contain(TestCounter(delivered(1: Int), 2, ca.tags))
         TestCounterInterface.foldlByAspect(delivered(""))(TestCounter.plus) must contain(TestCounter(delivered(""), 1, ca.tags))
         // NB: undelivered does not include the actor class name
-        TestCounterInterface.foldlByAspect(undelivered)(TestCounter.plus) must contain(TestCounter(undelivered, 1, ca.pathTags))
+        TestCounterInterface.foldlByAspect(undelivered)(TestCounter.plus) must contain(TestCounter(undelivered, 1, ca.pathTags ++ ca.systemTags))
       }
     }
 
@@ -164,6 +165,11 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
         supCounter.value mustEqual 10
         c1Counter.value mustEqual 1
       }
+    }
+
+    "Shutdown system" in {
+      system.shutdown()
+      success
     }
   }
 

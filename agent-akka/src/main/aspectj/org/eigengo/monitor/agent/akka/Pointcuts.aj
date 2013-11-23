@@ -15,9 +15,11 @@
  */
 package org.eigengo.monitor.agent.akka;
 
+import akka.actor.Actor;
 import akka.actor.ActorCell;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.japi.Creator;
 
 /**
  * Centralises the pointcuts
@@ -48,12 +50,12 @@ abstract aspect Pointcuts {
      * it in the {@code after returning()} advices.
      */
     private static pointcut unnamedActorOf(Props props) :
-            execution(* akka.actor.ActorRefFactory+.actorOf(*)) && args(props);
+            execution(ActorRef akka.actor.ActorRefFactory+.actorOf(*)) && args(props);
     /**
      * Pointcut for the {@code actorOf} method in {@code ActorRefFactory} implementations where actor is named on creation
      */
     private static pointcut namedActorOf(Props props) :
-            execution(* akka.actor.ActorRefFactory+.actorOf(*,*)) && args(props, *);
+            execution(ActorRef akka.actor.ActorRefFactory+.actorOf(*,*)) && args(props, *);
     /**
      * Public pointcut for retrieving Props instance used by {@code actorOf} method in {@code ActorRefFactory}
      */
@@ -68,4 +70,12 @@ abstract aspect Pointcuts {
      * Pointcut for {@code ActorCell.stop()} method, extracting the targeted {@code ActorCell}
      */
     static pointcut actorCellInternalStop(ActorCell actorCell) : target(actorCell) && execution(* akka.actor.ActorCell.stop());
-}
+
+    /**
+     * Pointcut for {@code Creator.create()} method in akka's java api. We use `returning(Actor actor)` to extract the actor
+     *
+     * We specify the return type as 'Actor', to avoid catching the creators that return 'typed' actors (i.e. this pointcut
+     * is strictly for catching those actors that would otherwise have anonymous type elsewhere in the runtime)
+     * */
+    static pointcut actorCreator() : call(Actor akka.japi.Creator+.create());
+ }

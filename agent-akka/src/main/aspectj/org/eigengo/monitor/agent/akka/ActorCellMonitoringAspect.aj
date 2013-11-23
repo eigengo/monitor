@@ -20,8 +20,6 @@ import org.eigengo.monitor.agent.AgentConfiguration;
 import org.eigengo.monitor.output.CounterInterface;
 import scala.Option;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,12 +27,16 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Contains advices for monitoring behaviour of an actor; typically imprisoned in an {@code ActorCell}.
  */
-public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingleton() {
+public final aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingleton() {
     private AkkaAgentConfiguration agentConfiguration;
+    private ActorPathTagger tagger;
     private final CounterInterface counterInterface;
     private final Option<String> anonymousActorClassName = Option.empty();
-    private final ConcurrentHashMap<PathAndClass, AtomicLong> samplingCounters  = new ConcurrentHashMap<PathAndClass, AtomicLong>();
-    private final ConcurrentHashMap<PathAndClass, AtomicInteger> numberOfActors = new ConcurrentHashMap<PathAndClass, AtomicInteger>();
+    // we sample based on actor type (i.e. a sampling rate of 'n' for a filter means 'every nth actor with type k, for each type k that matches that filter')
+    private final ConcurrentHashMap<Option<String>, AtomicLong> samplingCounters  = new ConcurrentHashMap<Option<String>, AtomicLong>();
+    // we count actors by actor type (any 'anonymous' or 'generic' actors are treated as the same type)
+    private final ConcurrentHashMap<Option<String>, AtomicInteger> numberOfActors = new ConcurrentHashMap<Option<String>, AtomicInteger>();
+    private final ConcurrentHashMap<ActorPath, String> pathTags                   = new ConcurrentHashMap<ActorPath, String>();
 
     /**
      * Constructs this aspect
@@ -43,6 +45,17 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         AgentConfiguration<AkkaAgentConfiguration> configuration = getAgentConfiguration("akka", AkkaAgentConfigurationJapi.apply());
         this.agentConfiguration = configuration.agent();
         this.counterInterface = createCounterInterface(configuration.common());
+        this.tagger = new ActorPathTagger(this.agentConfiguration.includeRoutees());
+    }
+
+    /**
+     * Injects the new {@code AkkaAgentConfiguration} instance.
+     *
+     * @param agentConfiguration the new configuration
+     */
+    synchronized final void setAgentConfiguration(AkkaAgentConfiguration agentConfiguration) {
+        this.agentConfiguration = agentConfiguration;
+        this.tagger = new ActorPathTagger(this.agentConfiguration.includeRoutees());
     }
 
     /**
@@ -58,13 +71,14 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     Object around(ActorCell actorCell, Object msg) : Pointcuts.actorCellReceiveMessage(actorCell, msg) {
         final ActorPath actorPath = actorCell.self().path();
-        final PathAndClass pathAndClass = new PathAndClass(actorPath, getActorClassName(actorCell));
+        final Option<String> className = getActorClassName(actorCell, actorPath);
+        final PathAndClass pathAndClass = new PathAndClass(actorPath, className);
         if (!includeActorPath(pathAndClass) || !sampleMessage(pathAndClass)) return proceed(actorCell, msg);
 
         int samplingRate = getSampleRate(pathAndClass);
 
         // we tag by actor name
-        final String[] tags = getTags(actorPath, getActorClassName(actorCell));
+        final String[] tags = this.tagger.getTags(actorPath, className);
 
         // record the queue size
         this.counterInterface.recordGaugeValue(Aspects.queueSize(), actorCell.numberOfMessages(), tags);
@@ -97,7 +111,9 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      */
     before(ActorCell actorCell, Throwable failure) : Pointcuts.actorCellHandleInvokeFailure(actorCell, failure) {
         // record the error, general and specific
-        String[] tags = getTags(actorCell.self().path(), getActorClassName(actorCell));
+        final Option<String> actorClassName = getActorClassName(actorCell, actorCell.self().path());
+        String[] tags = this.tagger.getTags(actorCell.self().path(), actorClassName);
+
         this.counterInterface.incrementCounter(Aspects.actorError(), tags);
         this.counterInterface.incrementCounter(Aspects.actorError(failure), tags);
     }
@@ -110,7 +126,7 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
     before(Object event) : Pointcuts.eventStreamPublish(event) {
         if (event instanceof UnhandledMessage) {
             UnhandledMessage unhandledMessage = (UnhandledMessage)event;
-            String[] tags = getTags(unhandledMessage.recipient().path(), this.anonymousActorClassName);
+            String[] tags = this.tagger.getTags(unhandledMessage.recipient().path(), ActorPathTagger.ANONYMOUS_ACTOR_CLASS_NAME);
             this.counterInterface.incrementCounter(Aspects.undelivered(), tags);
             this.counterInterface.incrementCounter(Aspects.undelivered(unhandledMessage.getMessage()), tags);
         }
@@ -135,6 +151,48 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
         recordActorCount(actorCell.self().path(), actorCell.props(), CountType.Decrement);
     }
 
+
+    /**
+     * Catches actors created by the japi.Creator.create(), at a point when their type is visible to the runtime.
+     * We use the visibility of the type at this one pointcut to create a map from the actor path to its type,
+     * which we then access within the other pointcuts (notably on actor death and message receipt) to get the
+     * 'real' type at those points.
+     *
+     * Since the 'ActorRefFactory.actorOf' method is guaranteed to be called on the creation of any actors after the
+     * initialisation of the actorSystem itself, and since we consider anonymous/untyped actors in our count, we also
+     * decrement the count of 'anonymous' actors here, for we know their type to be invisible to other pointcuts, and
+     * that the element mapping path to type will not have been created (i.e. we generally assume actor paths are unique,
+     * and that the actorOf advice will access the 'pathTags' map before we've inserted this new value). This approach
+     * may not be robust enough -- in particular, with regards the second assumption.
+     *
+     * Regardless, we still double check that the map element doesn't already exist. If it does, we make the assumption
+     * that it was created 'a while ago', and that the path referred to an actor of the same type.
+     *
+     * @param actor the Actor returned by the {@code Creator.create()} method
+     * */
+    after() returning(Actor actor) : Pointcuts.actorCreator() {
+        final String className = actor.getClass().getCanonicalName();
+        final ActorPath actorPath = actor.self().path();
+        final PathAndClass pac = new PathAndClass(actorPath, Option.apply(className));
+        if (this.pathTags.containsKey(actorPath)) return; // the key is there, we need do nothing.
+        // add the path -> type pair to the pathTags map
+        this.pathTags.putIfAbsent(actorPath, className);
+
+        if (includeActorPath(pac)) {
+            // safe increment of the count of actors of this type
+            this.numberOfActors.putIfAbsent(pac.actorClassName(), new AtomicInteger(0));
+            final int currentNumberOfActors = this.numberOfActors.get(pac.actorClassName()).incrementAndGet();
+            this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, this.tagger.getTags(actorPath, pac.actorClassName()));
+        }
+
+        if (includeActorPath(new PathAndClass(actorPath, this.anonymousActorClassName))) {
+            // safe decrement of the count of anonymous/untyped actors
+            this.numberOfActors.putIfAbsent(this.anonymousActorClassName, new AtomicInteger(0));
+            final int currentNumberOfActors = this.numberOfActors.get(this.anonymousActorClassName).decrementAndGet();
+            this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, this.tagger.getTags(actorPath, this.anonymousActorClassName));
+        }
+    }
+
     /**
      * Records the actor count increment or decrement
      *
@@ -143,19 +201,20 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param countType the increment or decrement
      */
      private void recordActorCount(ActorPath path, Props props, CountType countType) {
-         final PathAndClass pac = new PathAndClass(path, getActorClassName(props));
+         final Option<String> className = getActorClassName(props, path);
+         final PathAndClass pac = new PathAndClass(path, getActorClassName(props, path));
          if (!includeActorPath(pac)) return;
 
-         final String[] tags = getTags(path, pac.actorClassName());
-         this.numberOfActors.putIfAbsent(pac, new AtomicInteger(0));
+         final String[] tags = this.tagger.getTags(path, pac.actorClassName());
+         this.numberOfActors.putIfAbsent(className, new AtomicInteger(0));
          // increment and get the current number of actors of this type (if the value was 0, then this returns 1 -- which is correct)
          final int currentNumberOfActors;
          switch (countType) {
              case Increment:
-                 currentNumberOfActors = this.numberOfActors.get(pac).incrementAndGet();
+                 currentNumberOfActors = this.numberOfActors.get(className).incrementAndGet();
                  break;
              case Decrement:
-                 currentNumberOfActors = this.numberOfActors.get(pac).decrementAndGet();
+                 currentNumberOfActors = this.numberOfActors.get(className).decrementAndGet();
                  break;
              default:
                  currentNumberOfActors = 0;
@@ -164,15 +223,6 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
 
          this.counterInterface.recordGaugeValue(Aspects.actorCount(), currentNumberOfActors, tags);
      }
-
-    /**
-     * Injects the new {@code AkkaAgentConfiguration} instance.
-     *
-     * @param agentConfiguration the new configuration
-     */
-    synchronized final void setAgentConfiguration(AkkaAgentConfiguration agentConfiguration) {
-        this.agentConfiguration = agentConfiguration;
-    }
 
     /**
      * The count type for exhaustive matching
@@ -222,74 +272,13 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @return {@code true} if we should sample this actor
      */
     private boolean sampleMessage(final PathAndClass pathAndClass) {
+        final Option<String> className = pathAndClass.actorClassName();
         int sampleRate = getSampleRate(pathAndClass);
         if (sampleRate == 1) return true;
 
-        this.samplingCounters.putIfAbsent(pathAndClass, new AtomicLong(0));
-        long timesSeenSoFar = this.samplingCounters.get(pathAndClass).incrementAndGet();
+        this.samplingCounters.putIfAbsent(className, new AtomicLong(0));
+        long timesSeenSoFar = this.samplingCounters.get(className).incrementAndGet();
         return (timesSeenSoFar % sampleRate == 1); // == 1 to log first value (incrementAndGet returns updated value)
-    }
-
-    /**
-     * Formats the given {@code path} in a way that can be used for tagging. For example, for
-     * path <code>akka://default/user/a/b/c</code>, it returns <code>akka.path:/default/user/a/b/c</code>
-     *
-     * @param path the path
-     * @return the tag-ready path
-     */
-    private String actorPathToString(ActorPath path) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("akka.path:/");
-        sb.append(path.address().system());
-        for (String element : path.getElements()) {
-            sb.append("/");
-            sb.append(element);
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Decides whether {@code path} represents the "root" of the user actors
-     *
-     * @param path the actor path
-     * @return {@code true} if root of user actors
-     */
-    private boolean isUserRoot(ActorPath path) {
-        return "user".equals(path.elements().mkString("/"));
-    }
-
-    /**
-     * Computes the tags for the given {@code actorPath} and {@code actor} instances.
-     *
-     * @param actorPath the actor path; never {@code null}
-     * @param actorClassName the actor instance; may be {@code null}
-     * @return non-{@code null} array of tags
-     */
-    private String[] getTags(final ActorPath actorPath, final Option<String> actorClassName) {
-        List<String> tags = new ArrayList<String>();
-
-        // TODO: Improve detection of routed actors. This only detects "root" unnamed actors
-        String lastPathElement = actorPath.elements().last();
-        if (lastPathElement.startsWith("$")) {
-            // this is routed actor.
-            final ActorPath parent = actorPath.parent();
-            if (isUserRoot(parent)) {
-                // the parent is akka://xxx/user
-                tags.add(actorPathToString(actorPath));
-            } else {
-                // the parent is some other actor, akka://xxx/user/foo
-                tags.add(actorPathToString(parent));
-                if (this.agentConfiguration.includeRoutees()) tags.add(actorPathToString(actorPath));
-            }
-        } else {
-            // there is no supervisor
-            tags.add(actorPathToString(actorPath));
-        }
-        if (actorClassName.isDefined()) {
-            tags.add(String.format("akka.type:%s.%s", actorPath.address().system(), actorClassName.get()));
-        }
-
-        return tags.toArray(new String[tags.size()]);
     }
 
     /**
@@ -298,8 +287,8 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param actorCell the actor cell to get the name for
      * @return the Option of actor class, never {@code null}.
      */
-    private Option<String> getActorClassName(final ActorCell actorCell) {
-        return getActorClassName(actorCell.props());
+    private Option<String> getActorClassName(final ActorCell actorCell, final ActorPath actorPath) {
+        return getActorClassName(actorCell.props(), actorPath);
     }
 
     /**
@@ -314,9 +303,14 @@ public aspect ActorCellMonitoringAspect extends AbstractMonitoringAspect issingl
      * @param props the ActorRef {@code Props} instance
      * @return the Option of actor class, never {@code null}.
      */
-    private Option<String> getActorClassName(final Props props) {
+    private Option<String> getActorClassName(final Props props, final ActorPath actorPath) {
         final String canonicalName = props.actorClass().getCanonicalName();
-        if (canonicalName == null) return this.anonymousActorClassName;
+        if (canonicalName == null /*if actor is anonymous*/||/*OR actor is generic*/
+                canonicalName.endsWith("akka.actor.Actor")) {
+            // then we check to see if our path->className map can help...
+            if (this.pathTags.containsKey(actorPath)) return Option.apply(this.pathTags.get(actorPath));
+            return this.anonymousActorClassName;
+        }
         return Option.apply(canonicalName);
     }
 

@@ -2,10 +2,14 @@
 
     <aspects>
         <aspect name="org.eigengo.monitor.agent.akka.ActorCellMonitoringAspect"/>
+        <aspect name="org.eigengo.monitor.agent.akka.DispatcherMonitoringAspect"/>
     </aspects>
 
-    <weaver options="-verbose -XnoInline -showWeaveInfo">
+    <weaver options="-verbose -showWeaveInfo">
         <include within="akka.actor.*"/>
+        <include within="akka.dispatch.*"/>
+        <include within="scala.concurrent.*"/>
+        <include within="java.util.concurrent.*"/>
     </weaver>
 
 </aspectj>
