@@ -1,3 +1,5 @@
+.. _agent_akka:
+
 ##########
 Akka agent
 ##########
@@ -137,32 +139,41 @@ The aspect that monitors the actors in the ``ActorSystem`` can be configured to 
 to a given actor path or type.
 
 Parameters
-==========
+----------
 
-``output.class``
-    An implementation of ``org.eigengo.monitor.output.CounterInterface`` interface with a nullary
-    (zero parameter) constructor.
-``akka.includeRoutees``
-    If ``true``, we tag routed actors with their own full actor path, as well as parent's path.
-    For example, in round-robin configuration, information is tagged per actor:
-    ``akka.path://default/user/bar/_a``, ``akka.path://default/user/bar/_b`` .. ``akka.path://default/user/bar/_n``
-    as well in the parent: ``akka.path://default/user/bar``.
-``akka.included``
-    The actor classes or paths to monitor. We can match on class name or actor path. This list is
-    currently treated as a conjunction -- i.e. an actor must match all filters to be included.
-``akka.sampling``
-    Defines the rate at which to sample messages. This is optional -- default is to sample every message.
-``akka.sampling.rate``
-    Integer value n - sample every n`th` message to an actor filter (starting with the first).
-``akka.sampling.for``
-    Associates the sampling rate with an actor filter. If an actor is included and matches this filter,
-    we sample at the ``rate``. Syntax is the same as for included/excluded.
-``akka.allowExclusions``
-    If this is ``false``, we only include 'included' actors, if ``true``, we include all but
-    ``excluded`` actors.
-``akka.excluded``
-    The actor classes or paths to not monitor. Same syntax and rules as included/sampling.
-    See also ``allowExclusions``.
+.. tabularcolumns:: |l|l|p{11cm}|
+
+========================  ========  ===========================================================================
+Key                       Type      Description
+========================  ========  ===========================================================================
+``output.class``          string    An implementation of ``CounterInterface`` with a nullary (zero parameter)
+                                    constructor
+``akka.includeRoutees``   boolean   If ``true``, we tag routed actors with their own full actor path, as well
+                                    as parent's path
+``akka.included``         [string]  The actor classes or paths to monitor. We can match on class name or actor
+                                    path. This list is currently treated as a conjunction---i.e. an actor must
+                                    match all filters to be included
+``akka.excluded``         [string]  The actor classes or paths to not monitor. Same syntax and rules as included
+                                    and sampling
+``akka.allowExclusions``  boolean   If ``false``, we only include 'included' actors, if ``true``, we include all
+                                    but ``excluded`` actors
+``akka.sampling``         [{}]      Defines the rate at which to sample messages for given actor paths or types
+                                    This is optional---default is to sample every message
+``akka.sampling.rate``    number    Sample every n`th` message to an actor filter (starting with the first)
+``akka.sampling.for``     [string]  Associates the sampling rate with an actor filter. If an actor is included
+                                    and matches this filter, we sample at the ``rate``. Syntax is the same
+                                    as for included/excluded
+========================  ========  ===========================================================================
+
+The only configuration option that needs further clarification is the ``akka.includeRoutees``. It is
+particularly useful if you have routed actors and you only want to report the aggregate values for the
+router. For example, in round-robin configuration, information is tagged per actor:
+``akka.path://default/user/bar/$a``, ``akka.path://default/user/bar/$b`` |...|
+``akka.path://default/user/bar/$n`` as well in the parent: ``akka.path://default/user/bar``.
+
+.. |...| raw:: latex
+
+    \ldots\
 
 Type and path filters
 ---------------------

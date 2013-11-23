@@ -161,54 +161,54 @@ The ``go`` command is the text you type in on the standard input; the applicatio
 
 Overview of modules
 ===================
-**Output modules**
 
-*StatsD output for DataDog*
+Monitor is split into multiple modules; the motivation is to keep maintain very loose coupling. Such
+structure lets you deploy the monitor into various applications, be it :ref:`Akka <agent_akka>`,
+:ref:`Play <agent_play>`, or :ref:`Spray <agent_spray>`. The agent modules rely on the implementations
+of some output modules. Monitor includes support for the :ref:`Statsd <output_statsd>` and
+:ref:`Codahale Metrics <output_codahalemetrics>`.
 
-For sbt::
+Depending on the application you are developing, you will need to include the appropriate output module.
+Notably, if the application you are monitoring needs *multiple* output modules, you may include as many
+output modules as you require. So, if you have a very complex--though we say offer no comment whether this is
+a good idea--include multiple agent modules, and modify the ``aop.xml`` file appropriately to include
+the aspects you are using.
 
-    "org.eigengo.monitor" % "output-statsd" % "@version@"
+By convention, all agents load their configuration from the file ``META-INF/monitor/agent.conf``, but
+from a specific section. Therefore, if your application includes multiple modules, you will need to
+merge the specific configuration settings.
 
-For maven
+Agent modules
+-------------
 
-.. code:: xml
+The monitor project includes agents for :ref:`Akka <agent_akka>`, :ref:`Play <agent_play>`, and
+:ref:`Spray <agent_spray>`.
 
-    <dependency>
-        <groupId>org.eigengo.monitor</groupId>
-        <artifactId>output-statsd</artifactId>
-        <version>@version@</version>
-    </dependency>
-
-*Codahale Metric output*
-
-For sbt::
-
-    "org.eigengo.monitor" % "output-metrics" % "@version@"
-
-For maven
-
-.. code:: xml
-
-    <dependency>
-        <groupId>org.eigengo.monitor</groupId>
-        <artifactId>output-metrics</artifactId>
-        <version>@version@</version>
-    </dependency>
-
-**Monitoring Agent modules**
-
-*Akka monitoring*
-
-For sbt::
+The :ref:`Akka agent module <agent_akka>` records the details of (local) actor systems: the performance &
+error rates of the actors, as well as the performance & health of the dispatchers and thread pools. To
+use the Akka agent, include the dependency on::
 
     "org.eigengo.monitor" % "agent-akka" % "@version@"
 
-For maven
+The Play agent collects the statistics about the Play application. TBC.
 
-.. code:: xml
+The Spray agent collects the statistics about the Spray HTTP(s) layer. TBC.
 
-    <dependency>
-        <groupId>org.eigengo.monitor</groupId>
-        <artifactId>agent-akka</artifactId>
-        <version>@version@</version>
-    </dependency>
+Output modules
+--------------
+
+The output modules allow the statistics collected by the agents above to reach the ultimate metrics
+recording / monitoring target. We support output modules that record the data in :ref:`Statsd <output_statsd>`,
+and :ref:`Codahale Metrics <output_codahalemetrics>`.
+
+The :ref:`Statsd output module <output_statsd>` uses the `Datadog <http://datadoghq.com>`_ extensions,
+and thus does not support plain statsd servers. To use the Statsd output module, include the dependency
+on::
+
+    "org.eigengo.monitor" % "output-statsd" % "@version@"
+
+The :ref:`Codahale Metrics output module <output_codahalemetrics>` supports... TBC. To include the
+Codahale Metrics output module, include the dependency on::
+
+    "org.eigengo.monitor" % "output-codahalemetrics" % "@version@"
+

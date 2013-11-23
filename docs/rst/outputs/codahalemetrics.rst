@@ -1,3 +1,5 @@
+.. _output_codahalemetrics:
+
 ################
 Codahale Metrics
 ################

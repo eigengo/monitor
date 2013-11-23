@@ -7,13 +7,13 @@ Actor creation pointcuts
 
 Pointcut for the ``actorOf(..)`` method in ``ActorRefFactory`` implementations, extracting the ``Props`` being used::
 
-    private static pointcut unnamedActorOf(Props props) :
+    static pointcut unnamedActorOf(Props props) :
         execution(* akka.actor.ActorRefFactory+.actorOf(*)) && args(props);
 
 
 Pointcut for the ``actorOf(..)`` method in ``ActorRefFactory`` implementations where actor is named on creation, extracting the ``Props`` being used, and the ``String`` name of the actor::
 
-    private static pointcut namedActorOf(Props props) :
+    static pointcut namedActorOf(Props props) :
         execution(* akka.actor.ActorRefFactory+.actorOf(*,*)) && args(props, *);
 
 
