@@ -75,8 +75,11 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
     }
 
     public class InnerActor extends UntypedActor {
-        private final UUID id;
-        InnerActor(UUID uuid) {this.id = uuid;}
+
+        // unused parameter OK
+        InnerActor(UUID ignored) {
+
+        }
 
         public void onReceive(Object message) {
             /* noop */
