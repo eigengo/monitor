@@ -15,11 +15,9 @@
  */
 package org.eigengo.monitor.agent.akka;
 
-import akka.actor.Actor;
 import akka.actor.ActorCell;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.japi.Creator;
 
 /**
  * Centralises the pointcuts
