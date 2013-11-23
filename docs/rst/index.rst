@@ -5,6 +5,6 @@ Contents
    :maxdepth: 2
 
    intro
-   engineering/index
    users/index
+   engineering/index
    sponsors

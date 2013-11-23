@@ -34,6 +34,7 @@ Aspect/key                          Type      Description
 ``akka.pool.running.thread.count``  gauge     the number of active / running threads in the pool
 ``akka.pool.queued.task.count``     gauge     the number of queued tasks in the pool
 ``akka.pool.size``                  gauge     the thread pool size
+==================================  ========  ====================================================
 
 The tags allow you to further identify the "source" of the gauge or counter. The tags identify the
 specific actor path, actor type and actor system name. Consider the following code::
@@ -58,19 +59,23 @@ specific actor path, actor type and actor system name. Consider the following co
 The tags for the ``demo`` actor will be ``akka.path://foo/user/demo``, ``akka.type:demo.DemoActor`` and
 ``akka.system:foo``. And we will record the following *aspects*:
 
-* ``akka.actor.delivered`` -> 2 (The messages ``true`` and ``false``.)
-* ``akka.actor.delivered.Boolean`` -> 2 (The messages ``true`` and ``false``.)
-* ``akka.actor.undelivered`` -> 1 (The message ``"???"``.)
-* ``akka.actor.undelivered.String`` -> 1 (The message ``"???"``.)
-* ``akka.actor.queue.size`` -> min 0, max 3 (The ``Thread.sleep(10)`` and ``tell`` calls.)
-* ``akka.actor.duration`` -> ~10 (Typically exactly 10, but could differ depending on switching.)
-* ``akka.actor.error`` -> 1 (The ``throw new RuntimeException("false")``.)
-* ``akka.actor.error.RuntimeException`` -> 1 (The ``throw new RuntimeException("false")``.)
-* ``akka.actor.count`` -> 1 (The ``demo`` instance)
-* ``akka.pool.thread.count`` -> 5 (Depending on the default configuration for the ``ActorSystem``.)
-* ``akka.pool.running.thread.count`` -> min 0, max 3 (The three calls to ``tell``.)
-* ``akka.pool.queued.task.count`` -> min 0, max 3 (The three calls to ``tell``.)
-* ``akka.pool.size`` -> 15 (Depending on the default configuration for the ``ActorSystem``.)
+* ``akka.actor.delivered`` |->| 2 (The messages ``true`` and ``false``.)
+* ``akka.actor.delivered.Boolean`` |->| 2 (The messages ``true`` and ``false``.)
+* ``akka.actor.undelivered`` |->| 1 (The message ``"???"``.)
+* ``akka.actor.undelivered.String`` |->| 1 (The message ``"???"``.)
+* ``akka.actor.queue.size`` |->| min 0, max 3 (The ``Thread.sleep(10)`` and ``tell`` calls.)
+* ``akka.actor.duration`` |->| ~10 (Typically exactly 10, but could differ depending on switching.)
+* ``akka.actor.error`` |->| 1 (The exception ``RuntimeException("false")``.)
+* ``akka.actor.error.RuntimeException`` |->| 1 (The Exception ``throw new...``.)
+* ``akka.actor.count`` |->| 1 (The ``demo`` instance)
+* ``akka.pool.thread.count`` |->| 5 (Depending on the default configuration for the ``ActorSystem``.)
+* ``akka.pool.running.thread.count`` |->| min 0, max 3 (The three calls to ``tell``.)
+* ``akka.pool.queued.task.count`` |->| min 0, max 3 (The three calls to ``tell``.)
+* ``akka.pool.size`` |->| 15 (Depending on the default configuration for the ``ActorSystem``.)
+
+.. |->| raw:: latex
+
+    $\rightarrow$
 
 Configuring the Akka monitor
 ----------------------------
@@ -79,6 +84,7 @@ The ``org.eigengo.monitor.agent.AgentConfigurationFactory`` class searches for a
 configuration file at ``META-INF/monitor/agent.conf``. The configuration file must have this format:
 
 .. code:: json
+
     org.eigengo.monitor.agent {
         output {
             class: "org.eigengo.monitor.output.datadog.StatsdCounterInterface"
