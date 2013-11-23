@@ -6,6 +6,9 @@ To use the monitoring, include an output module, and at least one agent module, 
 dependencies. Once you have included the agent and output modules, you will need to provide their
 configuration.
 
+Minimal application
+===================
+
 Create the ``META-INF/monitor`` directory, containing ``agent.conf`` and ``output.conf`` files.
 The contents of the files depend on the agent and output module you have decided to use; in principle,
 the ``agent.conf`` file contains configuration for the agent, and the ``output.conf`` contains configuration
@@ -16,12 +19,12 @@ to submit the collected statistics. In addition to the two ``.conf`` files, you 
 For example, if you decide to use the statsd output module to monitor an Akka application, you will
 need to add the ``output-statsd`` and ``agent-akka`` dependencies to your project.
 
-In sbt::
+In sbt, one writes::
 
     "org.eigengo.monitor" % "output-statsd" % "@version@",
     "org.eigengo.monitor" % "agent-akka" % "@version@"
 
-or, in maven:
+or, in maven, one adds:
 
 .. code:: xml
 
@@ -36,8 +39,8 @@ or, in maven:
         <version>@version@</version>
     </dependency>
 
-And then create the configuration files for the agent and the output. Starting with the
-``META-INF/monitor/agent.conf``::
+Once the dependencies are resolved, you must create the configuration files for the agent and the output.
+Starting the tour with the ``META-INF/monitor/agent.conf``, we have::
 
     org.eigengo.monitor.agent {
         output {
@@ -156,8 +159,8 @@ code, and then execute it by running ``sbt run``, and issuing several ``go`` com
 The ``go`` command is the text you type in on the standard input; the application will then produce the
 ``Counting down...``, ``Bar done.`` and ``Foo done.`` output.
 
-Dependencies
-============
+Overview of modules
+===================
 **Output modules**
 
 *StatsD output for DataDog*

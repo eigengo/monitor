@@ -60,3 +60,7 @@ line
 
 
 Also is possible to edit this configuration in a graphic way using the "Edit" tab
+
+.. raw:: latex
+
+    \newpage
