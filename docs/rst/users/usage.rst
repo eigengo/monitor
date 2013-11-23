@@ -2,11 +2,14 @@
 Usage
 #####
 
-To use the monitoring include an output module, and at least one agent module, in your project dependencies
+To use the monitoring include an output module, and at least one agent module, in your project
+dependencies
 
 Configuration
 =============
-Create ``META-INF/monitor`` directory, containing ``agent.conf`` and ``output.conf`` files. (More info on Akka and Statsd sections) You'll also need an ``aop.xml`` file in ``META-INF`` to configure the load time weaving.
+Create ``META-INF/monitor`` directory, containing ``agent.conf`` and ``output.conf`` files.
+(More info on Akka and Statsd sections) You'll also need an ``aop.xml`` file in ``META-INF`` to
+configure the load time weaving.
 
 Dependencies
 ============
