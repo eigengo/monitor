@@ -18,6 +18,7 @@ package org.eigengo.monitor.agent.akka;
 import akka.actor.*;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * Exercises Akka's Java API for testing.
@@ -60,16 +61,42 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
         }
     }
 
+    public class OuterActor extends UntypedActor {
+
+        public void onReceive(final Object message) {
+            if (message instanceof UUID) {   // The actors created here have anonymous tags with current monitoring
+                getContext().actorOf(new Props(new UntypedActorFactory() {
+                    public InnerActor create() {
+                        return new InnerActor((UUID)message);
+                    }
+                }));
+            }
+        }
+    }
+
+    public class InnerActor extends UntypedActor {
+        private final UUID id;
+        InnerActor(UUID uuid) {this.id = uuid;}
+
+        public void onReceive(Object message) {
+            /* noop */
+        }
+    }
+
     // The ActorSystem under test
     protected final ActorSystem system;
     // The following fields are the Props used to create the matching ActorRefs below
     protected final Props greeterProps;
     protected final Props greetPrinterProps;
     protected final Props unnamedGreetPrinterProps;
+    protected final Props outerActorProps;
+    protected final Props innerActorProps;
     // The following fields are the ActorRefs constructed using the Props above
     protected final ActorRef greeter;
     protected final ActorRef greetPrinter;
     protected final ActorRef unnamedGreetPrinter;
+    protected final ActorRef outerActor;
+    protected final ActorRef innerActor;
 
     /**
      * Constructs the ActorSystem under test, and creates the Props and ActorRefs above
@@ -101,6 +128,23 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
 
         this.unnamedGreetPrinterProps = Props.create(GreetPrinter.class);
         this.unnamedGreetPrinter = system.actorOf(this.unnamedGreetPrinterProps);
+
+        // Deprecated API usage is OK: we need to ensure that even old code remains monitorable
+        this.outerActorProps = new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new OuterActor();
+            }
+        });
+        this.outerActor = system.actorOf(this.outerActorProps);
+
+        // Deprecated API usage is OK: we need to ensure that even old code remains monitorable
+        this.innerActorProps = new Props(new UntypedActorFactory() {
+            public InnerActor create() {
+                return new InnerActor(UUID.randomUUID());
+            }
+        });
+        this.innerActor = system.actorOf(innerActorProps);
+
     }
 
 }

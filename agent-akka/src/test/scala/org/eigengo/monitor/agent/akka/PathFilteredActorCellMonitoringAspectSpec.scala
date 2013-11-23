@@ -51,6 +51,11 @@ class PathFilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspec
       counter.value mustEqual 1
       counter.tags must contain(getPathTags(a, 0).head)
     }
+
+    "Shutdown system" in {
+      system.shutdown()
+      success
+    }
   }
 
 }

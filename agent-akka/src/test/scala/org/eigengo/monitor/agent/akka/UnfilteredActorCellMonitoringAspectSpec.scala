@@ -39,6 +39,7 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
 
     // records the count of actors, grouped by simple class name
     "Record the actor count" in {
+      TestCounterInterface.clear()
       withActorOf(Props[SimpleActor]) { ca =>
         TestCounterInterface.foldlByAspect(actorCount, ContainsTag(ca.pathTag))(takeLHS) must contain(TestCounter(actorCount, 1, ca.tags))
 
@@ -164,6 +165,11 @@ class UnfilteredActorCellMonitoringAspectSpec extends ActorCellMonitoringAspectS
         supCounter.value mustEqual 10
         c1Counter.value mustEqual 1
       }
+    }
+
+    "Shutdown system" in {
+      system.shutdown()
+      success
     }
   }
 
