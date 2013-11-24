@@ -5,6 +5,8 @@ Contents
    :maxdepth: 2
 
    intro
+   gettingstarted
+   agents/index
+   outputs/index
    engineering/index
-   users/index
    sponsors

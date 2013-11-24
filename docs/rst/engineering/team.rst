@@ -14,4 +14,5 @@ Cornel Foltea        Infrastructure lead           Cake Solutions Ltd.
 Hugh Simpson         Committer                     Cake Solutions Ltd.
 Matt Squire          Committer                     Cake Solutions Ltd.
 Mario Arias          Committer                     Cake Solutions Ltd.
+Ivan von Nagy        Committer                     ---
 ===================  ============================  ===================
