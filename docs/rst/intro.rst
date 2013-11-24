@@ -139,10 +139,10 @@ settings. An example ``agent.conf`` file is:
     }
 
 As you can see, it specifies the name of the class that will be responsible for delivering the monitoring
- messages to the monitoring tool (in our case it is statsd in ``StatsdCounterInterface``); the agent
- can also receive configuration that specifies which actors to include, and which to exclude. In our
- small application, we only want to monitor the ``foo`` and ``bar`` actors. (We could have left out
- the entire ``akka`` node, which would imply *monitor every actor*.)
+messages to the monitoring tool (in our case it is statsd in ``StatsdCounterInterface``); the agent
+can also receive configuration that specifies which actors to include, and which to exclude. In our
+small application, we only want to monitor the ``foo`` and ``bar`` actors. (We could have left out
+the entire ``akka`` node, which would imply *monitor every actor*.)
 
 Datadog
 =======
