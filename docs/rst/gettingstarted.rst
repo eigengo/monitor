@@ -24,7 +24,7 @@ In sbt, one writes::
     "org.eigengo.monitor" % "output-statsd" % "@version@",
     "org.eigengo.monitor" % "agent-akka" % "@version@"
 
-or, in maven, one adds:
+or, in Maven, one adds:
 
 .. code:: xml
 
@@ -170,8 +170,8 @@ of some output modules. Monitor includes support for the :ref:`Statsd <output_st
 
 Depending on the application you are developing, you will need to include the appropriate output module.
 Notably, if the application you are monitoring needs *multiple* output modules, you may include as many
-output modules as you require. So, if you have a very complex--though we say offer no comment whether this is
-a good idea--include multiple agent modules, and modify the ``aop.xml`` file appropriately to include
+output modules as you require. So, if you have a very complex---though we say offer no comment whether this is
+a good idea---include multiple agent modules, and modify the ``aop.xml`` file appropriately to include
 the aspects you are using.
 
 By convention, all agents load their configuration from the file ``META-INF/monitor/agent.conf``, but
