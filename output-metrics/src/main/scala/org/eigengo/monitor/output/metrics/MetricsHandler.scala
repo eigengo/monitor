@@ -57,36 +57,4 @@ trait MetricsHandler {
   def updateExecutionTime(aspect: String, duration: Int, tags: Seq[String]): Unit = {
     registry.timer(marshaller.buildName(aspect, tags)).update(duration, TimeUnit.MILLISECONDS)
   }
-
-//  private def buildName(aspect: String, tags: Seq[String]): String = {
-//    def fixPath: String =  PluginPathString(UserPathString(tags.head))
-//
-//    aspect match {
-//      case "akka.actor.count" =>
-//        // This is the actor count
-//        s"harness.actor-count"
-//      case "akka.queue.size" =>
-//        // This is the queue size
-//        s"$fixPath.queue-size"
-//      case _ => // These are all actor specific
-//        s"$fixPath.${aspect.replace("akka.actor.", "").replace("$","").toLowerCase}"
-//    }
-//  }
-//
-//  object UserPathString{
-//    def apply(str:String): String= {
-//      (str match {
-//        case s if s.startsWith("akka://server/user/") => s.stripPrefix("akka://server/user/")
-//        case s if s.startsWith("akka://server/system/") => s.replace("akka://server/system/", "internal.")
-//        case s => s.replace("akka://server/", "internal.")
-//      }).replace('/', '.').toLowerCase
-//    }
-//  }
-//
-//  object PluginPathString{
-//    def apply(str:String): String = str match {
-//      case s if s.startsWith("system.plugins.") => s.stripPrefix("system.plugins.")
-//      case s => s"harness.$s"
-//    }
-//  }
 }
