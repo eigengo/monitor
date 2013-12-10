@@ -42,8 +42,6 @@ class MetricsCollectionSpec extends Specification {
       Thread.sleep(500)
 
       // Get the metrics for the registry
-      aio.metrics
-      val system = aio.system
       val metrics = registry.getCounters
 
       // we should see 1 entry, with $count

@@ -16,6 +16,7 @@
 package org.eigengo.monitor.output.codahalemetrics
 
 import akka.actor.Actor
+import com.codahale.metrics.MetricRegistry
 
 /**
  * Companion object for the ``MetricsActor``, containing the messages that it can handle
@@ -68,10 +69,10 @@ object MetricsActor {
 class MetricsActor(provider: RegistryProvider, nameMarshaller: NameMarshaller) extends Actor with MetricsHandler {
 
   // Set the registry
-  def registry = provider.registry
+  def registry: MetricRegistry = provider.registry
 
   // Set the naming marshaller
-  def marshaller = nameMarshaller
+  def marshaller: NameMarshaller = nameMarshaller
 
   import MetricsActor._
 

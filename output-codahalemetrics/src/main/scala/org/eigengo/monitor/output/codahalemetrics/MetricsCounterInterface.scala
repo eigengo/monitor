@@ -16,6 +16,7 @@
 package org.eigengo.monitor.output.codahalemetrics
 
 import org.eigengo.monitor.output.{OutputConfigurationFactory, CounterInterface}
+import com.codahale.metrics.MetricRegistry
 
 /**
 * CounterInterface implementation that uses a metrics registry to register the Codahale Metrics updates.
@@ -27,24 +28,24 @@ class MetricsCounterInterface extends CounterInterface with MetricsHandler {
 
   // Set the registry
   val provider = RegistryFactory.getRegistryProvider(outputConfiguration.registryClass)
-  def registry = provider.registry
+  def registry: MetricRegistry = provider.registry
 
   // Set the naming marshaller
-  def marshaller = NameMarshallerFactory.getNameMarshaller(outputConfiguration.namingClass, outputConfiguration.prefix)
+  def marshaller: NameMarshaller = NameMarshallerFactory.getNameMarshaller(outputConfiguration.namingClass, outputConfiguration.prefix)
 
-  def recordExecutionTime(aspect: String, duration: Int, tags: String*): Unit =
+  override def recordExecutionTime(aspect: String, duration: Int, tags: String*): Unit =
     updateExecutionTime(aspect, duration, tags)
 
-  def recordGaugeValue(aspect: String, value: Int, tags: String*): Unit =
+  override def recordGaugeValue(aspect: String, value: Int, tags: String*): Unit =
     updateGaugeValue(aspect, value, tags)
 
-  def decrementCounter(aspect: String, tags: String*): Unit =
+  override def decrementCounter(aspect: String, tags: String*): Unit =
     updateCounter(aspect, -1, tags)
 
-  def incrementCounter(aspect: String, delta: Int, tags: String*): Unit =
+  override def incrementCounter(aspect: String, delta: Int, tags: String*): Unit =
     updateCounter(aspect, delta, tags)
 
-  def incrementCounter(aspect: String, tags: String*): Unit =
+  override def incrementCounter(aspect: String, tags: String*): Unit =
     updateCounter(aspect, 1, tags)
 
 }

@@ -28,9 +28,7 @@ import com.typesafe.config.Config
 case class MetricsOutputConfiguration(registryClass: String,
                                       namingClass: String,
                                       refresh: Int,
-                                      prefix: String) {
-
-}
+                                      prefix: String)
 
 /**
  * Companion object that makes instances of ``MetricsOutputConfiguration`` from the

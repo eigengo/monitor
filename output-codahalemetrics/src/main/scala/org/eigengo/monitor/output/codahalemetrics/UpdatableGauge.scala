@@ -29,7 +29,7 @@ class UpdatableGauge[T] extends Gauge[T] {
    * Set the value
    * @param newValue
    */
-  def setValue(newValue: T) = {
+  def setValue(newValue: T): Unit = {
     value = newValue
   }
 
