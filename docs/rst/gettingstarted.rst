@@ -207,7 +207,8 @@ on::
 
     "org.eigengo.monitor" % "output-statsd" % "@version@"
 
-The :ref:`Codahale Metrics output module <output_codahalemetrics>` supports... TBC. To include the
+The :ref:`Codahale Metrics output module <output_codahalemetrics>` supports the output of recorded data to a
+`Metric Registry <http://metrics.codahale.com/manual/core/#metric-registries>`_. To include the
 Codahale Metrics output module, include the dependency on::
 
     "org.eigengo.monitor" % "output-codahalemetrics" % "@version@"
