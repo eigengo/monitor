@@ -5,7 +5,7 @@ object MonitorBuild extends Build {
 
   override val settings = super.settings ++ Seq(
     organization := "org.eigengo.monitor",
-    version := "0.2-SNAPSHOT",
+    version := "0.3-SNAPSHOT",
     scalaVersion := "2.10.2"
   )
 
@@ -36,7 +36,7 @@ object MonitorBuild extends Build {
       fork in run := true,
       connectInput in run := true,
       mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")),
-    aggregate = Seq(agent, output, output_statsd, agent_akka, agent_spray, agent_play, example_akka, docs)) dependsOn (example_akka)
+    aggregate = Seq(agent, output, output_statsd, output_codahalemetrics, agent_akka, agent_spray, agent_play, example_akka, docs)) dependsOn (example_akka)
 
 /*
   lazy val macros = module("macros") settings(
@@ -60,6 +60,11 @@ object MonitorBuild extends Build {
   )
   lazy val output_statsd = module("output-statsd") dependsOn (output) settings (
   	libraryDependencies += dogstatsd_client,
+    libraryDependencies += akka.actor,
+    libraryDependencies += specs2 % "test"
+  )
+  lazy val output_codahalemetrics = module("output-codahalemetrics") dependsOn (output) settings (
+    libraryDependencies += codahale_metrics,
     libraryDependencies += akka.actor,
     libraryDependencies += specs2 % "test"
   )

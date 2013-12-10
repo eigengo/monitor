@@ -91,8 +91,8 @@ The monitor structure
 The monitor project is released in
 `Sonatype Snapshots <https://oss.sonatype.org/content/repositories/snapshots/org/eigengo/monitor>`_;
 the source code is in the usual place on `GitHub <https://github.com/eigengo/monitor>`_. At the
-moment the only working agent is the Akka agent, and the only working output module is the
-statsd / Datadog module. As you can see from the structure, I intend to add monitoring of
+moment the only working agent is the Akka agent, and the only working output modules are the
+statsd / Datadog module and the Codehale Metrics module. As you can see from the structure, I intend to add monitoring of
 `Spray <http://spray.io>`_, Play and more detail in Akka IO. Similarly, by popular demand,
 I will be adding more output modules.
 
