@@ -1,0 +1,11 @@
+<aspectj>
+
+    <aspects>
+        <aspect name="org.eigengo.monitor.agent.play.GlobalSettingMonitoringAspect"/>
+    </aspects>
+
+    <weaver options="-verbose -XnoInline -showWeaveInfo">
+        <include within="play.api.*"/>
+    </weaver>
+
+</aspectj>
