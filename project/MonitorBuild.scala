@@ -79,8 +79,14 @@ object MonitorBuild extends Build {
     javaOptions in Test += "-javaagent:" + System.getProperty("user.home") + s"/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-$aspectj_version.jar",
     fork in Test := true
   )
-  lazy val agent_spray = module("agent-spray") dependsOn(agent, output)
-  lazy val agent_play  = module("agent-play")  dependsOn(agent, output)
+  lazy val agent_play  = module("agent-play", BuildSettings.aspectjCompileSettings) dependsOn (agent, output, test % "test") settings (
+    libraryDependencies += aspectj_weaver,
+    libraryDependencies += play.test,
+
+    javaOptions in Test += "-javaagent:" + System.getProperty("user.home") + s"/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-$aspectj_version.jar",
+    fork in Test := true
+  )
+  lazy val agent_spray  = module("agent-spray")  dependsOn(agent, output)
 
   lazy val example_akka = module("example-akka") dependsOn(agent_akka, output_statsd) settings (
     libraryDependencies += akka.actor

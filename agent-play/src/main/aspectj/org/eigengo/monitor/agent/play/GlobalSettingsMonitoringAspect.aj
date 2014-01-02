@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Contains advices for monitoring behaviour of an actor; typically imprisoned in an {@code ActorCell}.
  */
-public final aspect GlobalSettingMonitoringAspect extends AbstractMonitoringAspect issingleton() {
+public final aspect GlobalSettingsMonitoringAspect extends AbstractMonitoringAspect issingleton() {
     private PlayAgentConfiguration agentConfiguration;
     private final CounterInterface counterInterface;
 

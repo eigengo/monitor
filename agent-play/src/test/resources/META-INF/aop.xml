@@ -1,7 +1,7 @@
 <aspectj>
 
     <aspects>
-        <aspect name="org.eigengo.monitor.agent.play.GlobalSettingMonitoringAspect"/>
+        <aspect name="org.eigengo.monitor.agent.play.GlobalSettingsMonitoringAspect"/>
     </aspects>
 
     <weaver options="-verbose -XnoInline -showWeaveInfo">
