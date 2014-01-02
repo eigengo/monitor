@@ -48,7 +48,6 @@ public final aspect GlobalSettingsMonitoringAspect extends AbstractMonitoringAsp
      * @param request the RequestHeader containing the header information the HTTP request
      */
     after(RequestHeader request) returning (Option<Handler> handler) : Pointcuts.playReceiveRequest(request) {
-        System.out.println("Pointcuts.playReceiveRequest ALEX");
         // TODO: Use request to get request URL and use as tag
         // TODO: Use handler to get controller class & method and use as tag
         this.counterInterface.incrementCounter(Aspects.requestCount(), new String[]{});
