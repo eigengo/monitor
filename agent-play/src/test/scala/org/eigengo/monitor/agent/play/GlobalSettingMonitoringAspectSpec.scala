@@ -1,8 +1,12 @@
 package org.eigengo.monitor.agent.play
 
-import play.api.test.{FakeApplication, WithApplication, PlaySpecification, FakeRequest}
+import play.api.test.{WithApplication, PlaySpecification, FakeRequest}
 import play.api.mvc.Action
 import play.api.mvc.Results.Ok
+import org.eigengo.monitor.TestCounterInterface
+import org.eigengo.monitor.TestCounterInterface._
+import play.api.test.FakeApplication
+import scala.Some
 
 class GlobalSettingMonitoringAspectSpec extends PlaySpecification {
 
@@ -13,14 +17,17 @@ class GlobalSettingMonitoringAspectSpec extends PlaySpecification {
       }
   })
 
-  "respond to the index Action" in new WithApplication(appWithRoutes) {
-    val foo = route(FakeRequest(GET, "/"))
-    val Some(result) = route(FakeRequest(GET, "/"))
+  "The GlobalSettingMonitoringAspect" should {
 
-    status(result) must equalTo(OK)
-    contentType(result) must beSome("text/plain")
-    charset(result) must beSome("utf-8")
-    contentAsString(result) must contain("ok")
+    "count a single request" in new WithApplication(appWithRoutes) {
+      val Some(result) = route(FakeRequest(GET, "/"))
+
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("text/plain")
+      charset(result) must beSome("utf-8")
+      contentAsString(result) must contain("ok")
+      val requestCounts = TestCounterInterface.foldlByAspect(Aspects.requestCount)(takeLHS)
+      requestCounts.size must be equalTo(1)
+    }
   }
-
 }

@@ -15,6 +15,10 @@
  */
 package org.eigengo.monitor.agent.play;
 
+import play.api.mvc.RequestHeader;
+import scala.Option;
+import play.api.GlobalSettings;
+
 /**
  * Centralises the Play pointcuts
  */
@@ -23,6 +27,6 @@ abstract aspect Pointcuts {
     /**
      * Pointcut for {@code ActorCell.receiveMessage(msg)}, extracting the {@code ActorCell} and the message being received
      */
-    static pointcut playReceiveRequest(ActorCell actorCell, Object msg) : target(requestHeader) &&
-            call(* play.api.GlobalSettings.onRouteRequest(..)) && args(requestHeader);
+    static pointcut playReceiveRequest(RequestHeader request) :
+            execution(Option<Handler> play.api.GlobalSettings.onRouteRequest(*)) && args(request);
 }

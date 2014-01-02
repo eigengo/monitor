@@ -19,7 +19,8 @@ import org.eigengo.monitor.agent.AgentConfiguration;
 import org.eigengo.monitor.output.CounterInterface;
 import scala.Option;
 import play.api.GlobalSettings;
-import play.api.mvc.RequestHeader
+import play.api.mvc.RequestHeader;
+import play.api.mvc.Handler;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,7 +36,7 @@ public final aspect GlobalSettingsMonitoringAspect extends AbstractMonitoringAsp
     /**
      * Constructs this aspect
      */
-    public GlobalSettingMonitoringAspect() {
+    public GlobalSettingsMonitoringAspect() {
         AgentConfiguration<PlayAgentConfiguration> configuration = getAgentConfiguration("play", PlayAgentConfigurationJapi.apply());
         this.agentConfiguration = configuration.agent();
         this.counterInterface = createCounterInterface(configuration.common());
@@ -47,9 +48,10 @@ public final aspect GlobalSettingsMonitoringAspect extends AbstractMonitoringAsp
      * @param request the RequestHeader containing the header information the HTTP request
      */
     after(RequestHeader request) returning (Option<Handler> handler) : Pointcuts.playReceiveRequest(request) {
+        System.out.println("Pointcuts.playReceiveRequest ALEX");
         // TODO: Use request to get request URL and use as tag
         // TODO: Use handler to get controller class & method and use as tag
-        this.counterInterface.incrementCounter(Aspects.requestCount, new String[]);
+        this.counterInterface.incrementCounter(Aspects.requestCount(), new String[]{});
     }
 
 }
