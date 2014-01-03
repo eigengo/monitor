@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Contains advices for monitoring behaviour of an actor; typically imprisoned in an {@code ActorCell}.
+ * Contains advices for monitoring behaviour of a play application; typically imprisoned in an {@code GlobalSettings}.
  */
 public final aspect GlobalSettingsMonitoringAspect extends AbstractMonitoringAspect issingleton() {
     private PlayAgentConfiguration agentConfiguration;
