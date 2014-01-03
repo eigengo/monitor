@@ -20,6 +20,7 @@ class GlobalSettingMonitoringAspectSpec extends PlaySpecification {
   "The GlobalSettingMonitoringAspect" should {
 
     "count a single request" in new WithApplication(appWithRoutes) {
+      TestCounterInterface.clear
       val Some(result) = route(FakeRequest(GET, "/"))
 
       status(result) must equalTo(OK)
@@ -28,6 +29,19 @@ class GlobalSettingMonitoringAspectSpec extends PlaySpecification {
       contentAsString(result) must contain("ok")
       val requestCounts = TestCounterInterface.foldlByAspect(Aspects.requestCount)(takeLHS)
       requestCounts.size must be equalTo(1)
+    }
+
+    "count multiple requests" in new WithApplication(appWithRoutes) {
+      TestCounterInterface.clear
+
+      def hitIndex(r: Range): Unit = if (!r.isEmpty) {
+        route(FakeRequest(GET, "/"))
+        hitIndex(r.tail)
+      }
+      hitIndex(1 to 3)
+
+      val requestCounts = TestCounterInterface.foldlByAspect(Aspects.requestCount)(takeLHS)
+      requestCounts.size must be equalTo(3)
     }
   }
 }
