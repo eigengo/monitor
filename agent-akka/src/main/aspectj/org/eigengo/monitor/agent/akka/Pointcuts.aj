@@ -32,7 +32,7 @@ abstract aspect Pointcuts {
     static pointcut actorCellReceiveMessage(ActorCell actorCell, Object msg) : target(actorCell) &&
             call(* akka.actor.ActorCell.receiveMessage(..)) && args(msg);
 
-    /**                             `
+    /**
      * Pointcut for {@code ActorCell.handleInvokeFailure(_, failure)}, extracting the {@code ActorCell} and the
      * cause of the failure
      */
