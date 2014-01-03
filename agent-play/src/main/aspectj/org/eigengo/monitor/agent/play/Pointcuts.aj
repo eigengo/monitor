@@ -26,7 +26,7 @@ import play.api.mvc.Handler;
 abstract aspect Pointcuts {
 
     /**
-     * Pointcut for {@code GlobalSettings.onRouteRequest(request)}, accessing the submitted request and returned Handler
+     * Pointcut for {@code play.api.GlobalSettings.onRouteRequest(request)}, accessing the submitted request and returned Handler
      */
     static pointcut playReceiveRequest(RequestHeader request) :
             execution(Option<Handler> play.api.GlobalSettings+.onRouteRequest(*)) && args(request);

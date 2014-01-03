@@ -20,20 +20,21 @@ import com.typesafe.config.Config
 /**
  * Configuration of the Play agent.
  */
-case class PlayAgentConfiguration(foo: String)
+class PlayAgentConfiguration
 
 /**
  * Companion for PlayAgentConfiguration that provides a method to turn a ``Config`` into
  * ``PlayAgentConfiguration``.
  */
 object PlayAgentConfiguration {
+
   /**
    * Parses the given ``config`` into a valid ``PlayAgentConfiguration``
    *
    * @param config the agent-specific configuration
    * @return the PlayAgentConfiguration
    */
-  def apply(config: Config): PlayAgentConfiguration = PlayAgentConfiguration(config.getString("foo"))
+  def apply(config: Config): PlayAgentConfiguration = new PlayAgentConfiguration()
 }
 
 /**
@@ -41,7 +42,7 @@ object PlayAgentConfiguration {
  */
 object PlayAgentConfigurationJapi {
   /**
-   * Lifted ``AkkaAgentConfiguration.apply``
+   * Lifted ``PlayAgentConfiguration.apply``
    *
    * @return the lifted function
    */

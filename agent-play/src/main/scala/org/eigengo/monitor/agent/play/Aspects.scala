@@ -17,6 +17,6 @@ package org.eigengo.monitor.agent.play
 
 object Aspects {
 
-  val requestCount                     = "play.request.count"
+  val requestCount = "play.request.count"
 
 }
