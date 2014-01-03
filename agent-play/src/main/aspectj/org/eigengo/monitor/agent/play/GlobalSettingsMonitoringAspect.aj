@@ -22,6 +22,8 @@ import play.api.GlobalSettings;
 import play.api.mvc.RequestHeader;
 import play.api.mvc.Handler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,12 +47,17 @@ public final aspect GlobalSettingsMonitoringAspect extends AbstractMonitoringAsp
     /**
      * Advises {@code GlobalSettings.onRouteRequest(request: RequestHeader): Option<Handler>} pointcut
      *
-     * @param request the RequestHeader containing the header information the HTTP request
+     * @param request the RequestHeader containing the header information from the HTTP request
      */
     after(RequestHeader request) returning (Option<Handler> handler) : Pointcuts.playReceiveRequest(request) {
-        // TODO: Use request to get request URL and use as tag
-        // TODO: Use handler to get controller class & method and use as tag
-        this.counterInterface.incrementCounter(Aspects.requestCount(), new String[]{});
+        this.counterInterface.incrementCounter(Aspects.requestCount(), deriveRequestTags(request));
+    }
+
+    private String[] deriveRequestTags(RequestHeader request) {
+        List<String> tags = new ArrayList<String>();
+        tags.add("play.request.path:" + request.path());
+        tags.add("play.request.query:" + request.rawQueryString());
+        return tags.toArray(new String[tags.size()]);
     }
 
 }
