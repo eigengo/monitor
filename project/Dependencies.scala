@@ -23,6 +23,10 @@ object Dependencies {
     val testkit = "com.typesafe.akka" %% "akka-testkit" % akka_version
   }
 
+  object play {
+    val test    = "com.typesafe.play" %% "play-test" % "2.2.1"
+  }
+
   object spray {
     val spray_version = "1.2-RC2"
 
