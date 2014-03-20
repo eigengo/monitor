@@ -113,7 +113,7 @@ configuration file at ``META-INF/monitor/agent.conf``. The configuration file mu
         }
 
         akka {
-            includeRoutees: true
+            includeRoutees: false
             included: [
                 "akka:*.com.company.project.module.TypeOfActor"
             ]
