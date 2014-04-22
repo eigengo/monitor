@@ -20,7 +20,8 @@ import org.specs2.mutable.SpecificationLike
 import java.util.UUID
 import akka.actor.ActorRef
 import org.specs2.matcher.MatchResult
-import org.eigengo.monitor.agent.akka.AbstractJavaApiActorCellMonitoringAspectSpec.{Greeter, GreetPrinter}
+import org.eigengo.monitor.agent.akka.AbstractJavaApiActorCellMonitoringAspectSpec._
+import scala.Some
 
 class JavaApiActorCellMonitoringAspectSpec
   extends AbstractJavaApiActorCellMonitoringAspectSpec
@@ -90,17 +91,6 @@ class JavaApiActorCellMonitoringAspectSpec
         (1, innerActorTypeTag)
       ))
     }
-
-    "Record messages sent to an ActorSelection" in {
-      TestCounterInterface.clear()
-            val innerActorSelection = system.actorSelection("/javaapi/user/$b/$a")
-            innerActorSelection.tell(1, ActorRef.noSender)
-      Thread.sleep(1000L)
-
-      TestCounterInterface.foldlByAspect(delivered(1: Int))(TestCounter.plus)containsCounters (delivered(1: Int), Seq(
-        (1, innerActorTypeTag)
-      ))
-    }.pendingUntilFixed("this may just be failing because of actor selection syntax. This isn't needed atm, but is a test we should have for completeness")
 
     "Record actor death" in {
       TestCounterInterface.clear()
