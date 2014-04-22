@@ -63,7 +63,7 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
         }
     }
 
-    public class OuterActor extends UntypedActor {
+    public static class OuterActor extends UntypedActor {
 
         public void onReceive(final Object message) {
             if (message instanceof UUID) {   // The actors created here have anonymous tags with current monitoring
@@ -72,7 +72,7 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
         }
     }
 
-    public class InnerActor extends UntypedActor {
+    public static class InnerActor extends UntypedActor {
 
         // unused parameter OK
         InnerActor(UUID ignored) {
