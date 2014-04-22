@@ -5,8 +5,8 @@ object MonitorBuild extends Build {
 
   override val settings = super.settings ++ Seq(
     organization := "org.eigengo.monitor",
-    version := "0.3-SNAPSHOT",
-    scalaVersion := "2.10.2"
+    version := "0.4-SNAPSHOT",
+    scalaVersion := "2.10.4"
   )
 
   def module(dir: String, extraSettings: Seq[Setting[_]] = Nil) = Project(id = dir, base = file(dir), 

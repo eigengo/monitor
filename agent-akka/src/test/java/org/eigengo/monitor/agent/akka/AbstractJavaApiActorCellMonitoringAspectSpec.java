@@ -16,6 +16,8 @@
 package org.eigengo.monitor.agent.akka;
 
 import akka.actor.*;
+import akka.japi.Creator;
+import scala.collection.immutable.List;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -65,11 +67,7 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
 
         public void onReceive(final Object message) {
             if (message instanceof UUID) {   // The actors created here have anonymous tags with current monitoring
-                getContext().actorOf(new Props(new UntypedActorFactory() {
-                    public InnerActor create() {
-                        return new InnerActor((UUID)message);
-                    }
-                }));
+                getContext().actorOf(Props.create(InnerActor.class, message));
             }
         }
     }
@@ -132,7 +130,8 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
         this.unnamedGreetPrinterProps = Props.create(GreetPrinter.class);
         this.unnamedGreetPrinter = system.actorOf(this.unnamedGreetPrinterProps);
 
-        // Deprecated API usage is OK: we need to ensure that even old code remains monitorable
+        // Deprecated API usage is no longer OK: we need to ensure that even old code remains monitorable
+        /*
         this.outerActorProps = new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new OuterActor();
@@ -147,7 +146,12 @@ abstract class AbstractJavaApiActorCellMonitoringAspectSpec {
             }
         });
         this.innerActor = system.actorOf(innerActorProps);
+        */
 
+        this.outerActorProps = Props.create(OuterActor.class);
+        this.outerActor = system.actorOf(this.outerActorProps);
+        this.innerActorProps = Props.create(InnerActor.class, UUID.randomUUID());
+        this.innerActor = system.actorOf(innerActorProps);
     }
 
 }
