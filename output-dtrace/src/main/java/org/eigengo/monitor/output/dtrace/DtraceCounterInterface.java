@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright (c) 2013 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ public class DtraceCounterInterface implements CounterInterface {
         ProviderFactory factory = ProviderFactory.getDefaultFactory();
         System.out.println("***************** " + factory);
         provider = factory.createProvider(DtraceCounterProvider.class);
-        provider.goobledygook();
     }
 
     public void x() {
@@ -34,26 +33,26 @@ public class DtraceCounterInterface implements CounterInterface {
 
     @Override
     public void incrementCounter(String aspect, String... tags) {
-        provider.foo("++ " + aspect);
+        provider.messageCount("++ " + aspect);
     }
 
     @Override
     public void incrementCounter(String aspect, int delta, String... tags) {
-        provider.foo("+= " + aspect);
+        provider.messageCount("+= " + aspect);
     }
 
     @Override
     public void decrementCounter(String aspect, String... tags) {
-        provider.foo("-- " + aspect);
+        provider.messageCount("-- " + aspect);
     }
 
     @Override
     public void recordGaugeValue(String aspect, int value, String... tags) {
-        provider.foo("== " + aspect);
+        provider.messageCount("== " + aspect);
     }
 
     @Override
     public void recordExecutionTime(String aspect, int duration, String... tags) {
-        provider.foo(" t " + aspect);
+        provider.messageCount(" t " + aspect);
     }
 }
