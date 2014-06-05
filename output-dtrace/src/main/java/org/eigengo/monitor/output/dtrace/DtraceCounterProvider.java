@@ -20,9 +20,9 @@ import com.sun.tracing.dtrace.FunctionName;
 import com.sun.tracing.dtrace.ModuleName;
 
 @ProviderName("akka")
-@ModuleName("JSDT")
+@ModuleName("JDST")
 public interface DtraceCounterProvider extends com.sun.tracing.Provider {
     @FunctionName("foo") void foo(String name);
-    void x(int n);
+    void goobledygook();
 
 }

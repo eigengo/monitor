@@ -32,7 +32,10 @@ object MonitorBuild extends Build {
       generatedPdf in Sphinx <<= generatedPdf in Sphinx in LocalProject(docs.id) map identity,
       generatedEpub in Sphinx <<= generatedEpub in Sphinx in LocalProject(docs.id) map identity,
       // run options
-      javaOptions in run += "-javaagent:" + System.getProperty("user.home") + s"/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-$aspectj_version.jar",
+      javaOptions in run ++= Seq(
+        "-javaagent:" + System.getProperty("user.home") + s"/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-$aspectj_version.jar",
+        "-XX:+ExtendedDTraceProbes"
+      ),
       fork in run := true,
       connectInput in run := true,
       mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")),

@@ -23,8 +23,13 @@ public class DtraceCounterInterface implements CounterInterface {
     static DtraceCounterProvider provider;
     static {
         ProviderFactory factory = ProviderFactory.getDefaultFactory();
+        System.out.println("***************** " + factory);
         provider = factory.createProvider(DtraceCounterProvider.class);
-        provider.x(60);
+        provider.goobledygook();
+    }
+
+    public void x() {
+
     }
 
     @Override
