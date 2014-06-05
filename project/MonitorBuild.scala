@@ -72,6 +72,7 @@ object MonitorBuild extends Build {
     libraryDependencies += specs2 % "test"
   )
   lazy val output_dtrace = module("output-dtrace") dependsOn (output) settings (
+    javaOptions in run ++= Seq("-XX:+ExtendedDTraceProbes")
   )
   lazy val test = module("test") dependsOn (output) settings (
   	libraryDependencies += specs2,
