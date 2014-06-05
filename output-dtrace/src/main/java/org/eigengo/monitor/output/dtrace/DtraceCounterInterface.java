@@ -33,7 +33,7 @@ public class DtraceCounterInterface implements CounterInterface {
 
     @Override
     public void incrementCounter(String aspect, String... tags) {
-        provider.messageCount("++ " + aspect);
+        provider.messageCounter(aspect, aspect.length(), 1);
     }
 
     @Override

@@ -23,4 +23,5 @@ import com.sun.tracing.dtrace.ModuleName;
 public interface DtraceCounterProvider extends com.sun.tracing.Provider {
     @FunctionName("messageCount") void messageCount(String name);
     @FunctionName("queueSize") void queueSize(int size);
+    @FunctionName("messageCounter") void messageCounter(String name, int length, int delta);
 }
