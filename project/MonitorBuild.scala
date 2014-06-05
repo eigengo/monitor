@@ -1,5 +1,7 @@
 import sbt._
-import Keys._
+import sbt.Keys._
+import sbt.LocalProject
+import scala.Some
 
 object MonitorBuild extends Build {
 
@@ -72,7 +74,9 @@ object MonitorBuild extends Build {
     libraryDependencies += specs2 % "test"
   )
   lazy val output_dtrace = module("output-dtrace") dependsOn (output) settings (
-    javaOptions in run ++= Seq("-XX:+ExtendedDTraceProbes")
+    javaOptions in run ++= Seq("-XX:+ExtendedDTraceProbes"),
+    fork in run := true,
+    connectInput in run := true
   )
   lazy val test = module("test") dependsOn (output) settings (
   	libraryDependencies += specs2,
