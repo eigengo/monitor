@@ -18,8 +18,8 @@ package org.eigengo.monitor.example.akka
 import akka.actor.{ActorRef, Props, ActorSystem, Actor}
 import akka.routing.RoundRobinPool
 
-// run with -javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
-// in my case -javaagent:/Users/janmachacek/.m2/repository/org/aspectj/aspectjweaver/1.7.3/aspectjweaver-1.7.3.jar
+// run with -javaagent:$HOME/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.4.jar
+// in my case -javaagent:/Users/janmachacek/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.4.jar
 object Main extends App {
   val longSleep = 10
   val shortSleep = 1

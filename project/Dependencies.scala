@@ -24,7 +24,7 @@ object Dependencies {
   }
 
   object play {
-    val test    = "com.typesafe.play" %% "play-test" % "2.3-SNAPSHOT"
+    val test    = "com.typesafe.play" %% "play-test" % "2.3.0"
   }
 
   object spray {
