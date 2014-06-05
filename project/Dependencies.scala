@@ -12,7 +12,7 @@ object Dependencies {
     ExclusionRule(organization = "org.slf4j")
   )
 
-  val aspectj_version = "1.7.3"
+  val aspectj_version = "1.7.4"
 
   val aspectj_weaver = "org.aspectj"  % "aspectjweaver" % aspectj_version
 
