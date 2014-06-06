@@ -2,11 +2,9 @@
 language: scala
 
 scala:
-  - 2.10.1
-  - 2.10.2
-  - 2.10.3
+  - 2.10.4
   
-script: sbt clean scalastyle test
+script: sbt clean test
 
 # Testing with OpenJDK7 as well just to be adventurous!
 jdk:
