@@ -2,17 +2,7 @@ object Dependencies {
   import sbt._
   import Keys._
 
-  // to help resolve transitive problems, type:
-  //   `sbt dependency-graph`
-  //   `sbt test:dependency-tree`
-  val bad = Seq(
-    ExclusionRule(name = "log4j"),
-    ExclusionRule(name = "commons-logging"),
-    ExclusionRule(name = "commons-collections"),
-    ExclusionRule(organization = "org.slf4j")
-  )
-
-  val aspectj_version = "1.7.4"
+  val aspectj_version = "1.8.0"
 
   val aspectj_weaver = "org.aspectj"  % "aspectjweaver" % aspectj_version
 

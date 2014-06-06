@@ -2,7 +2,6 @@ object BuildSettings {
   import sbt._
   import Keys._
   import com.typesafe.sbt.SbtAspectj.{ Aspectj, aspectjSettings }
-  import com.typesafe.sbt.SbtAspectj.AspectjKeys.{ compileOnly, sourceLevel, aspectjDirectory, aspectjVersion }
   import org.scalastyle.sbt.ScalastylePlugin
 
   lazy val buildSettings = 
@@ -10,6 +9,7 @@ object BuildSettings {
     sbtunidoc.Plugin.unidocSettings ++ 
     sbtunidoc.Plugin.genjavadocExtraSettings ++ 
     Publish.settings ++ 
+    aspectjCompileSettings ++
     ScalastylePlugin.Settings ++ 
     Seq(
       org.scalastyle.sbt.PluginKeys.config := file("project/scalastyle-config.xml"),
@@ -36,12 +36,14 @@ object BuildSettings {
       parallelExecution in Test := false
   )
 
-  lazy val aspectjCompileSettings = aspectjSettings ++ Seq(
+  import com.typesafe.sbt.SbtAspectj.AspectjKeys._
+  lazy val aspectjCompileSettings = Seq(
     // only compile the aspects (no weaving)
+    aspectjVersion in Aspectj := "Dependencies.aspectj_version",
     compileOnly in Aspectj := true,
+    verbose in Aspectj := true,
     aspectjDirectory in Aspectj <<= crossTarget,
-    sourceLevel in Aspectj := "-1.6",
-    aspectjVersion in Aspectj := Dependencies.aspectj_version,
+    sourceLevel in Aspectj := "-1.7",
 
     // add the compiled aspects as products
     products in Compile <++= products in Aspectj
