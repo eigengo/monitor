@@ -1,7 +1,6 @@
 object BuildSettings {
   import sbt._
   import Keys._
-  import com.typesafe.sbt.SbtAspectj.{ Aspectj, aspectjSettings }
   import org.scalastyle.sbt.ScalastylePlugin
 
   lazy val buildSettings = 
@@ -37,9 +36,10 @@ object BuildSettings {
   )
 
   import com.typesafe.sbt.SbtAspectj.AspectjKeys._
-  lazy val aspectjCompileSettings = Seq(
+  import com.typesafe.sbt.SbtAspectj.{ Aspectj, aspectjSettings }
+  lazy val aspectjCompileSettings = aspectjSettings ++ Seq(
     // only compile the aspects (no weaving)
-    aspectjVersion in Aspectj := "Dependencies.aspectj_version",
+    aspectjVersion in Aspectj := Dependencies.aspectj_version,
     compileOnly in Aspectj := true,
     verbose in Aspectj := true,
     aspectjDirectory in Aspectj <<= crossTarget,
