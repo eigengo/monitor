@@ -21,13 +21,15 @@ import com.sun.tracing.dtrace.FunctionName;
 
 @ProviderName("akka")
 public interface DtraceCounterProvider extends com.sun.tracing.Provider {
-    @FunctionName("Records execution time of ``def receive``")
+    @FunctionName("Receive execution time")
     @ProbeName("execution-time")
     void executionTime(String name, int length, int duration);
 
-    @FunctionName("counter")
+    @FunctionName("All counters")
+    @ProbeName("all-counters")
     void counter(String name, int length, int delta);
 
-    @FunctionName("gauge")
+    @FunctionName("All gauges")
+    @ProbeName("all-gauges")
     void gauge(String name, int length, int value);
 }
