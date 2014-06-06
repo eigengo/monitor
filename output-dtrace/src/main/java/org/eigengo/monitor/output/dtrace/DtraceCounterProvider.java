@@ -15,13 +15,19 @@
  */
 package org.eigengo.monitor.output.dtrace;
 
+import com.sun.tracing.ProbeName;
 import com.sun.tracing.ProviderName;
 import com.sun.tracing.dtrace.FunctionName;
-import com.sun.tracing.dtrace.ModuleName;
 
 @ProviderName("akka")
 public interface DtraceCounterProvider extends com.sun.tracing.Provider {
-    @FunctionName("execution-time") void executionTime(String name, int length, int duration);
-    @FunctionName("counter") void counter(String name, int length, int delta);
-    @FunctionName("gauge") void gauge(String name, int length, int value);
+    @FunctionName("Records execution time of ``def receive``")
+    @ProbeName("execution-time")
+    void executionTime(String name, int length, int duration);
+
+    @FunctionName("counter")
+    void counter(String name, int length, int delta);
+
+    @FunctionName("gauge")
+    void gauge(String name, int length, int value);
 }
