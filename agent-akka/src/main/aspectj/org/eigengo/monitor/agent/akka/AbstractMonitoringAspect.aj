@@ -30,8 +30,10 @@ abstract aspect AbstractMonitoringAspect {
             CounterInterface counterInterface = (CounterInterface)Class.forName(configuration.counterInterfaceClassName()).newInstance();
             return counterInterface;
         } catch (final ReflectiveOperationException e) {
+            e.printStackTrace();
             return new NullCounterInterface();
         } catch (final ClassCastException e) {
+            e.printStackTrace();
             return new NullCounterInterface();
         }
     }

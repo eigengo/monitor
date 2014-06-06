@@ -1,5 +1,7 @@
 import sbt._
-import Keys._
+import sbt.Keys._
+import sbt.LocalProject
+import scala.Some
 
 object MonitorBuild extends Build {
 
@@ -32,11 +34,14 @@ object MonitorBuild extends Build {
       generatedPdf in Sphinx <<= generatedPdf in Sphinx in LocalProject(docs.id) map identity,
       generatedEpub in Sphinx <<= generatedEpub in Sphinx in LocalProject(docs.id) map identity,
       // run options
-      javaOptions in run += "-javaagent:" + System.getProperty("user.home") + s"/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-$aspectj_version.jar",
+      javaOptions in run ++= Seq(
+        "-javaagent:" + System.getProperty("user.home") + s"/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-$aspectj_version.jar",
+        "-XX:+ExtendedDTraceProbes"
+      ),
       fork in run := true,
       connectInput in run := true,
       mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")),
-    aggregate = Seq(agent, output, output_statsd, output_codahalemetrics, agent_akka, agent_spray, agent_play, example_akka, docs)) dependsOn (example_akka)
+    aggregate = Seq(agent, output, output_statsd, output_codahalemetrics, output_dtrace, agent_akka, agent_spray, agent_play, example_akka, docs)) dependsOn (example_akka)
 
 /*
   lazy val macros = module("macros") settings(
@@ -68,6 +73,11 @@ object MonitorBuild extends Build {
     libraryDependencies += akka.actor,
     libraryDependencies += specs2 % "test"
   )
+  lazy val output_dtrace = module("output-dtrace") dependsOn (output) settings (
+    javaOptions in run ++= Seq("-XX:+ExtendedDTraceProbes"),
+    fork in run := true,
+    connectInput in run := true
+  )
   lazy val test = module("test") dependsOn (output) settings (
   	libraryDependencies += specs2,
     libraryDependencies += akka.testkit
@@ -91,10 +101,10 @@ object MonitorBuild extends Build {
   )
   lazy val agent_spray  = module("agent-spray")  dependsOn(agent, output)
 
-  lazy val example_akka = module("example-akka") dependsOn(agent_akka, output_statsd) settings (
+  lazy val example_akka = module("example-akka") dependsOn(agent_akka, output_statsd, output_dtrace) settings (
     libraryDependencies += akka.actor
   )
-  lazy val example_spray = module("example-spray") dependsOn(agent_spray, output_statsd) settings (
+  lazy val example_spray = module("example-spray") dependsOn(agent_spray, output_statsd, output_dtrace) settings (
     libraryDependencies += spray.can,
     libraryDependencies += spray.httpx
   )
