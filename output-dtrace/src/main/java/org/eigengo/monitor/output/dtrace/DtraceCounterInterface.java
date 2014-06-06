@@ -33,22 +33,26 @@ public class DtraceCounterInterface implements CounterInterface {
 
     @Override
     public void incrementCounter(String aspect, String... tags) {
-        provider.messageCounter(aspect, aspect.length(), 1);
+        provider.counter(aspect, aspect.length(), 1);
     }
 
     @Override
     public void incrementCounter(String aspect, int delta, String... tags) {
+        provider.counter(aspect, aspect.length(), delta);
     }
 
     @Override
     public void decrementCounter(String aspect, String... tags) {
+        provider.counter(aspect, aspect.length(), -1);
     }
 
     @Override
     public void recordGaugeValue(String aspect, int value, String... tags) {
+        provider.gauge(aspect, aspect.length(), value);
     }
 
     @Override
     public void recordExecutionTime(String aspect, int duration, String... tags) {
+        provider.executionTime(aspect, aspect.length(), duration);
     }
 }

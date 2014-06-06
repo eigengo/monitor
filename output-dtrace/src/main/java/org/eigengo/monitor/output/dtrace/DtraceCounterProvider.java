@@ -21,7 +21,7 @@ import com.sun.tracing.dtrace.ModuleName;
 
 @ProviderName("akka")
 public interface DtraceCounterProvider extends com.sun.tracing.Provider {
-    @FunctionName("queue-size") void queueSize(int size);
-    @FunctionName("message-counter") void messageCounter(String name, int length, int delta);
-    @FunctionName("receive-duration") void receiveDuration(String name, int length, int duration);
+    @FunctionName("execution-time") void executionTime(String name, int length, int duration);
+    @FunctionName("counter") void counter(String name, int length, int delta);
+    @FunctionName("gauge") void gauge(String name, int length, int value);
 }
