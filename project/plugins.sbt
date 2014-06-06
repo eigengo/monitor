@@ -1,6 +1,6 @@
 resolvers += "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.9.5-SNAPSHOT")
+addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.9.4")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8")
 

@@ -12,9 +12,9 @@ object BuildSettings {
     ScalastylePlugin.Settings ++ 
     Seq(
       org.scalastyle.sbt.PluginKeys.config := file("project/scalastyle-config.xml"),
-      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-target:jvm-1.7", "-deprecation", "-unchecked", "-Ywarn-dead-code"),
+      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-target:jvm-1.6", "-deprecation", "-unchecked", "-Ywarn-dead-code"),
       scalacOptions in (Compile, doc) <++= (name in (Compile, doc), version in (Compile, doc)) map DefaultOptions.scaladoc,
-      //javacOptions in Compile ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:-options"),
+      javacOptions in Compile ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:-options"),
       //scalacOptions in doc := Seq(),
       //javacOptions in doc := Seq("-source", "1.7"),
       javaOptions += "-Xmx2G",
@@ -43,7 +43,7 @@ object BuildSettings {
     compileOnly in Aspectj := true,
     verbose in Aspectj := true,
     aspectjDirectory in Aspectj <<= crossTarget,
-    sourceLevel in Aspectj := "-1.7",
+    sourceLevel in Aspectj := "-1.6",
 
     // add the compiled aspects as products
     products in Compile <++= products in Aspectj

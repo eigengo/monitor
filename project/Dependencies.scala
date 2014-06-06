@@ -2,7 +2,7 @@ object Dependencies {
   import sbt._
   import Keys._
 
-  val aspectj_version = "1.8.0"
+  val aspectj_version = "1.7.3"
 
   val aspectj_weaver = "org.aspectj"  % "aspectjweaver" % aspectj_version
 
