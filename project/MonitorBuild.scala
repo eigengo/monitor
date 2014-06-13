@@ -43,19 +43,6 @@ object MonitorBuild extends Build {
       mainClass in (Compile, run) := Some("org.eigengo.monitor.example.akka.Main")),
     aggregate = Seq(agent, output, output_statsd, output_codahalemetrics, output_dtrace, agent_akka, agent_spray, agent_play, example_akka, docs)) dependsOn (example_akka)
 
-/*
-  lazy val macros = module("macros") settings(
-    libraryDependencies <++=
-      (scalaVersion)(v => Seq(("org.scala-lang" % "scala-compiler" % v), ("org.scala-lang" % "scala-reflect" % v))))
-  )
-  lazy val macros: Project = Project(
-    "macros",
-    file("macros"),
-    settings = buildSettings ++ Seq(libraryDependencies <++=
-      (scalaVersion)(v => Seq(("org.scala-lang" % "scala-compiler" % v), ("org.scala-lang" % "scala-reflect" % v)))))
-*/
-
-
   lazy val agent = module("agent") settings (
   	libraryDependencies += typesafe_config
   )

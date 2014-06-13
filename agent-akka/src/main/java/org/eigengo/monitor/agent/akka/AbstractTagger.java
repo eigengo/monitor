@@ -60,7 +60,7 @@ abstract class AbstractTagger {
     }
 
     /**
-     * Computes actor path tags & adds them to the given {@code tags}.
+     * Computes actor path tags &amp; adds them to the given {@code tags}.
      *
      * @param actorPath the actor path
      * @param tags the tags that will be modified with the tags
@@ -86,7 +86,7 @@ abstract class AbstractTagger {
     }
 
     /**
-     * Computes the system tags & adds them to the given {@code tags}.
+     * Computes the system tags &amp; adds them to the given {@code tags}.
      *
      * @param actorPath the actor path
      * @param tags the tags that will be modified with the tags
@@ -96,7 +96,7 @@ abstract class AbstractTagger {
     }
 
     /**
-     * Computes the type tags & adds them to the given {@code tags}.
+     * Computes the type tags &amp; adds them to the given {@code tags}.
      *
      * @param actorPath the actor path
      * @param actorClassName the optional actor class name
